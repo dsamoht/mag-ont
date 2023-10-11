@@ -9,7 +9,7 @@
 > *__Note__* : this is a *long-reads-first* pipeline. If you give both long reads and paired-end short reads, the draft assembly will first be done with long reads, then "polished" with short reads.
 ## Dependencies
 - __Software :__  
-  [Nextflow](https://www.nextflow.io/)
+  [Nextflow](https://www.nextflow.io/)  
   [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
 
 - __Data :__  
