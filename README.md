@@ -7,6 +7,7 @@
 ![alt text](/img/mag-ont_schema.png)
 
 > *__Note__* : this is a *long-reads-first* pipeline. If you give both long reads and paired-end short reads, the draft assembly will first be done with long reads, then "polished" with short reads.
+
 ## Dependencies
 - __Software :__  
   [Nextflow](https://www.nextflow.io/)  
@@ -29,3 +30,10 @@ __Run on your data__:
 ```
 nextflow run mag-ont.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
 ```
+
+## Acknowledgement
+This workflow is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) pipeline:  
+> nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
+>Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
+>NAR Genom Bioinform. 2022 Feb 2;4(1)  
+>. doi: [10.1093/nargab/lqac007](https://academic.oup.com/nargab/article/4/1/lqac007/6520104)
