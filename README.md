@@ -32,7 +32,7 @@ nextflow run mag-ont.nf -profile {docker,singularity},{local,hpc} --reads sample
 ```
 
 ## Acknowledgement
-This workflow is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) pipeline:  
+This pipeline is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) :  
 > nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
 >Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
 >NAR Genom Bioinform. 2022 Feb 2;4(1)  
