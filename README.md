@@ -18,9 +18,10 @@
   A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
 
 - __Edit__ *nextflow.config* at lines 15-16 :  
+  ```
   gtdbtk_db = '/path/to/extracted/gtdbtk/database'    
   kraken_db = '/path/to/extracted/kraken2/database'
-
+  ```
 ## How to run the pipeline
 __This command will test the setup and download the containers for off-line use__:  
 ```
