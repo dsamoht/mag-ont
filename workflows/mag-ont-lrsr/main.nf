@@ -4,6 +4,7 @@ include { BWA as BWA_POST               } from '../../modules/bwa'
 include { CHECKM                        } from '../../modules/checkm'
 include { DASTOOL                       } from '../../modules/dastool'
 include { FLYE                          } from '../../modules/flye'
+include { GTDBTK                        } from '../../modules/gtdbtk'
 include { KRAKEN                        } from '../../modules/kraken'
 include { KRAKENTOOLS                   } from '../../modules/krakentools'
 include { KRONA                         } from '../../modules/krona'
@@ -43,5 +44,7 @@ workflow MAG_ONT_LRSR {
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
     bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
     DASTOOL(bins_ch)
+    CHECKM(DASTOOL.out.dasBins)
+    GTDBTK(DASTOOL.out.dasBins)
 
 }
