@@ -35,6 +35,6 @@ workflow MAG_ONT_LR {
     bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
     DASTOOL(bins_ch)
     CHECKM(DASTOOL.out.dasBins)
-    GTDBTK(DASTOOL.out.dasBins)
+    GTDBTK(DASTOOL.out.dasBins, params.gtdbtk_db)
 
 }
