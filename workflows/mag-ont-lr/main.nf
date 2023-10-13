@@ -1,3 +1,4 @@
+include { ANTISMASH         } from '../../modules/antismash'
 include { BRACKEN           } from '../../modules/bracken'
 include { CHECKM            } from '../../modules/checkm'
 include { DASTOOL           } from '../../modules/dastool'
