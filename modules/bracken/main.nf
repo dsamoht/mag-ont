@@ -21,6 +21,6 @@ process BRACKEN {
 
     script:
     """
-    est_abundance.py -i ${krakenOutputFile} -k ${db}/database300mers.kmer_distrib -l S -t 10 -o tax.bracken
+    est_abundance.py -i ${krakenOutputFile} -k ${db}/database200mers.kmer_distrib -l S -t 10 -o tax.bracken
     """
 }
