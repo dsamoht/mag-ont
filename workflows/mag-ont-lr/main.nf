@@ -24,6 +24,7 @@ workflow MAG_ONT_LR {
     FLYE(reads)
     MEDAKA(reads, FLYE.out)
     PRODIGAL(MEDAKA.out)
+    ANTISMASH(MEDAKA.out)
     MINIMAP(reads, MEDAKA.out)
     SAMTOOLS(MINIMAP.out)
     METABAT(MEDAKA.out, SAMTOOLS.out)
