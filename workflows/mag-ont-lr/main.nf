@@ -18,7 +18,7 @@ include { SAMTOOLS          } from '../../modules/samtools'
 workflow MAG_ONT_LR {
 
     reads = Channel.fromPath(params.reads)
-    if (params.krakenOnly) {
+    if (params.onlyKraken) {
         KRAKEN(reads, params.krakenDB)
         BRACKEN(KRAKEN.out, params.krakenDB)
         KRAKENTOOLS(BRACKEN.out.brackenOutputForKrona)

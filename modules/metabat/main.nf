@@ -5,6 +5,7 @@ process METABAT {
     } else {
         container = params.metabat_docker
     }
+    errorStrategy 'ignore'
 
     publishDir "${params.outdir}/metabat", mode: 'copy'
 

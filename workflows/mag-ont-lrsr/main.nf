@@ -26,7 +26,7 @@ workflow MAG_ONT_LRSR {
     reads = Channel.fromPath(params.reads)
     paired_reads = Channel.fromFilePairs(params.paired_reads)
 
-    if (params.krakenOnly) {
+    if (params.onlyKraken) {
         KRAKEN(reads, params.krakenDB)
         BRACKEN(KRAKEN.out, params.krakenDB)
         KRAKENTOOLS(BRACKEN.out.brackenOutputForKrona)
