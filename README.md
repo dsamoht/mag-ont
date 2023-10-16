@@ -17,10 +17,10 @@
   [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)  
   A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
 
-- __Edit__ *nextflow.config* at lines 15-16 :  
+- __Edit__ *nextflow.config* :  
   ```
-  gtdbtk_db = '/path/to/extracted/gtdbtk/database'    
-  kraken_db = '/path/to/extracted/kraken2/database'
+  gtdbtkDB = '/path/to/extracted/gtdbtk/database'    
+  krakenDB = '/path/to/extracted/kraken2/database'
   ```
 ## How to run the pipeline
 __This command will test the setup and download the containers for off-line use__:  
