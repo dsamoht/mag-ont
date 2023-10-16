@@ -19,6 +19,7 @@ include { PRODIGAL                      } from '../../modules/prodigal'
 include { SAMTOOLS as SAMTOOLS_POST_FWD } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_POST_REV } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_POST_LR  } from '../../modules/samtools'
+include { SEQKIT                        } from '../../modules/seqkit'
 
 
 workflow MAG_ONT_LRSR {
@@ -44,12 +45,18 @@ workflow MAG_ONT_LRSR {
         SAMTOOLS_POST_REV(BWA_POST.out.revSam)
         PRODIGAL(POLYPOLISH.out)
         ANTISMASH(POLYPOLISH.out)
-        bam_ch = SAMTOOLS.out.mix(SAMTOOLS_POST_FWD.out, SAMTOOLS_POST_REV)
+        bam_ch = SAMTOOLS.out.flatten().
+            mix(SAMTOOLS_POST_FWD.out.flatten()).
+            mix(SAMTOOLS_POST_REV.out.flatten()).
+            collect()
         METABAT(POLYPOLISH.out, bam_ch)
         MAXBIN(POLYPOLISH.out, METABAT.out.metabatDepth)
         MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
-        bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
+        bins_ch = METABAT.out.metabatBins.flatten().
+            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins.flatten()).
+            collect()
         DASTOOL(bins_ch)
+        SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
     } else {
@@ -68,12 +75,18 @@ workflow MAG_ONT_LRSR {
         SAMTOOLS_POST_REV(BWA_POST.out.revSam)
         PRODIGAL(POLYPOLISH.out)
         ANTISMASH(POLYPOLISH.out)
-        bam_ch = SAMTOOLS.out.mix(SAMTOOLS_POST_FWD.out, SAMTOOLS_POST_REV)
+        bam_ch = SAMTOOLS.out.flatten().
+            mix(SAMTOOLS_POST_FWD.out.flatten()).
+            mix(SAMTOOLS_POST_REV.out.flatten()).
+            collect()
         METABAT(POLYPOLISH.out, bam_ch)
         MAXBIN(POLYPOLISH.out, METABAT.out.metabatDepth)
         MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
-        bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
+        bins_ch = METABAT.out.metabatBins.flatten().
+            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins.flatten()).
+            collect()
         DASTOOL(bins_ch)
+        SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
 

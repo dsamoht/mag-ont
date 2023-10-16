@@ -14,6 +14,8 @@ include { METABAT           } from '../../modules/metabat'
 include { MINIMAP           } from '../../modules/minimap'
 include { PRODIGAL          } from '../../modules/prodigal'
 include { SAMTOOLS          } from '../../modules/samtools'
+include { SEQKIT            } from '../../modules/seqkit'
+
 
 workflow MAG_ONT_LR {
 
@@ -32,13 +34,16 @@ workflow MAG_ONT_LR {
         MINIMAP(reads, MEDAKA.out)
         SAMTOOLS(MINIMAP.out)
         METABAT(MEDAKA.out, SAMTOOLS.out)
-        SAMTOOLS.out.view()
         MAXBIN(MEDAKA.out, METABAT.out.metabatDepth)
         MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
-        bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
+        bins_ch = METABAT.out.metabatBins.flatten().
+            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins.flatten()).
+            collect()
         DASTOOL(bins_ch)
+        SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+
     } else {
         KRAKEN(reads, params.krakenDB)
         BRACKEN(KRAKEN.out, params.krakenDB)
@@ -54,8 +59,10 @@ workflow MAG_ONT_LR {
         SAMTOOLS.out.view()
         MAXBIN(MEDAKA.out, METABAT.out.metabatDepth)
         MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
-        bins_ch = METABAT.out.metabatBins.mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins)
-        DASTOOL(bins_ch)
+        bins_ch = METABAT.out.metabatBins.flatten().
+            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins.flatten()).
+            collect()
+        SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
     }
