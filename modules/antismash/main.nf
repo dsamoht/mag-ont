@@ -12,15 +12,15 @@ process ANTISMASH {
      path assembly
 
      output:
-     path "./clusterblast/*_c*.txt", optional: true, emit: clusterblast_file
-     path "./knownclusterblast/", optional: true, emit: knownclusterblast_dir
-     path "./knownclusterblast/*_c*.txt" , optional: true, emit: knownclusterblast_txt
-     path "./clusterblastoutput.txt", optional: true, emit: clusterblastoutput
-     path "./knownclusterblastoutput.txt", optional: true, emit: knownclusterblastoutput
+     path "antismash_out/clusterblast/*_c*.txt", optional: true, emit: clusterblast_file
+     path "antismash_out/knownclusterblast/", optional: true, emit: knownclusterblast_dir
+     path "antismash_out/knownclusterblast/*_c*.txt" , optional: true, emit: knownclusterblast_txt
+     path "antismash_out/clusterblastoutput.txt", optional: true, emit: clusterblastoutput
+     path "antismash_out/knownclusterblastoutput.txt", optional: true, emit: knownclusterblastoutput
 
      script:
      """
-     antismash ${assembly} --output-dir . --genefinding-tool prodigal
+     antismash ${assembly} --output-dir antismash_out --genefinding-tool prodigal
      """
 
 }
