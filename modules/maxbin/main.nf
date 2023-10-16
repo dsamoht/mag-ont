@@ -5,6 +5,7 @@ process MAXBIN {
     } else {
         container = params.maxbin_docker
     }
+    errorStrategy 'ignore'
 
     input:
     path medakaOutFile

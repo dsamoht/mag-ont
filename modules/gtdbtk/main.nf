@@ -5,6 +5,8 @@ process GTDBTK {
     } else {
         container = params.gtdbtk_docker
     }
+    
+    errorStrategy 'ignore'
 
     publishDir "${params.outdir}/gtdbtk", mode: 'copy'
 

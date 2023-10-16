@@ -5,6 +5,8 @@ process CHECKM {
     } else {
         container = params.checkm_docker
     }
+    
+    errorStrategy 'ignore'
 
     publishDir "${params.outdir}/checkm", mode: 'copy'
 

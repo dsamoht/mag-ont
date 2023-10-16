@@ -1,5 +1,7 @@
 process MAXBIN_ADJUST_EXT {
 
+    errorStrategy 'ignore'
+
     publishDir "${params.outdir}/maxbin", mode: 'copy'
 
     input:
