@@ -12,15 +12,16 @@ process DASTOOL {
 
     input:
     path bins
+    path contig2bin
 
     output:
-    path "contigs2bins.tsv", emit: contigs2bins, optional: true
     path "*/*bin*.fa", emit: dasBins, optional: true
 
     script:
+    def contig2binList = contig2bin.join(",")
+    def label = contig2bin instanceof List ? "metabat,maxbin" : contig2bin.toString() - "_contigs2bins.tsv"
     """
-    Fasta_to_Contig2Bin.sh -e fa > contigs2bins.tsv
     cat ${bins} > contigs.fasta
-    DAS_Tool -i contigs2bins.tsv -c contigs.fasta -o das-bin --write_bins --score_threshold 0.1
+    DAS_Tool -i ${contig2binList} -l ${label} -c contigs.fasta -o das-bin --write_bins --score_threshold 0.1
     """
 }
