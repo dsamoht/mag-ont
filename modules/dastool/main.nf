@@ -15,7 +15,7 @@ process DASTOOL {
     path contig2bin
 
     output:
-    path "*/*bin*.fa", emit: dasBins, optional: true
+    path "das-bin*/*bin*.fa", emit: dasBins, optional: true
 
     script:
     def contig2binList = contig2bin.join(",")

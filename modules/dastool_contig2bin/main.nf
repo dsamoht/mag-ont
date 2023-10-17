@@ -8,7 +8,7 @@ process DASTOOL_CONTIG2BIN {
 
     errorStrategy 'ignore'
 
-    publishDir "${params.outdir}/dastool", mode: 'copy', saveAs: { filename -> new File(filename).getName() }
+    publishDir "${params.outdir}/dastool", mode: 'copy'
 
     input:
     path bins

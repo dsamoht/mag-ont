@@ -44,11 +44,8 @@ workflow MAG_ONT_LR {
         contig2bin_ch = METABAT_C2B.out.contigs2bins.
             mix(MAXBIN_C2B.out.contigs2bins).
             collect()
-        bins_ch = METABAT.out.metabatBins.
-            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins).
-            collect()
 
-        DASTOOL(bins_ch, contig2bin_ch)
+        DASTOOL(MEDAKA.out, contig2bin_ch)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
@@ -73,11 +70,8 @@ workflow MAG_ONT_LR {
         contig2bin_ch = METABAT_C2B.out.contigs2bins.
             mix(MAXBIN_C2B.out.contigs2bins).
             collect()
-        bins_ch = METABAT.out.metabatBins.
-            mix(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins).
-            collect()
 
-        DASTOOL(bins_ch, contig2bin_ch)
+        DASTOOL(MEDAKA.out, contig2bin_ch)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
