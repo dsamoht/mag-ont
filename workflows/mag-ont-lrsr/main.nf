@@ -3,6 +3,7 @@ include { BRACKEN                           } from '../../modules/bracken'
 include { BWA as BWA_PRE                    } from '../../modules/bwa'
 include { BWA as BWA_POST                   } from '../../modules/bwa'
 include { CHECKM                            } from '../../modules/checkm'
+include { COLLECT                           } from '../../modules/collect'
 include { DASTOOL                           } from '../../modules/dastool'
 include { DASTOOL_CONTIG2BIN as METABAT_C2B } from '../../modules/dastool_contig2bin'
 include { DASTOOL_CONTIG2BIN as MAXBIN_C2B  } from '../../modules/dastool_contig2bin'
@@ -65,6 +66,8 @@ workflow MAG_ONT_LRSR {
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+        COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
+
     } else {
         KRAKEN(reads, params.krakenDB)
         BRACKEN(KRAKEN.out, params.krakenDB)
@@ -99,5 +102,6 @@ workflow MAG_ONT_LRSR {
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+        COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
     }
 }

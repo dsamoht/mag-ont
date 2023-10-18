@@ -1,6 +1,7 @@
 include { ANTISMASH                         } from '../../modules/antismash'
 include { BRACKEN                           } from '../../modules/bracken'
 include { CHECKM                            } from '../../modules/checkm'
+include { COLLECT                           } from '../../modules/collect'
 include { DASTOOL                           } from '../../modules/dastool'
 include { DASTOOL_CONTIG2BIN as METABAT_C2B } from '../../modules/dastool_contig2bin'
 include { DASTOOL_CONTIG2BIN as MAXBIN_C2B  } from '../../modules/dastool_contig2bin'
@@ -17,6 +18,7 @@ include { MINIMAP                           } from '../../modules/minimap'
 include { PRODIGAL                          } from '../../modules/prodigal'
 include { SAMTOOLS                          } from '../../modules/samtools'
 include { SEQKIT                            } from '../../modules/seqkit'
+
 
 
 workflow MAG_ONT_LR {
@@ -49,6 +51,7 @@ workflow MAG_ONT_LR {
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+        COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
 
     } else {
         KRAKEN(reads, params.krakenDB)
@@ -75,5 +78,6 @@ workflow MAG_ONT_LR {
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+        COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
     }
 }
