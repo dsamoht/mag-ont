@@ -11,7 +11,7 @@ process DASTOOL {
     publishDir "${params.outdir}/dastool", mode: 'copy', saveAs: { filename -> new File(filename).getName() }
 
     input:
-    path bins
+    path assembly
     path contig2bin
 
     output:
@@ -21,7 +21,6 @@ process DASTOOL {
     def contig2binList = contig2bin.join(",")
     def label = contig2bin instanceof List ? "metabat,maxbin" : contig2bin.toString() - "_contigs2bins.tsv"
     """
-    cat ${bins} > contigs.fasta
-    DAS_Tool -i ${contig2binList} -l ${label} -c contigs.fasta -o das-bin --write_bins --score_threshold 0.1
+    DAS_Tool -i ${contig2binList} -l ${label} -c ${assembly} -o das-bin --write_bins
     """
 }
