@@ -1,4 +1,3 @@
-include { ANTISMASH                         } from '../../modules/antismash'
 include { BRACKEN                           } from '../../modules/bracken'
 include { BWA as BWA_PRE                    } from '../../modules/bwa'
 include { BWA as BWA_POST                   } from '../../modules/bwa'
@@ -28,7 +27,8 @@ include { SEQKIT                            } from '../../modules/seqkit'
 workflow MAG_ONT_LRSR {
 
     reads = Channel.fromPath(params.reads)
-    paired_reads = Channel.fromFilePairs(params.paired_reads)
+    paired_reads = Channel.fromFilePairs(params.pairedReads)
+    paired_reads.view()
 
     if (params.onlyKraken) {
         KRAKEN(reads, params.krakenDB)
@@ -47,8 +47,7 @@ workflow MAG_ONT_LRSR {
         SAMTOOLS_POST_FWD(BWA_POST.out.fwdSam)
         SAMTOOLS_POST_REV(BWA_POST.out.revSam)
         PRODIGAL(POLYPOLISH.out)
-        ANTISMASH(POLYPOLISH.out)
-        bam_ch = SAMTOOLS.out.flatten().
+        bam_ch = SAMTOOLS_POST_LR.out.flatten().
             mix(SAMTOOLS_POST_FWD.out.flatten()).
             mix(SAMTOOLS_POST_REV.out.flatten()).
             collect()
@@ -83,11 +82,10 @@ workflow MAG_ONT_LRSR {
         SAMTOOLS_POST_FWD(BWA_POST.out.fwdSam)
         SAMTOOLS_POST_REV(BWA_POST.out.revSam)
         PRODIGAL(POLYPOLISH.out)
-        ANTISMASH(POLYPOLISH.out)
-        bam_ch = SAMTOOLS.out.flatten().
-            mix(SAMTOOLS_POST_FWD.out.flatten()).
-            mix(SAMTOOLS_POST_REV.out.flatten()).
-            collect()
+        bam_ch = SAMTOOLS_POST_LR.out.
+            mix(SAMTOOLS_POST_FWD.out).
+            mix(SAMTOOLS_POST_REV.out).
+            collect().view()
         METABAT(POLYPOLISH.out, bam_ch)
         MAXBIN(POLYPOLISH.out, METABAT.out.metabatDepth)
         MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)

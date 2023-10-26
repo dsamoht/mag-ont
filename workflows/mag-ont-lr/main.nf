@@ -1,4 +1,3 @@
-include { ANTISMASH                         } from '../../modules/antismash'
 include { BRACKEN                           } from '../../modules/bracken'
 include { CHECKM                            } from '../../modules/checkm'
 include { COLLECT                           } from '../../modules/collect'
@@ -34,7 +33,6 @@ workflow MAG_ONT_LR {
         FLYE(reads)
         MEDAKA(reads, FLYE.out)
         PRODIGAL(MEDAKA.out)
-        ANTISMASH(MEDAKA.out)
         MINIMAP(reads, MEDAKA.out)
         SAMTOOLS(MINIMAP.out)
         METABAT(MEDAKA.out, SAMTOOLS.out)
@@ -61,7 +59,6 @@ workflow MAG_ONT_LR {
         FLYE(reads)
         MEDAKA(reads, FLYE.out)
         PRODIGAL(MEDAKA.out)
-        ANTISMASH(MEDAKA.out)
         MINIMAP(reads, MEDAKA.out)
         SAMTOOLS(MINIMAP.out)
         METABAT(MEDAKA.out, SAMTOOLS.out)

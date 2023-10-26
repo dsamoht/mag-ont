@@ -11,7 +11,7 @@ process METABAT {
 
     input:
     path medakaOutFile
-    path sortedBamFile
+    path("*map.sorted.bam")
 
     output:
     path "*metabat-bin*.fa", emit: metabatBins, optional: true
@@ -19,7 +19,7 @@ process METABAT {
 
     script:
     """
-    jgi_summarize_bam_contig_depths --outputDepth depth.txt ${sortedBamFile}
+    jgi_summarize_bam_contig_depths --outputDepth depth.txt *map.sorted.bam
     metabat2 -i ${medakaOutFile} -a depth.txt -o metabat-bin
     """
 }
