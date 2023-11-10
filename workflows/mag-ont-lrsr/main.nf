@@ -22,6 +22,7 @@ include { SAMTOOLS as SAMTOOLS_POST_FWD     } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_POST_REV     } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_POST_LR      } from '../../modules/samtools'
 include { SEQKIT                            } from '../../modules/seqkit'
+include { TIARA                             } from '../../modules/tiara'
 
 
 workflow MAG_ONT_LRSR {
@@ -62,6 +63,7 @@ workflow MAG_ONT_LRSR {
             collect()
 
         DASTOOL(POLYPOLISH.out, contig2bin_ch)
+        TIARA(DASTOOL.out.dasBins)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
@@ -97,6 +99,7 @@ workflow MAG_ONT_LRSR {
             collect()
 
         DASTOOL(POLYPOLISH.out, contig2bin_ch)
+        TIARA(DASTOOL.out.dasBins)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)

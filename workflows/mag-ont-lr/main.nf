@@ -17,7 +17,7 @@ include { MINIMAP                           } from '../../modules/minimap'
 include { PRODIGAL                          } from '../../modules/prodigal'
 include { SAMTOOLS                          } from '../../modules/samtools'
 include { SEQKIT                            } from '../../modules/seqkit'
-
+include { TIARA                             } from '../../modules/tiara'
 
 
 workflow MAG_ONT_LR {
@@ -46,6 +46,7 @@ workflow MAG_ONT_LR {
             collect()
 
         DASTOOL(MEDAKA.out, contig2bin_ch)
+        TIARA(DASTOOL.out.dasBins)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
@@ -72,6 +73,7 @@ workflow MAG_ONT_LR {
             collect()
 
         DASTOOL(MEDAKA.out, contig2bin_ch)
+        TIARA(DASTOOL.out.dasBins)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
