@@ -46,7 +46,7 @@ workflow MAG_ONT_LR {
             collect()
 
         DASTOOL(MEDAKA.out, contig2bin_ch)
-        TIARA(DASTOOL.out.dasBins)
+        TIARA(MEDAKA.out)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
@@ -73,7 +73,7 @@ workflow MAG_ONT_LR {
             collect()
 
         DASTOOL(MEDAKA.out, contig2bin_ch)
-        TIARA(DASTOOL.out.dasBins)
+        TIARA(MEDAKA.out)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)

@@ -63,7 +63,7 @@ workflow MAG_ONT_LRSR {
             collect()
 
         DASTOOL(POLYPOLISH.out, contig2bin_ch)
-        TIARA(DASTOOL.out.dasBins)
+        TIARA(POLYPOLISH.out)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
@@ -99,7 +99,7 @@ workflow MAG_ONT_LRSR {
             collect()
 
         DASTOOL(POLYPOLISH.out, contig2bin_ch)
-        TIARA(DASTOOL.out.dasBins)
+        TIARA(POLYPOLISH.out)
         SEQKIT(DASTOOL.out.dasBins)
         CHECKM(DASTOOL.out.dasBins)
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
