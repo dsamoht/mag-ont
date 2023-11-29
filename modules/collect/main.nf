@@ -21,7 +21,7 @@ process COLLECT {
     paste -d, seqkit.tmp checkm.tmp > res1.tmp
     cat ${gtdbtkTsv} | sed '1d' | awk -F '\t' '{print \$2}' | awk -F ';' '{print \$1","\$2","\$3","\$4","\$5","\$6","\$7}' > taxa.tmp
     cat ${gtdbtkTsv} | sed '1d' | awk -F '\t' '{print \$8","\$11}' > info1.tmp
-    cat ${gtdbtkTsv} | sed '1d' | awk -F '\t' '{print \$NF}' | sed 's/ /;/g' > info2.tmp
+    cat ${gtdbtkTsv} | sed '1d' | awk -F '\t' '{print \$NF}' | sed 's/ /;/g' | sed 's/,/;/g' > info2.tmp
     paste -d, res1.tmp taxa.tmp info1.tmp info2.tmp > val.tmp
     cat names.tmp val.tmp > summary.tsv
     """
