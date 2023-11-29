@@ -6,7 +6,7 @@ process KRAKEN {
         container = params.kraken_docker
     }
 
-    publishDir "${params.outdir}/kraken", mode: 'copy', pattern: 'tax.kraken'
+    publishDir "${params.outdir}/kraken", mode: 'copy'
 
     input:
     path rawReads
@@ -14,9 +14,10 @@ process KRAKEN {
 
     output:
     path 'tax.kraken', emit: krakenOutputFile
+    path 'kraken.out', emit: krakenStdOutput
 
     script:
     """
-    kraken2 --db ${db} --report tax.kraken ${rawReads} --threads ${task.cpus}
+    kraken2 --db ${db} --report tax.kraken ${rawReads} --threads ${task.cpus} > kraken.out
     """
 }
