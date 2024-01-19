@@ -68,9 +68,9 @@ workflow ASSEMBLY_WF {
             SAMTOOLS_SRHS_REV(BWA_HS.out.revSam, "revSam")
             
             bam_channel = SAMTOOLS_LRHS.out//.
-                //mix(SAMTOOLS_SRHS_FWD.out).
-                //mix(SAMTOOLS_SRHS_REV.out).
-                //collect()
+                mix(SAMTOOLS_SRHS_FWD.out).
+                mix(SAMTOOLS_SRHS_REV.out).
+                collect()
             
         }
         else if (params.hybrid_assembler == "") {
@@ -87,10 +87,10 @@ workflow ASSEMBLY_WF {
             SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
             SAMTOOLS_LRSR_POST_REV(BWA_POST.out.revSam, "revSam")
 
-            bam_channel = SAMTOOLS_LRSR_LR.out//.
-             //   mix(SAMTOOLS_LRSR_POST_FWD.out).
-             //   mix(SAMTOOLS_LRSR_POST_REV.out).
-             //   collect()
+            bam_channel = SAMTOOLS_LRSR_LR.out.
+                mix(SAMTOOLS_LRSR_POST_FWD.out).
+                mix(SAMTOOLS_LRSR_POST_REV.out).
+                collect()
         }
     }
 

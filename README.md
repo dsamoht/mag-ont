@@ -8,6 +8,11 @@
 
 > *__Note__* : this is a *long-reads-first* pipeline. If you give both long reads and paired-end short reads, the draft assembly will first be done with long reads, then "polished" with short reads.
 
+*__2024-01__*: it is now possible to use (hybrid)Spades by specifying:
+```
+--hybrid_assembler hybridspades
+```
+
 ## Dependencies
 - __Software :__  
   [Nextflow](https://www.nextflow.io/)  
@@ -25,11 +30,11 @@
 ## How to run the pipeline
 __This command will test the setup and download the containers for off-line use__:  
 ```
-nextflow run mag-ont.nf -profile {docker,singularity},test
+nextflow run metagenomics-wf.nf -profile {docker,singularity},test
 ```
 __Run on your data__:  
 ```
-nextflow run mag-ont.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
+nextflow run metagenomics-wf.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
 ```
 
 ## Acknowledgement

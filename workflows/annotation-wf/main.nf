@@ -39,8 +39,8 @@ workflow ANNOTATION_WF {
     DASTOOL(assembly, contig2bin_ch)
     TIARA(assembly)
     SEQKIT(DASTOOL.out.dasBins)
-    //CHECKM(DASTOOL.out.dasBins)
-    //GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
-    //COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
+    CHECKM(DASTOOL.out.dasBins)
+    GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+    COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
 
 }
