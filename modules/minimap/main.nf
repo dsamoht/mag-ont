@@ -15,6 +15,7 @@ process MINIMAP {
 
     script:
     """
-    minimap2 -a ${medakaOutFile} ${rawReads} > map.sam
+
+    minimap2 -ax map-ont ${medakaOutFile} ${rawReads} > map.sam
     """
 }

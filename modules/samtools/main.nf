@@ -6,14 +6,17 @@ process SAMTOOLS {
         container = params.samtools_docker
     }
 
+    publishDir "${params.outdir}/samtools", mode: 'copy'
+
     input:
     path samFile
+    val origin
 
     output:
-    path 'map.sorted.bam', emit: bamFile
+    path '*.map.sorted.bam', emit: bamFile
 
     script:
     """
-    samtools view -bS ${samFile} | samtools sort -o map.sorted.bam -
+    samtools view -bS ${samFile} | samtools sort -o ${origin}.map.sorted.bam -
     """
 }

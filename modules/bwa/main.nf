@@ -8,7 +8,7 @@ process BWA {
 
     input:
     path assembly
-    tuple val(sample_id), path(reads)
+    tuple val(sample_id), path(shortReads)
 
     output:
     path 'fwd.sam', emit: fwdSam
@@ -17,7 +17,7 @@ process BWA {
     script:
     """
     bwa index ${assembly}
-    bwa mem -a ${assembly} ${reads[0]} > fwd.sam
-    bwa mem -a ${assembly} ${reads[1]} > rev.sam
+    bwa mem -a ${assembly} ${shortReads[0]} > fwd.sam
+    bwa mem -a ${assembly} ${shortReads[1]} > rev.sam
     """
 }

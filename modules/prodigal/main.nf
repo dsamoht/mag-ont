@@ -9,14 +9,15 @@ process PRODIGAL {
     publishDir "${params.outdir}/prodigal/", mode: 'copy'
 
     input:
-    path medakaOutFile
+    path assembly
 
     output:
-    path 'coords.gbk', emit: coordsOut
-    path 'genes.faa', emit: genesOut
+    path 'genes.gff', emit: genesGff
+    path 'genes.faa', emit: genesFaa
+    path 'genes.fna', emit: genesFna
 
     script:
     """
-    prodigal -i ${medakaOutFile} -o coords.gbk -a genes.faa -p meta
+    prodigal -i ${assembly} -f gff -o genes.gff -a genes.faa -d genes.fna -p meta
     """
 }
