@@ -24,7 +24,6 @@ workflow ANNOTATION_WF {
     PRODIGAL(assembly)
 
     FEATURECOUNTS(PRODIGAL.out.genesGff, sorted_bam)
-    BEDTOOLS(PRODIGAL.out.genesGff, sorted_bam)
 
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
@@ -39,8 +38,8 @@ workflow ANNOTATION_WF {
     DASTOOL(assembly, contig2bin_ch)
     TIARA(assembly)
     SEQKIT(DASTOOL.out.dasBins)
-    CHECKM(DASTOOL.out.dasBins)
-    GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
-    COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
+    //CHECKM(DASTOOL.out.dasBins)
+    //GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+    //COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
 
 }

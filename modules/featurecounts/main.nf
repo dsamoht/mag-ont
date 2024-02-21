@@ -5,9 +5,8 @@ process FEATURECOUNTS {
     } else {
         container = params.subread_docker
     }
-    
-    errorStrategy 'ignore'
 
+    errorStrategy 'ignore'
     publishDir "${params.outdir}/featurecounts", mode: 'copy'
 
     input:
@@ -20,7 +19,7 @@ process FEATURECOUNTS {
 
     script:
     """
-    featureCounts -L -M -O -t CDS -g ID -s 0 -a ${genesGff} -o featureCounts.txt ${sorted_bam}
+    featureCounts -L -O --largestOverlap -t CDS -g ID -s 0 -a ${genesGff} -o featureCounts.txt ${sorted_bam}
     """
 }
 
