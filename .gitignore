@@ -3,3 +3,4 @@
 .nextflow
 test/*
 bin/*
+.DS_store
