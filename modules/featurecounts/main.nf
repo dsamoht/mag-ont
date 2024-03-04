@@ -1,4 +1,4 @@
-process FEATURECOUNTS {
+| process FEATURECOUNTS {
 
     if (workflow.containerEngine == 'singularity') {
         container = params.subread_singularity

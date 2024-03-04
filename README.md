@@ -2,39 +2,49 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-# Metagenome-assembled genomes from long reads
-## Introduction
+# Introduction
+This is a two-steps pipeline:
+- __step 1__: assembly and annotation of individual metagenome
+- __step 2__: clustering of metagenomes based on gene families
+
+
 ![alt text](/img/mag-ont_schema.png)
 
-> *__Note__* : this is a *long-reads-first* pipeline. If you give both long reads and paired-end short reads, the draft assembly will first be done with long reads, then "polished" with short reads.
-
-*__2024-01__*: it is now possible to use (hybrid)Spades by specifying:
-```
---hybrid_assembler hybridspades
-```
+The pipeline supports paired-end reads (`megahit` assembly), long reads (`flye` assembly) or both (`spades` or `flye + polypolish` assembly)
 
 ## Dependencies
 - __Software :__  
-  [Nextflow](https://www.nextflow.io/)  
-  [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
+  - [Nextflow](https://www.nextflow.io/)  
+  - [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
 
-- __Data :__  
-  [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)  
-  A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
+- __Database :__  
+  - [COG database](https://ftp.ncbi.nih.gov/pub/COG/COG2020/data/cog-20.fa.gz)
+  - [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)
+  -  [KEGG profiles](https://www.genome.jp/ftp/db/kofam/profiles.tar.gz) and [KO list](https://www.genome.jp/ftp/db/kofam/ko_list.gz)
+  - A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
+  - [Pfam database](https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz)
 
-- __Edit__ *nextflow.config* :  
+- __Edit__ these lines in *nextflow.config* file:  
   ```
-  gtdbtkDB = '/path/to/extracted/gtdbtk/database'    
+  cogDB = '/path/to/extracted/cog/database'
+  gtdbtkDB = '/path/to/extracted/gtdbtk/database'
+  keggProfiles = '/path/to/extracted/kegg/profiles'  
+  koList = '/path/to/extracted/ko/list'   
   krakenDB = '/path/to/extracted/kraken2/database'
+  pfamDB = '/path/to/extracted/pfam/database'
   ```
 ## How to run the pipeline
-__This command will test the setup and download the containers for off-line use__:  
+- __Test your setup and download the containers for off-line use (run once):__
 ```
-nextflow run metagenomics-wf.nf -profile {docker,singularity},test
+nextflow run metagenomics-wf.nf \\
+  -profile singularity,local,test
 ```
-__Run on your data__:  
+__Run on your data__:
 ```
-nextflow run metagenomics-wf.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
+nextflow run metagenomics-wf.nf \\
+  -profile singularity,hpc \\
+  --reads sample.fastq.gz \\
+  --outdir results/
 ```
 
 ## Acknowledgement
