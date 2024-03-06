@@ -14,21 +14,23 @@ include { SEQKIT                            } from '../../modules/seqkit'
 include { TIARA                             } from '../../modules/tiara/tiara_tiara'
 include { TIARA_SPLIT_BY_DOMAIN             } from '../../modules/tiara/tiara_split_by_domain'
 include { METAEUK_EASY_PREDICT              } from '../../modules/metaeuk/metaeuk_easy_predict'
+include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeuk_modify_gff'
+
 
 workflow ANNOTATION_WF {
 
     take:
     assembly
     sorted_bam
+    read_type
     
     main:
     TIARA(assembly)
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
-    METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs)
-
-    FEATURECOUNTS(PRODIGAL.out.genesGff, sorted_bam)
-
+    METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
+    METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
+    FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)

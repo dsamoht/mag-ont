@@ -63,7 +63,7 @@ workflow METAGENOMICS_WF {
 
    else {
         ASSEMBLY_WF()       
-        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam)
+        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
 
    if (!params.skipKraken) {
         KRAKEN()

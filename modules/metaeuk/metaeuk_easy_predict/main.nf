@@ -7,9 +7,11 @@ process METAEUK_EASY_PREDICT {
     }
 
     publishDir "${params.outdir}/metaeuk", mode: 'copy'
+    
 
     input:
     path euk_contigs
+    path ref_db
 
     output:
     path "euk_genes.fas", emit: euk_proteins
@@ -19,6 +21,6 @@ process METAEUK_EASY_PREDICT {
 
     script:
     """
-    metaeuk easy-predict ${euk_contigs} ${params.metaeuk_db} euk_genes metaeuk_tmp
+    metaeuk easy-predict ${euk_contigs} ${ref_db} euk_genes metaeuk_tmp
     """
 }
