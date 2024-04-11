@@ -40,8 +40,8 @@ workflow ASSEMBLY_WF {
         long_reads = Channel.fromPath(params.longReads)
         FLYE_LR(long_reads)
         MEDAKA_LR(long_reads, FLYE_LR.out)
-        assembly_channel = MEDAKA_LR.out
-        MINIMAP_LR(long_reads, MEDAKA_LR.out)
+        assembly_channel = FLYE_LR.out
+        MINIMAP_LR(long_reads, FLYE_LR.out)
         SAMTOOLS_LR(MINIMAP_LR.out, "long_reads_sam")
         bam_channel = SAMTOOLS_LR.out
     }

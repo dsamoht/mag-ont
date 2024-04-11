@@ -1,4 +1,4 @@
-process KRAKENTOOLS {
+process KRAKENTOOLS_KRONA {
 
     if (workflow.containerEngine == 'singularity') {
         container = params.krakentools_singularity

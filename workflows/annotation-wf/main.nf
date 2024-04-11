@@ -1,11 +1,13 @@
 include { BEDTOOLS                          } from '../../modules/bedtools' 
-//include { CHECKM                            } from '../../modules/checkm'
-//include { COLLECT                           } from '../../modules/collect'
+include { CHECKM                            } from '../../modules/checkm'
+include { CDHIT_CDHIT as CDHIT              } from '../../modules/cdhit/cdhit_cdhit'
 include { DASTOOL                           } from '../../modules/dastool'
 include { DASTOOL_CONTIG2BIN as METABAT_C2B } from '../../modules/dastool_contig2bin'
 include { DASTOOL_CONTIG2BIN as MAXBIN_C2B  } from '../../modules/dastool_contig2bin'
+include { DIAMOND_BLASTP                    } from '../../modules/diamond/diamond_blastp'
 include { FEATURECOUNTS                     } from '../../modules/featurecounts'
-//include { GTDBTK                            } from '../../modules/gtdbtk'
+include { MMSEQS_CLUSTER                    } from '../../modules/mmseqs/mmseqs_cluster'
+include { GTDBTK                            } from '../../modules/gtdbtk'
 include { MAXBIN                            } from '../../modules/maxbin'
 include { MAXBIN_ADJUST_EXT                 } from '../../modules/maxbin_adjust_ext'
 include { METABAT                           } from '../../modules/metabat'
@@ -31,12 +33,16 @@ workflow ANNOTATION_WF {
     METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
     METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
     FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
+    mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
+    mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
+    DIAMOND_BLASTP(PRODIGAL.out.genesFaa, mibig_dmnd_path, "mibig")
+    CDHIT(PRODIGAL.out.genesFaa, mibig_path, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
     METABAT_C2B(METABAT.out.metabatBins, "metabat")
     MAXBIN_C2B(MAXBIN_ADJUST_EXT.out.renamed_maxbinBins, "maxbin")
-        
+
     contig2bin_ch = METABAT_C2B.out.contigs2bins.
         mix(MAXBIN_C2B.out.contigs2bins).
         collect()
@@ -44,8 +50,7 @@ workflow ANNOTATION_WF {
     DASTOOL(assembly, contig2bin_ch)
     
     SEQKIT(DASTOOL.out.dasBins)
-    //CHECKM(DASTOOL.out.dasBins)
-    //GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
-    //COLLECT(SEQKIT.out, CHECKM.out, GTDBTK.out)
+    CHECKM(DASTOOL.out.dasBins)
+    GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
 
 }

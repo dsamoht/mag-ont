@@ -21,12 +21,12 @@ process FEATURECOUNTS {
 
     script:
     if ("${read_type}" == "long") {
-        fc_options = "-L -t CDS -g ID -s 0"
+        options = "-L -t CDS -g ID -s 0"
     } else {
-        fc_options = "-p -t CDS -g ID -s 0"
+        options = "-p -t CDS -g ID -s 0"
     }
     """
     cat ${prodigal_genes_gff} ${metaeuk_genes_gff} | grep "CDS" > global_cds.gff 
-    featureCounts ${fc_options} -a global_cds.gff -o featureCounts.txt ${sorted_bam}
+    featureCounts ${options} -a global_cds.gff -o featureCounts.txt ${sorted_bam}
     """
 }

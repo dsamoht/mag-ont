@@ -1,4 +1,4 @@
-process CDHIT {
+process CDHIT_CDHIT {
 
     if (workflow.containerEngine == 'singularity') {
         container = params.cdhit_singularity
@@ -10,12 +10,16 @@ process CDHIT {
 
     input:
     path proteins
+    path database
+    val database_name
 
     output:
-    path "proteins.cdhit.c95aL90.clstr", emit: clstr_file
+    path "${database_name}.cdhit.c70aL50.clstr", emit: clstr_file
 
     script:
     """
-    cd-hit -i ${proteins} -o proteins.cdhit.c95aL90 -c 0.95 -aL 0.90 -n 5 -g 1 -M 0 -T ${task.cpus}
+    sed -i "s/^>/>DATABASE|/g" ${database}
+    sed -i "s/^>/>SAMPLE|/g" ${proteins}
+    cd-hit-2d -i ${database} -i2 ${proteins} -o ${database_name}.cdhit.c70aL50 -g 1 -c 0.7 -n 5 -M 0 -d 0 -T ${task.cpus}
     """
 }

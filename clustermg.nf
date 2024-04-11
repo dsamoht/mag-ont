@@ -4,7 +4,7 @@ include { ASSEMBLY_WF                           } from './workflows/assembly-wf'
 include { ANNOTATION_WF                         } from './workflows/annotation-wf/'
 include { KRAKEN_WF as KRAKEN_ONLY              } from './workflows/kraken-wf/'
 include { KRAKEN_WF as KRAKEN                   } from './workflows/kraken-wf/'
-
+include { SETUP_WF                              } from './workflows/setup-wf/'
 
 info = """
    ____ _           _            __  __  ____ 
@@ -62,6 +62,7 @@ workflow METAGENOMICS_WF {
     }
 
    else {
+        SETUP_WF()
         ASSEMBLY_WF()       
         ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
 
