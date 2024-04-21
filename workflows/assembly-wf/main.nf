@@ -21,6 +21,7 @@ include { MINIMAP as MINIMAP_LR                             } from '../../module
 include { MINIMAP as MINIMAP_HS                             } from '../../modules/minimap'
 include { MINIMAP as MINIMAP_LRSR                           } from '../../modules/minimap'
 include { POLYPOLISH                                        } from '../../modules/polypolish'
+include { CHOPPER                                           } from '../../modules/chopper'
 
 
 workflow ASSEMBLY_WF {
@@ -41,7 +42,8 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads == "") {
         long_reads = Channel.fromPath(params.longReads)
-        FLYE_LR(long_reads)
+        CHOPPER(long_reads)
+        FLYE_LR(CHOPPER.out)
         MEDAKA_LR(long_reads, FLYE_LR.out)
         
         assembly_channel = MEDAKA_LR.out
