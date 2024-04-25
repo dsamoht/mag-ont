@@ -18,6 +18,6 @@ process KRAKEN {
 
     script:
     """
-    kraken2 --db ${db} --report tax.kraken ${rawReads} --threads ${task.cpus} > kraken.out
+    kraken2 --db ${db} --confidence 0.02 --report tax.kraken ${rawReads} --threads ${task.cpus} > kraken.out
     """
 }
