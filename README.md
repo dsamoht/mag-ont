@@ -34,7 +34,7 @@ The pipeline supports paired-end reads (`megahit` assembly), long reads (`flye` 
   pfamDB = '/path/to/extracted/pfam/database'
   ```
 ## How to run the pipeline
-- __Test your setup and download the containers for off-line use (run once):__
+__Test your setup and download the containers for off-line use (run once):__
 ```
 nextflow run metagenomics-wf.nf \\
   -profile singularity,local,test
