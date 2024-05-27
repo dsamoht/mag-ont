@@ -29,6 +29,8 @@ workflow ASSEMBLY_WF {
     if (params.longReads == "" && params.shortReads != "") {
         read_type = "paired"
         short_reads = Channel.fromFilePairs(params.shortReads)
+        // short reads filtration and trimming not implemented
+        filtered_reads = short_reads
         MEGAHIT(short_reads)
         assembly_channel = MEGAHIT.out
         BOWTIE(MEGAHIT.out, short_reads)
@@ -40,6 +42,7 @@ workflow ASSEMBLY_WF {
         read_type = "long"
         long_reads = Channel.fromPath(params.longReads)
         CHOPPER(long_reads)
+        filtered_reads = CHOPPER.out
         FLYE_LR(CHOPPER.out)
         MEDAKA_LR(long_reads, FLYE_LR.out)
         assembly_channel = FLYE_LR.out
@@ -52,9 +55,11 @@ workflow ASSEMBLY_WF {
         read_type = "hybrid"
         long_reads = Channel.fromPath(params.longReads)
         short_reads = Channel.fromFilePairs(params.shortReads)
+        CHOPPER(long_reads)
+        filtered_reads = CHOPPER.out
 
         if (params.hybrid_assembler == "hybridspades") {
-            HYBRID_SPADES(long_reads, short_reads)
+            HYBRID_SPADES(CHOPPER.out, short_reads)
             assembly_channel = HYBRID_SPADES.out
             MINIMAP_HS(HYBRID_SPADES.out, long_reads)
             SAMTOOLS_LRHS(MINIMAP_HS.out, "lr_sam")
@@ -68,7 +73,7 @@ workflow ASSEMBLY_WF {
             
         }
         else if (params.hybrid_assembler == "") {
-            FLYE_LRSR(long_reads)
+            FLYE_LRSR(CHOPPER.out)
             MEDAKA_LRSR(long_reads, FLYE_LRSR.out)
             BWA_PRE(MEDAKA_LRSR.out, short_reads)
             POLYPOLISH(MEDAKA_LRSR.out, BWA_PRE.out.fwdSam, BWA_PRE.out.revSam)
@@ -88,5 +93,6 @@ workflow ASSEMBLY_WF {
     assembly = assembly_channel
     sorted_bam = bam_channel
     read_type = read_type
+    filtered_reads = filtered_reads
 
 }
