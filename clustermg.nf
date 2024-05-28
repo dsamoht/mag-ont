@@ -5,6 +5,7 @@ include { ANNOTATION_WF                         } from './workflows/annotation-w
 include { KRAKEN_WF as KRAKEN_ONLY              } from './workflows/kraken-wf/'
 include { KRAKEN_WF as KRAKEN                   } from './workflows/kraken-wf/'
 include { SETUP_WF                              } from './workflows/setup-wf/'
+include { QC_WF                                 } from './workflows/qc-wf/'
 
 info = """
    ____ _           _            __  __  ____ 
@@ -63,11 +64,12 @@ workflow METAGENOMICS_WF {
 
    else {
         SETUP_WF()
-        ASSEMBLY_WF()       
+        QC_WF()
+        ASSEMBLY_WF(QC_WF.out.filt_long_reads)       
         ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
 
    if (!params.skipKraken) {
-        KRAKEN(ASSEMBLY_WF.out.filtered_reads)
+        KRAKEN(QC_WF.out.filt_long_reads)
    }
    }
 }
