@@ -12,6 +12,3 @@ workflow QC_WF {
     emit:
     filt_long_reads = filt_long_reads
 }
-
-
-}
