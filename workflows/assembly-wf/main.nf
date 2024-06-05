@@ -25,7 +25,7 @@ include { POLYPOLISH                                        } from '../../module
 
 workflow ASSEMBLY_WF {
     take:
-    filt_long_reads
+    long_reads
 
     main:
     if (params.longReads == "" && params.shortReads != "") {
@@ -40,10 +40,10 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads == "") {
         read_type = "long"
-        FLYE_LR(filt_long_reads)
-        MEDAKA_LR(filt_long_reads, FLYE_LR.out)
+        FLYE_LR(long_reads)
+        MEDAKA_LR(long_reads, FLYE_LR.out)
         assembly_channel = FLYE_LR.out
-        MINIMAP_LR(filt_long_reads, FLYE_LR.out)
+        MINIMAP_LR(long_reads, FLYE_LR.out)
         SAMTOOLS_LR(MINIMAP_LR.out, "long_reads_sam")
         bam_channel = SAMTOOLS_LR.out
     }
@@ -53,9 +53,9 @@ workflow ASSEMBLY_WF {
         short_reads = Channel.fromFilePairs(params.shortReads)
 
         if (params.hybrid_assembler == "hybridspades") {
-            HYBRID_SPADES(filt_long_reads, short_reads)
+            HYBRID_SPADES(long_reads, short_reads)
             assembly_channel = HYBRID_SPADES.out
-            MINIMAP_HS(HYBRID_SPADES.out, filt_long_reads)
+            MINIMAP_HS(HYBRID_SPADES.out, long_reads)
             SAMTOOLS_LRHS(MINIMAP_HS.out, "lr_sam")
             BWA_HS(HYBRID_SPADES.out, short_reads)
             SAMTOOLS_SRHS_FWD(BWA_HS.out.fwdSam, "fwd_sam")
@@ -67,12 +67,12 @@ workflow ASSEMBLY_WF {
             
         }
         else if (params.hybrid_assembler == "") {
-            FLYE_LRSR(filt_long_reads)
-            MEDAKA_LRSR(filt_long_reads, FLYE_LRSR.out)
+            FLYE_LRSR(long_reads)
+            MEDAKA_LRSR(long_reads, FLYE_LRSR.out)
             BWA_PRE(MEDAKA_LRSR.out, short_reads)
             POLYPOLISH(MEDAKA_LRSR.out, BWA_PRE.out.fwdSam, BWA_PRE.out.revSam)
             assembly_channel = POLYPOLISH.out
-            MINIMAP_LRSR(POLYPOLISH.out, filt_long_reads)
+            MINIMAP_LRSR(POLYPOLISH.out, long_reads)
             SAMTOOLS_LRSR_LR(MINIMAP_LRSR.out, "lrSam")
             BWA_POST(POLYPOLISH.out, short_reads)
             SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
