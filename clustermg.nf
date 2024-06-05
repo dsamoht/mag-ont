@@ -64,8 +64,13 @@ workflow METAGENOMICS_WF {
 
    else {
         SETUP_WF()
-        QC_WF()
-        ASSEMBLY_WF(QC_WF.out.long_reads)       
+        if(!params.skipQC) {
+          QC_WF()
+          long_reads = QC_WF.out.long_reads
+        } else {
+          long_reads = Channel.fromPath(params.longReads)
+        }
+        ASSEMBLY_WF(long_reads)       
         ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
 
    if (!params.skipKraken) {
