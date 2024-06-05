@@ -11,13 +11,17 @@ workflow KRAKEN_WF {
     (`--krakenReads` argument). Paired-end reads must
     merged into a single file.
     """
+    take:
+    long_reads
+
+    main:
     //if (params.krakenReads == ""){
     //    params.krakenReads = params.longReads
     //}
-    newest_reads = Channel.watchPath("$projectDir/test_data/*.f*.gz").view()
+    //newest_reads = Channel.watchPath("$projectDir/test_data/*.f*.gz").view()
     //reads = Channel.fromPath("$projectDir/test_data/*.f*.gz")
     //CONCATENATE_FASTQ(newest_reads, reads)
-    KRAKEN(newest_reads, params.krakenDB)
+    KRAKEN(long_reads, params.krakenDB)
     BRACKEN(KRAKEN.out.krakenOutputFile, params.krakenDB)
     KRAKENTOOLS_KRONA(BRACKEN.out.brackenOutputForKrona)
     KRONA(KRAKENTOOLS_KRONA.out)

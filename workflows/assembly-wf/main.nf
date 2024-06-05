@@ -24,7 +24,10 @@ include { POLYPOLISH                                        } from '../../module
 
 
 workflow ASSEMBLY_WF {
+    take:
+    long_reads
 
+    main:
     if (params.longReads == "" && params.shortReads != "") {
         read_type = "paired"
         short_reads = Channel.fromFilePairs(params.shortReads)
@@ -37,7 +40,6 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads == "") {
         read_type = "long"
-        long_reads = Channel.fromPath(params.longReads)
         FLYE_LR(long_reads)
         MEDAKA_LR(long_reads, FLYE_LR.out)
         assembly_channel = FLYE_LR.out
@@ -48,7 +50,6 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads != "") {
         read_type = "hybrid"
-        long_reads = Channel.fromPath(params.longReads)
         short_reads = Channel.fromFilePairs(params.shortReads)
 
         if (params.hybrid_assembler == "hybridspades") {
