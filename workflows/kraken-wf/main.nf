@@ -12,7 +12,7 @@ workflow KRAKEN_WF {
     merged into a single file.
     """
     take:
-    filtered_reads
+    long_reads
 
     main:
     //if (params.krakenReads == ""){
@@ -21,7 +21,7 @@ workflow KRAKEN_WF {
     //newest_reads = Channel.watchPath("$projectDir/test_data/*.f*.gz").view()
     //reads = Channel.fromPath("$projectDir/test_data/*.f*.gz")
     //CONCATENATE_FASTQ(newest_reads, reads)
-    KRAKEN(filtered_reads, params.krakenDB)
+    KRAKEN(long_reads, params.krakenDB)
     BRACKEN(KRAKEN.out.krakenOutputFile, params.krakenDB)
     KRAKENTOOLS_KRONA(BRACKEN.out.brackenOutputForKrona)
     KRONA(KRAKENTOOLS_KRONA.out)
