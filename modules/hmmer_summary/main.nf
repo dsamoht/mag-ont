@@ -11,6 +11,7 @@ process HMMER_SUMMARY {
     input:
     path hmmerDomTable
     path koList
+    path diamond_result
 
     output:
     path 'contig_annotation.tsv', emit: hmmerSummary
@@ -29,6 +30,6 @@ process HMMER_SUMMARY {
         hmmerDomTableKegg = '-k ' + hmmerDomTableKegg.join('')
     }
     """
-    hmmer_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList}
+    hmmer_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList} -d ${diamond_result}
     """
 }

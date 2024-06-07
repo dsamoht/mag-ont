@@ -71,7 +71,7 @@ workflow METAGENOMICS_WF {
           long_reads = Channel.fromPath(params.longReads)
         }
         ASSEMBLY_WF(long_reads)       
-        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
+        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type. SETUP_WF.out.diamond_db)
 
    if (!params.skipKraken) {
         KRAKEN(long_reads)

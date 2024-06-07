@@ -8,4 +8,7 @@ workflow SETUP_WF {
     DIAMOND_MAKEDB(mibig_fasta, "mibig")
     DIAMOND_MAKEDB(cog_fasta, "cog")
 
+    emit:
+    diamond_db = DIAMOND_MAKEDB.out.diamond_db
+
 }
