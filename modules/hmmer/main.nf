@@ -14,7 +14,7 @@ process HMMER {
 
     output:
     path "hmmer_${type}.out"
-    path ("hmmer_dom-table_${type}.txt")
+    path "hmmer_dom-table_${type}.txt"
     
     script:
     """

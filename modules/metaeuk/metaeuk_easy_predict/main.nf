@@ -7,7 +7,7 @@ process METAEUK_EASY_PREDICT {
     }
 
     publishDir "${params.outdir}/metaeuk", mode: 'copy'
-    
+    errorStrategy 'ignore'
 
     input:
     path euk_contigs
