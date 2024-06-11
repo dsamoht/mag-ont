@@ -35,7 +35,7 @@ workflow ANNOTATION_WF {
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
     METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
-    genes_euk = METAEUK_EASY_PREDICT.out.euk_proteins.ifEmpty(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs)
+    genes_euk = METAEUK_EASY_PREDICT.out.euk_proteins.ifEmpty("$projectDir/data/NO_FILE")
     METAEUK_MODIFY_GFF(genes_euk)
     FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
