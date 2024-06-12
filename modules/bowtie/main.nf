@@ -7,11 +7,11 @@ process BOWTIE {
     }
 
     input:
-    path assembly
-    tuple val(sample_id), path(shortReads)
+    tuple val(meta) path(assembly)
+    tuple val(meta), path(shortReads)
 
     output:
-    path 'short_reads.sam', emit: short_reads_sam
+    tuple val(meta), path('short_reads.sam'), emit: short_reads_sam
 
     script:
     """

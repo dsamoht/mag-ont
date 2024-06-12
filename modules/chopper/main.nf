@@ -11,10 +11,10 @@ process CHOPPER {
     publishDir "${params.outdir}/chopper", mode: 'copy'
 
     input:
-    path raw_reads
+    tuple val(meta), path(raw_reads)
 
     output:
-    path "qc_reads.fastq.gz", emit: qc_reads
+    tuple val(meta), path("qc_reads.fastq.gz"), emit: qc_reads
 
     script:
     """

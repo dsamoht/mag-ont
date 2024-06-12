@@ -7,11 +7,11 @@ process MINIMAP {
     }
 
     input:
-    path rawReads
-    path medakaOutFile
+    tuple val(meta), path(rawReads)
+    tuple val(meta), path(medakaOutFile)
 
     output:
-    path 'map.sam', emit: samFileOut
+    tuple val(meta), path('map.sam'), emit: samFileOut
 
     script:
     """

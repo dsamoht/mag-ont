@@ -10,10 +10,10 @@ process FEATURECOUNTS_SUMMARY {
     publishDir "${params.outdir}/featurecounts", mode: 'copy'
 
     input:
-    path counts
+    tuple val(meta), path(counts)
 
     output:
-    path "abundance_table.tsv", emit: featurecountsSummary
+    tuple val(meta), path("abundance_table.tsv"), emit: featurecountsSummary
 
     script:
     """

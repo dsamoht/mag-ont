@@ -11,10 +11,10 @@ process SEQKIT {
     publishDir "${params.outdir}/seqkit/", mode: 'copy'
 
     input:
-    path bins
+    tuple val(meta), path(bins)
 
     output:
-    path 'stats.tsv', emit: seqkitStats
+    tuple val(meta), (path 'stats.tsv'), emit: seqkitStats
 
     script:
     """

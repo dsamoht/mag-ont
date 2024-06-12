@@ -9,10 +9,10 @@ process METAEUK_MODIFY_GFF {
     publishDir "${params.outdir}/metaeuk", mode: 'copy'
     
     input:
-    path euk_fas
+    tuple val(meta), path(euk_fas)
 
     output:
-    path "euk_genes_modif.gff", emit: euk_gff_modif
+    tuple val(meta), path("euk_genes_modif.gff"), emit: euk_gff_modif
 
     script:
     """

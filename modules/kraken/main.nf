@@ -9,12 +9,12 @@ process KRAKEN {
     publishDir "${params.outdir}/kraken", mode: 'copy'
 
     input:
-    path rawReads
+    tuple val(meta), path(rawReads)
     path db
 
     output:
-    path 'tax.kraken', emit: krakenOutputFile
-    path 'kraken.out', emit: krakenStdOutput
+    tuple val(meta), path('tax.kraken'), emit: krakenOutputFile
+    tuple val(meta), path('kraken.out'), emit: krakenStdOutput
 
     script:
     """

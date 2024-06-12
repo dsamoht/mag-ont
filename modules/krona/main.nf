@@ -10,10 +10,10 @@ process KRONA {
     errorStrategy 'ignore'
 
     input:
-    path krakentoolsOutput
+    tuple val(meta), path(krakentoolsOutput)
 
     output:
-    path 'krona.html', emit: kronaPlotHtml, optional: true
+    tuple val(meta), path('krona.html'), emit: kronaPlotHtml, optional: true
 
     script:
     """

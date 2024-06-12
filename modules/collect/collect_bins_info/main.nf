@@ -5,12 +5,12 @@ process COLLECT {
     publishDir "${params.outdir}/summary", mode: 'copy'
 
     input:
-    path seqkitTsv
-    path checkmTsv
-    path gtdbtkTsv
+    tuple val(meta), path(seqkitTsv)
+    tuple val(meta), path(checkmTsv)
+    tuple val(meta), path(gtdbtkTsv)
 
     output:
-    path "summary.tsv", emit: summary, optional: true
+    tuple val(meta), path("summary.tsv"), emit: summary, optional: true
 
     script:
     """

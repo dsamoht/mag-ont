@@ -10,14 +10,14 @@ process METAEUK_EASY_PREDICT {
     errorStrategy 'ignore'
 
     input:
-    path euk_contigs
+    tuple val(meta), path(euk_contigs)
     path ref_db
 
     output:
-    path "euk_genes.fas", emit: euk_proteins
-    path "euk_genes.codon.fas", emit: euk_codons
-    path "euk_genes.headersMap.tsv", emit: euk_headers_map
-    path "euk_genes.gff", emit: euk_gff
+    tuple val(meta), path("euk_genes.fas"), emit: euk_proteins
+    tuple val(meta), path("euk_genes.codon.fas"), emit: euk_codons
+    tuple val(meta), path("euk_genes.headersMap.tsv"), emit: euk_headers_map
+    tuple val(meta), path("euk_genes.gff"), emit: euk_gff
 
     script:
     """

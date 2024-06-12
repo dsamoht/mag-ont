@@ -9,12 +9,12 @@ process HMMER {
     publishDir "${params.outdir}/hmmer", mode: 'copy'
 
     input:
-    path genes
+    tuple val(meta), path(genes)
     tuple val(type), path(profile)
 
     output:
-    path "hmmer_${type}.out"
-    path "hmmer_dom-table_${type}.txt"
+    tuple val(meta), path("hmmer_${type}.out")
+    tuple val(meta), path("hmmer_dom-table_${type}.txt")
     
     script:
     """

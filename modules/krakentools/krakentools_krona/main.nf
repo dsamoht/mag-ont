@@ -9,10 +9,10 @@ process KRAKENTOOLS_KRONA {
     errorStrategy 'ignore'
 
     input:
-    path brackenOutputForKrona
+    tuple val(meta), path(brackenOutputForKrona)
 
     output:
-    path 'krona.out', emit: krakentoolsToKrona, optional: true
+    tuple val(meta), path('krona.out'), emit: krakentoolsToKrona, optional: true
 
     script:
     """

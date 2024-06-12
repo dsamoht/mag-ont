@@ -26,11 +26,11 @@ include { POLYPOLISH                                        } from '../../module
 workflow ASSEMBLY_WF {
     take:
     long_reads
+    short_reads
 
     main:
     if (params.longReads == "" && params.shortReads != "") {
         read_type = "paired"
-        short_reads = Channel.fromFilePairs(params.shortReads)
         MEGAHIT(short_reads)
         assembly_channel = MEGAHIT.out
         BOWTIE(MEGAHIT.out, short_reads)
@@ -50,7 +50,6 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads != "") {
         read_type = "hybrid"
-        short_reads = Channel.fromFilePairs(params.shortReads)
 
         if (params.hybrid_assembler == "hybridspades") {
             HYBRID_SPADES(long_reads, short_reads)
