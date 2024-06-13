@@ -15,7 +15,7 @@ process METABAT {
     tuple val(meta), path(sorted_bam)
 
     output:
-    tuple val(meta), path("*metabat-bin*.fa", emit: metabatBins), optional: true
+    tuple val(meta), path("*metabat-bin*.fa"), emit: metabatBins, optional: true
     tuple val(meta), path("depth.txt"), emit: metabatDepth
 
     script:

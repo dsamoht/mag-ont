@@ -62,7 +62,7 @@ workflow ASSEMBLY_WF {
             
             bam_channel = SAMTOOLS_SRHS_FWD.out.
                 mix(SAMTOOLS_SRHS_REV.out).
-                collect()
+                groupTuple()
             
         }
         else if (params.hybrid_assembler == "") {
@@ -76,9 +76,9 @@ workflow ASSEMBLY_WF {
             BWA_POST(POLYPOLISH.out, short_reads)
             SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
             SAMTOOLS_LRSR_POST_REV(BWA_POST.out.revSam, "revSam")
-            bam_channel = SAMTOOLS_LRSR_POST_FWD.out.
-                mix(SAMTOOLS_LRSR_POST_REV.out).
-                collect()
+            bam_channel = SAMTOOLS_SRHS_FWD.out.
+                mix(SAMTOOLS_SRHS_REV.out).
+                groupTuple()
         }
     }
 
