@@ -62,7 +62,7 @@ workflow ANNOTATION_WF {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
         genes = PRODIGAL.out.genesFaa.collect()
         HMMER(genes = genes, profiles.filter{ it.count('') == 0 })
-        HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].collect(), koList = params.koList, diamond_result = DIAMOND_BLASTP.out.diamond_result)
+        HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = DIAMOND_BLASTP.out.diamond_result)
     }
 
 }
