@@ -60,8 +60,8 @@ class ClusterSeq:
 
         seq_info_pd_df = pd.DataFrame.from_dict(clstr_info, orient="index",
                                    columns=["seq_id", "seq", "source", "cluster", "representative"])
-        self.seq_info_df = pl.from_pandas(seq_info_pd_df)
 
+        self.seq_info_df = pl.from_pandas(seq_info_pd_df)
         del seq_info_pd_df
         with open(self.output_dir.joinpath("clusters_info_polars.pkl"), "wb") as f_output:
             pickle.dump(self.seq_info_df, f_output)
@@ -118,8 +118,24 @@ class ClusterSeq:
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}.tsv")
 
         grouped_counts = self.seq_info_df.group_by(["cluster", "source"]).agg(pl.len().alias("count"))
-        matrix = grouped_counts.pivot('count', 'cluster', 'source').fill_null(0)
+        matrix = grouped_counts.pivot(values='count', index='cluster', columns='source').fill_null(0)
         matrix.write_csv(output_file)
+
+
+    def featurecounts_matrix_from_cdhit(self, featurecounts_table: str | Path) -> None:
+        """
+
+        """
+        featurecounts_df = pl.read_csv(featurecounts_table, separator='\t')
+        seq_clust_df = self.seq_info_df
+        seq_clust_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id'))
+        df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on="contigId", how="left", coalesce=True)
+
+        tsv_dir = self.output_dir.joinpath("tsv/")
+        output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_abundance.tsv")
+        cluster_counts = df_join.pivot(index="cluster", columns="source", values="Abundance", aggregate_function="sum")
+        cluster_counts.write_csv(output_file)
+
 
     def _clstr_rep_fasta(self) -> None:
         """
@@ -141,9 +157,13 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--extract', help='''file containing clusters of interest
                                                    (1 per line) -> output: 1 fasta file
                                                    per cluster.''')
+    parser.add_argument('-a', '--abundance', help='''featurecounts abundance table''')
+
     args = parser.parse_args()
 
 
     exp = ClusterSeq(args.clstr, args.fasta, args.output)
     if args.extract:
         exp.clusters_to_fasta(args.extract)
+    if args.abundance:
+        exp.featurecounts_matrix_from_cdhit(args.abundance)

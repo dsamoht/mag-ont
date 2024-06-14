@@ -87,4 +87,4 @@ df_annot.insert(0, 'contigId', df_annot.pop('contigId'))
 df_annot.loc[(df_annot['genPred_len_x'].isna()) & (df_annot['genPred_len_y'].notna()), 'genPred_len_x'] = df_annot['genPred_len_y'][(df_annot['genPred_len_x'].isna()) & (df_annot['genPred_len_y'].notna())]
 df_annot = df_annot.rename(columns={"genPred_len_x":"genPred_len"})
 df_annot = df_annot.drop("genPred_len_y", axis=1)
-df_annot.to_csv("contig_annotation.tsv", sep="\t")
+df_annot.to_csv("contig_annotation.tsv", sep="\t", index=False)
