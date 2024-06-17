@@ -10,12 +10,12 @@ process DIAMOND_BLASTP {
     publishDir "${params.outdir}/diamond", mode: 'copy'
 
     input:
-    path proteins
+    tuple val(meta), path(proteins)
     path diamond_db
     val diamond_db_name
 
     output:
-    path "${diamond_db_name}.matches.tsv", emit: diamond_result
+    tuple val(meta), path("${diamond_db_name}.matches.tsv"), emit: diamond_result
 
     script:
     """

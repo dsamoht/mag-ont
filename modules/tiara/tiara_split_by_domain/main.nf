@@ -3,12 +3,12 @@ process TIARA_SPLIT_BY_DOMAIN {
     publishDir "${params.outdir}/tiara", mode: 'copy'
 
     input:
-    path tiara_classification
-    path contigs
+    tuple val(meta), path(tiara_classification)
+    tuple val(meta), path(contigs)
 
     output:
-    path "bac_contigs.fa", emit: bac_contigs
-    path "euk_contigs.fa", emit: euk_contigs
+    tuple val(meta), path("bac_contigs.fa"), emit: bac_contigs
+    tuple val(meta), path("euk_contigs.fa"), emit: euk_contigs
 
     script:
     """

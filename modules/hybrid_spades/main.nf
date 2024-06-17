@@ -9,11 +9,11 @@ process HYBRID_SPADES {
     publishDir "${params.outdir}/hybrid_spades", mode: 'copy'
 
     input:
-    path longReads
+    tuple val(meta), path(longReads)
     tuple val(sample_id), path(shortReads)
 
     output:
-    path "contigs.fna", emit: assembly
+    tuple val(meta), path("contigs.fna"), emit: assembly
     
     script:
     """

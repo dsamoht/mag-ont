@@ -65,13 +65,15 @@ workflow METAGENOMICS_WF {
    else {
         SETUP_WF()
         if(!params.skipQC) {
-          QC_WF()
+          QC_WF(SETUP_WF.out.ch_long_reads, SETUP_WF.out.ch_short_reads)
           long_reads = QC_WF.out.long_reads
+          short_reads = QC_WF.out.short_reads
         } else {
-          long_reads = Channel.fromPath(params.longReads)
+          long_reads = Channel.fromPath(SETUP_WF.out.ch_long_reads)
+          short_reads = Channel.fromPath(SETUP_WF.out.ch_short_reads)
         }
-        ASSEMBLY_WF(long_reads)       
-        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type)
+        ASSEMBLY_WF(long_reads, short_reads)       
+        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type, SETUP_WF.out.diamond_db)
 
    if (!params.skipKraken) {
         KRAKEN(long_reads)

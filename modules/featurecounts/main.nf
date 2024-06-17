@@ -10,14 +10,14 @@ process FEATURECOUNTS {
     publishDir "${params.outdir}/featurecounts", mode: 'copy'
 
     input:
-    path prodigal_genes_gff
-    path metaeuk_genes_gff
-    path sorted_bam
+    tuple val(meta), path(prodigal_genes_gff)
+    tuple val(meta), path(metaeuk_genes_gff)
+    tuple val(meta), path(sorted_bam)
     val read_type
 
     output:
-    path "*featureCounts.txt", emit: counts
-    path "*featureCounts.txt.summary", emit: summary
+    tuple val(meta), path("*featureCounts.txt"), emit: counts
+    tuple val(meta), path("*featureCounts.txt.summary"), emit: summary
 
     script:
     if ("${read_type}" == "long") {

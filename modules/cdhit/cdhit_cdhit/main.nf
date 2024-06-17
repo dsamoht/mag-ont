@@ -9,12 +9,12 @@ process CDHIT_CDHIT {
     publishDir "${params.outdir}/cdhit", mode: 'copy'
 
     input:
-    path proteins
+    tuple val(meta), path(proteins)
     path database
     val database_name
 
     output:
-    path "${database_name}.cdhit.c70aL50.clstr", emit: clstr_file
+    tuple val(meta), path("${database_name}.cdhit.c70aL50.clstr"), emit: clstr_file
 
     script:
     """

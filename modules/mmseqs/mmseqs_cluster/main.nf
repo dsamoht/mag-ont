@@ -9,12 +9,12 @@ process MMSEQS_CLUSTER {
     publishDir "${params.outdir}/mmseqs", mode: 'copy'
     
     input:
-    path proteins
+    tuple val(meta), path(proteins)
     path database
     
     
     output:
-    path 'prot_and_db_mmseqs_clu*'
+    tuple val(meta), path('prot_and_db_mmseqs_clu*')
 
     script:
     """

@@ -26,11 +26,11 @@ include { POLYPOLISH                                        } from '../../module
 workflow ASSEMBLY_WF {
     take:
     long_reads
+    short_reads
 
     main:
     if (params.longReads == "" && params.shortReads != "") {
         read_type = "paired"
-        short_reads = Channel.fromFilePairs(params.shortReads)
         MEGAHIT(short_reads)
         assembly_channel = MEGAHIT.out
         BOWTIE(MEGAHIT.out, short_reads)
@@ -50,7 +50,6 @@ workflow ASSEMBLY_WF {
 
     else if (params.longReads != "" && params.shortReads != "") {
         read_type = "hybrid"
-        short_reads = Channel.fromFilePairs(params.shortReads)
 
         if (params.hybrid_assembler == "hybridspades") {
             HYBRID_SPADES(long_reads, short_reads)
@@ -63,7 +62,7 @@ workflow ASSEMBLY_WF {
             
             bam_channel = SAMTOOLS_SRHS_FWD.out.
                 mix(SAMTOOLS_SRHS_REV.out).
-                collect()
+                groupTuple()
             
         }
         else if (params.hybrid_assembler == "") {
@@ -77,9 +76,9 @@ workflow ASSEMBLY_WF {
             BWA_POST(POLYPOLISH.out, short_reads)
             SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
             SAMTOOLS_LRSR_POST_REV(BWA_POST.out.revSam, "revSam")
-            bam_channel = SAMTOOLS_LRSR_POST_FWD.out.
-                mix(SAMTOOLS_LRSR_POST_REV.out).
-                collect()
+            bam_channel = SAMTOOLS_SRHS_FWD.out.
+                mix(SAMTOOLS_SRHS_REV.out).
+                groupTuple()
         }
     }
 

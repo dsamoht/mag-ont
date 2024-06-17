@@ -6,6 +6,7 @@ include { DASTOOL_CONTIG2BIN as METABAT_C2B } from '../../modules/dastool_contig
 include { DASTOOL_CONTIG2BIN as MAXBIN_C2B  } from '../../modules/dastool_contig2bin'
 include { DIAMOND_BLASTP                    } from '../../modules/diamond/diamond_blastp'
 include { FEATURECOUNTS                     } from '../../modules/featurecounts'
+include { FEATURECOUNTS_SUMMARY             } from '../../modules/featurecounts_summary'
 include { MMSEQS_CLUSTER                    } from '../../modules/mmseqs/mmseqs_cluster'
 include { GTDBTK                            } from '../../modules/gtdbtk'
 include { MAXBIN                            } from '../../modules/maxbin'
@@ -17,6 +18,8 @@ include { TIARA                             } from '../../modules/tiara/tiara_ti
 include { TIARA_SPLIT_BY_DOMAIN             } from '../../modules/tiara/tiara_split_by_domain'
 include { METAEUK_EASY_PREDICT              } from '../../modules/metaeuk/metaeuk_easy_predict'
 include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeuk_modify_gff'
+include { HMMER                             } from '../../modules/hmmer'
+include { HMMER_SUMMARY                     } from '../../modules/hmmer_summary'
 
 
 workflow ANNOTATION_WF {
@@ -25,6 +28,7 @@ workflow ANNOTATION_WF {
     assembly
     sorted_bam
     read_type
+    diamond_db
     
     main:
     TIARA(assembly)
@@ -33,10 +37,11 @@ workflow ANNOTATION_WF {
     METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
     METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
     FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
-    mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
-    mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
-    DIAMOND_BLASTP(PRODIGAL.out.genesFaa, mibig_dmnd_path, "mibig")
-    CDHIT(PRODIGAL.out.genesFaa, mibig_path, "mibig")
+    FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
+    //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
+    //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
+    DIAMOND_BLASTP(PRODIGAL.out.genesFaa, diamond_db, "mibig")
+    CDHIT(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
@@ -52,5 +57,12 @@ workflow ANNOTATION_WF {
     SEQKIT(DASTOOL.out.dasBins)
     CHECKM(DASTOOL.out.dasBins)
     GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+
+    if(params.profilePfam != '' || params.profileKegg != '') {
+        profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
+        genes = PRODIGAL.out.genesFaa.collect()
+        HMMER(genes = genes, profiles.filter{ it.count('') == 0 })
+        HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = DIAMOND_BLASTP.out.diamond_result)
+    }
 
 }

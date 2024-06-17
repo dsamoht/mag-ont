@@ -11,11 +11,11 @@ process DASTOOL_CONTIG2BIN {
     publishDir "${params.outdir}/dastool", mode: 'copy'
 
     input:
-    path bins
+    tuple val(meta), path(bins)
     val software
 
     output:
-    path "${software}_contigs2bins.tsv", emit: contigs2bins, optional: true
+    tuple val(meta), path("${software}_contigs2bins.tsv"), emit: contigs2bins, optional: true
 
     script:
     """

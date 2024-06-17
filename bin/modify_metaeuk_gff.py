@@ -35,7 +35,8 @@ with open(filename_infile) as infile:
 
 
 with open(output_filename, 'w') as f:
-    f.write("##gff_version 3\n")
+    if len(initial_list) != 0:
+        f.write("##gff_version 3\n")
 
     for entry in initial_list:
         entry_list = (entry.split("|",8))

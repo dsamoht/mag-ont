@@ -9,12 +9,12 @@ process POLYPOLISH {
     publishDir "${params.outdir}/polypolish", mode: 'copy'
     
     input:
-    path inputAssembly
-    path fwdSam
-    path revSam
+    tuple val(meta), path(inputAssembly)
+    tuple val(meta), path(fwdSam)
+    tuple val(meta), path(revSam)
     
     output:
-    path 'consensus_polished.fasta', emit: polishedAssembly
+    tuple val(meta), path('consensus_polished.fasta'), emit: polishedAssembly
 
     script:
     """

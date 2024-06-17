@@ -11,10 +11,10 @@ process MEGAHIT {
     errorStrategy 'ignore'
 
     input:
-    tuple val(sample_id), path(shortReads)
+    tuple val(meta), path(shortReads)
 
     output:
-    path "contigs.fna", emit: assembly
+    tuple val(meta), path("contigs.fna"), emit: assembly
 
     script:
     """

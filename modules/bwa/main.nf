@@ -7,12 +7,12 @@ process BWA {
     }
 
     input:
-    path assembly
+    tuple val(meta), path(assembly)
     tuple val(sample_id), path(shortReads)
 
     output:
-    path 'fwd.sam', emit: fwdSam
-    path 'rev.sam', emit: revSam
+    tuple val(meta), path('fwd.sam'), emit: fwdSam
+    tuple val(meta), path('rev.sam'), emit: revSam
 
     script:
     """

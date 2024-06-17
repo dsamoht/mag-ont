@@ -7,20 +7,26 @@ process METAEUK_EASY_PREDICT {
     }
 
     publishDir "${params.outdir}/metaeuk", mode: 'copy'
-    
+    errorStrategy 'ignore'
 
     input:
-    path euk_contigs
+    tuple val(meta), path(euk_contigs)
     path ref_db
 
     output:
-    path "euk_genes.fas", emit: euk_proteins
-    path "euk_genes.codon.fas", emit: euk_codons
-    path "euk_genes.headersMap.tsv", emit: euk_headers_map
-    path "euk_genes.gff", emit: euk_gff
+    tuple val(meta), path("euk_genes.fas"), emit: euk_proteins, optional: true
+    tuple val(meta), path("euk_genes.codon.fas"), emit: euk_codons, optional: true
+    tuple val(meta), path("euk_genes.headersMap.tsv"), emit: euk_headers_map, optional: true
+    tuple val(meta), path("euk_genes.gff"), emit: euk_gff, optional: true
 
     script:
     """
-    metaeuk easy-predict ${euk_contigs} ${ref_db} euk_genes metaeuk_tmp
+    if [ -s ${euk_contigs} ]; then
+        # The file is not-empty.
+        metaeuk easy-predict ${euk_contigs} ${ref_db} euk_genes metaeuk_tmp
+    else
+        # The file is empty.
+        touch euk_genes.fas
+    fi
     """
 }

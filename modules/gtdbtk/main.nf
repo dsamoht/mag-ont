@@ -11,11 +11,11 @@ process GTDBTK {
     publishDir "${params.outdir}/gtdbtk", mode: 'copy'
 
     input:
-    path "bins/*"
+    tuple val(meta), path("bins/*")
     path gtdbtk_db
 
     output:
-    path "gtdbtk.*.summary.tsv", emit: summary
+    tuple val(meta), path("gtdbtk.*.summary.tsv"), emit: summary
 
     script:
     """

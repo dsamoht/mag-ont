@@ -9,11 +9,11 @@ process BEDTOOLS {
     publishDir "${params.outdir}/bedtools", mode: 'copy'
 
     input:
-    path prodigalGff
-    path sorted_bam
+    tuple val(meta), path(prodigalGff)
+    tuple val(meta), path(sorted_bam)
 
     output:
-    path 'genes.cov', emit: genesCoverage
+    tuple val(meta), path('genes.cov'), emit: genesCoverage
 
     script:
     """

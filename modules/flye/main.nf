@@ -9,10 +9,10 @@ process FLYE {
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    path rawReads
+    tuple val(meta), path(rawReads)
 
     output:
-    path '*/assembly.fasta', emit: flyeAssembly
+    tuple val(meta), path('*/assembly.fasta'), emit: flyeAssembly
 
     script:
     """

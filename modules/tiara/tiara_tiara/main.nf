@@ -9,10 +9,10 @@ process TIARA {
     publishDir "${params.outdir}/tiara", mode: 'copy'
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
 
     output:
-    path "classification.txt", emit: classifications
+    tuple val(meta), path("classification.txt"), emit: classifications
 
     script:
     """
