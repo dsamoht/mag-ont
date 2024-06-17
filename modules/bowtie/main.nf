@@ -7,7 +7,7 @@ process BOWTIE {
     }
 
     input:
-    tuple val(meta) path(assembly)
+    tuple val(meta), path(assembly)
     tuple val(meta), path(shortReads)
 
     output:
