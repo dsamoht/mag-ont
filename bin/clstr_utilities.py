@@ -124,7 +124,12 @@ class ClusterSeq:
 
     def featurecounts_matrix_from_cdhit(self, featurecounts_table: str | Path) -> None:
         """
+        Count the number of features by clusters and write a matrix in the form of a .tsv
+        file where each row is a cluster and each column a sample.
 
+        Parameter:
+        -----------
+        `featurecounts_table`: path to a .tsv file containaing Id and abondance of multiple samples.
         """
         featurecounts_df = pl.read_csv(featurecounts_table, separator='\t')
         seq_clust_df = self.seq_info_df
