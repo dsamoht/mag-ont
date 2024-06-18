@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 """
-usage:
+Modify featurecounts output by making an abundance table for the predicted genes in the contigs (genes_abundance.tsv)
+with id corresponding to hmmsearch and diammond blastp results.
 
-Make an abundance table for the predicted genes in the contigs (contig_abundance.tsv) which correspond
-to hmmer results with featurecounts .txt output.
+usage:
+python genes_abundance_table.py -p [path to featurecount .txt output, required]
+
+output:
+genes_abundance.tsv : abundance for each gene
 """
 import pandas as pd
 import argparse
@@ -18,5 +22,5 @@ pos_contig = df_fc['Geneid'].str.split('_').str[1]
 pos_contig = "_" + pos_contig
 df_fc.Chr = df_fc.Chr + pos_contig
 df_fc = df_fc.drop("Geneid", axis=1)
-df_fc = df_fc.rename(columns={"Chr":"contigId"})
-df_fc.to_csv("abundance_table.tsv", sep="\t", index=False)
+df_fc = df_fc.rename(columns={"Chr":"geneId"})
+df_fc.to_csv("genes_abundance.tsv", sep="\t", index=False)

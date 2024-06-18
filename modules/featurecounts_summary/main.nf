@@ -13,10 +13,10 @@ process FEATURECOUNTS_SUMMARY {
     tuple val(meta), path(counts)
 
     output:
-    tuple val(meta), path("abundance_table.tsv"), emit: featurecountsSummary
+    tuple val(meta), path("genes_abundance.tsv"), emit: featurecountsSummary
 
     script:
     """
-    make_abundance_table.py -p ${counts}
+    genes_abundance_table.py -p ${counts}
     """
 }

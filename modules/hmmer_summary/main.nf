@@ -14,7 +14,7 @@ process HMMER_SUMMARY {
     tuple val(meta), path(diamond_result)
 
     output:
-    tuple val(meta), path('contig_annotation.tsv'), emit: hmmerSummary
+    tuple val(meta), path('genes_annot_summary.tsv'), emit: hmmerSummary
 
     script:
     hmmerDomTablePfam = hmmerDomTable.grep(~/.*pfam.*/)
@@ -30,6 +30,6 @@ process HMMER_SUMMARY {
         hmmerDomTableKegg = '-k ' + hmmerDomTableKegg.join('')
     }
     """
-    hmmer_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList} -d ${diamond_result}
+    genes_annot_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList} -d ${diamond_result}
     """
 }
