@@ -3,14 +3,14 @@ process CONCATENATE_FILES {
     publishDir "${params.outdir}/concat_files", mode: 'copy'
 
     input:
-    path genes_files
-    path annot_files
-    path abund_files
+    tuple val(meta), path(genes_files)
+    tuple val(meta), path(annot_files)
+    tuple val(meta), path(abund_files)
 
     output:
-    path 'genes_all.faa', emit: genesConcat
-    path 'genes_annot_all.tsv', emit: genesAnnotConcat
-    path 'genes_abund_all.tsv', emit: genesAbundConcat
+    tuple val(meta), path('genes_all.faa'), emit: genesConcat
+    tuple val(meta), path('genes_annot_all.tsv'), emit: genesAnnotConcat
+    tuple val(meta), path('genes_abund_all.tsv'), emit: genesAbundConcat
 
     script:
     """

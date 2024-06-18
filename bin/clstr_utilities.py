@@ -179,7 +179,7 @@ if __name__ == '__main__':
                                             with software `CD-HIT`.''')
     parser.add_argument('-c', '--clstr', help='''.clstr file (CD-HIT's output)''')
     parser.add_argument('-f', '--fasta', help='''source .faa file (CD-HIT's input)''')
-    parser.add_argument('-o', '--output', help='''output directory''')
+    parser.add_argument('-o', '--output', help='''output directory''', default='./')
     parser.add_argument('-e', '--extract', help='''file containing clusters of interest
                                                    (1 per line) -> output: 1 fasta file
                                                    per cluster.''')
