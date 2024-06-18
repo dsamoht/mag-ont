@@ -1,11 +1,12 @@
 #!/usr/bin/env nextflow
 
-include { ASSEMBLY_WF                           } from './workflows/assembly-wf'
+include { ASSEMBLY_WF                           } from './workflows/assembly-wf/'
 include { ANNOTATION_WF                         } from './workflows/annotation-wf/'
 include { KRAKEN_WF as KRAKEN_ONLY              } from './workflows/kraken-wf/'
 include { KRAKEN_WF as KRAKEN                   } from './workflows/kraken-wf/'
 include { SETUP_WF                              } from './workflows/setup-wf/'
 include { QC_WF                                 } from './workflows/qc-wf/'
+include { GROUP_WF                              } from './workflows/group-wf/'
 
 info = """
    ____ _           _            __  __  ____ 
@@ -57,28 +58,33 @@ log.info info
 log.info info
 
 workflow METAGENOMICS_WF {
+     
+     if (!params.step2) {
 
-   if (params.onlyKraken) {
-        KRAKEN_ONLY()
-    }
+          if (params.onlyKraken) {
+          KRAKEN_ONLY()
 
-   else {
-        SETUP_WF()
-        if(!params.skipQC) {
-          QC_WF(SETUP_WF.out.ch_long_reads, SETUP_WF.out.ch_short_reads)
-          long_reads = QC_WF.out.long_reads
-          short_reads = QC_WF.out.short_reads
-        } else {
-          long_reads = Channel.fromPath(SETUP_WF.out.ch_long_reads)
-          short_reads = Channel.fromPath(SETUP_WF.out.ch_short_reads)
-        }
-        ASSEMBLY_WF(long_reads, short_reads)       
-        ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type, SETUP_WF.out.diamond_db)
+          } else {
+               SETUP_WF()
+               if(!params.skipQC) {
+                    QC_WF(SETUP_WF.out.ch_long_reads, SETUP_WF.out.ch_short_reads)
+                    long_reads = QC_WF.out.long_reads
+                    short_reads = QC_WF.out.short_reads
+               } else {
+                    long_reads = Channel.fromPath(SETUP_WF.out.ch_long_reads)
+                    short_reads = Channel.fromPath(SETUP_WF.out.ch_short_reads)
+               }
+               ASSEMBLY_WF(long_reads, short_reads)       
+               ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type, SETUP_WF.out.diamond_db)
 
-   if (!params.skipKraken) {
-        KRAKEN(long_reads)
-   }
-   }
+               if (!params.skipKraken) {
+                    KRAKEN(long_reads)
+               }
+          }
+     } else {
+          GROUP_WF()
+     }
+
 }
 
 workflow {

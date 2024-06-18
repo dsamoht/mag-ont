@@ -1,6 +1,6 @@
 include { BEDTOOLS                          } from '../../modules/bedtools' 
 include { CHECKM                            } from '../../modules/checkm'
-include { CDHIT_CDHIT as CDHIT              } from '../../modules/cdhit/cdhit_cdhit'
+include { CDHIT_CDHIT as CDHIT_2d           } from '../../modules/cdhit/cdhit_cdhit'
 include { DASTOOL                           } from '../../modules/dastool'
 include { DASTOOL_CONTIG2BIN as METABAT_C2B } from '../../modules/dastool_contig2bin'
 include { DASTOOL_CONTIG2BIN as MAXBIN_C2B  } from '../../modules/dastool_contig2bin'
@@ -20,6 +20,7 @@ include { METAEUK_EASY_PREDICT              } from '../../modules/metaeuk/metaeu
 include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeuk_modify_gff'
 include { HMMER                             } from '../../modules/hmmer'
 include { HMMER_SUMMARY                     } from '../../modules/hmmer_summary'
+include { PREPARE_STEP2                     } from '../../modules/prepare_step2'
 
 
 workflow ANNOTATION_WF {
@@ -41,7 +42,7 @@ workflow ANNOTATION_WF {
     //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
     //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
     DIAMOND_BLASTP(PRODIGAL.out.genesFaa, diamond_db, "mibig")
-    CDHIT(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
+    CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
@@ -63,6 +64,10 @@ workflow ANNOTATION_WF {
         genes = PRODIGAL.out.genesFaa.collect()
         HMMER(genes = genes, profiles.filter{ it.count('') == 0 })
         HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = DIAMOND_BLASTP.out.diamond_result)
+    }
+
+    if(params.step2_inputDir != '') {
+        PREPARE_STEP2(PRODIGAL.out.genesFaa, HMMER_SUMMARY.out.hmmerSummary, FEATURECOUNTS_SUMMARY.out.featurecountsSummary)
     }
 
 }
