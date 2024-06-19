@@ -14,8 +14,8 @@ process PREPARE_STEP2 {
 
     script:
     """
-    sed 's/contig_/${meta['name']}|contig_/' ${genes} > ${meta['name']}_genes.faa
-    sed 's/contig_/${meta['name']}|contig_/' ${annotation} > ${meta['name']}_genes_annot_summary.tsv
-    sed 's/contig_/${meta['name']}|contig_/' ${abundance} > ${meta['name']}_genes_abundance.tsv
+    cp ${genes} ${meta['name']}_genes.faa
+    cp ${annotation} ${meta['name']}_genes_annot_summary.tsv
+    cp ${abundance}  ${meta['name']}_genes_abundance.tsv
     """
 }

@@ -17,5 +17,6 @@ process FLYE {
     script:
     """
     flye --nano-raw ${rawReads} -o flye --meta --threads ${task.cpus}
+    sed -i 's/>contig_/>${meta['name']}|contig_/' assembly.fasta
     """
 }

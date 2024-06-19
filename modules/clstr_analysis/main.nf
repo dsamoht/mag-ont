@@ -20,7 +20,7 @@ process CLSTR_ANALYSIS {
 
     script:
     """
-    python clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance}
+    clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance}
     """
 
 }

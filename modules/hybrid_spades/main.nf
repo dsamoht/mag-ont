@@ -24,5 +24,7 @@ process HYBRID_SPADES {
         --nanopore ${longReads} \
         -o spades
     mv spades/contigs.fasta contigs.fna
+    sed -i 's/_length_.*//' contigs.fna
+    sed -i 's/>NODE_/>${meta['name']}|NODE_/' contigs.fna
     """
 }

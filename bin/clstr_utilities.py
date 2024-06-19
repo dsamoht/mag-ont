@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Utilities."""
 from __future__ import annotations
 from argparse import ArgumentParser
