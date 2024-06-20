@@ -1,5 +1,6 @@
 process METABAT {
 
+    conda "bioconda::metabat2=2.15"
     if (workflow.containerEngine == 'singularity') {
         container = params.metabat_singularity
     } else {

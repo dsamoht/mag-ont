@@ -1,5 +1,6 @@
 process SAMTOOLS {
 
+    conda "bioconda::samtools=1.18"
     if (workflow.containerEngine == 'singularity') {
         container = params.samtools_singularity
     } else {

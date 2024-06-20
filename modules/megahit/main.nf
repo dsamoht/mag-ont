@@ -1,5 +1,6 @@
 process MEGAHIT {
 
+    conda "bioconda::megahit=1.2.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.megahit_singularity
     } else {

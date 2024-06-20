@@ -1,5 +1,6 @@
 process DIAMOND_MAKEDB {
 
+    conda "bioconda::diamond=2.1.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.diamond_singularity
     } else {

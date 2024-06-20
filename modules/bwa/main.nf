@@ -1,5 +1,6 @@
 process BWA {
 
+    conda "bioconda::bwa=0.7.3a"
     if (workflow.containerEngine == 'singularity') {
         container = params.bwa_singularity
     } else {

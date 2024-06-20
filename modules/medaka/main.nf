@@ -1,5 +1,6 @@
 process MEDAKA {
 
+    conda "bioconda::medaka=1.11.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.medaka_singularity
     } else {

@@ -1,5 +1,6 @@
 process KRAKEN {
 
+    conda "bioconda::kraken2=2.1.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.kraken_singularity
     } else {

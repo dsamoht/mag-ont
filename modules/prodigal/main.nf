@@ -1,5 +1,6 @@
 process PRODIGAL {
 
+    conda "bioconda::prodigal=2.6.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.prodigal_singularity
     } else {

@@ -1,5 +1,6 @@
 process TIARA {
    
+    conda "bioconda::tiara=1.0.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.tiara_singularity
     } else {

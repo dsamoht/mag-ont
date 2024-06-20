@@ -1,5 +1,6 @@
 process DASTOOL_CONTIG2BIN {
 
+    conda "bioconda::das_tool=1.1.6"
     if (workflow.containerEngine == 'singularity') {
         container = params.dastool_singularity
     } else {

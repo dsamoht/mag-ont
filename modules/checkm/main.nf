@@ -1,5 +1,6 @@
 process CHECKM {
 
+    conda "bioconda::checkm-genome=1.2.2"
     if (workflow.containerEngine == 'singularity') {
         container = params.checkm_singularity
     } else {

@@ -1,5 +1,6 @@
 process KRONA {
 
+    conda "bioconda::krona=2.8.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.krona_singularity
     } else {

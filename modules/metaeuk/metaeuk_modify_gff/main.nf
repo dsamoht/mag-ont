@@ -1,5 +1,6 @@
 process METAEUK_MODIFY_GFF {
 
+    conda "conda-forge::python=3.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.python_singularity
     } else {

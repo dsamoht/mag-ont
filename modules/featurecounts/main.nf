@@ -1,5 +1,6 @@
 process FEATURECOUNTS {
 
+    conda "bioconda::subread=2.0.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.subread_singularity
     } else {

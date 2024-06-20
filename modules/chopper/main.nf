@@ -1,5 +1,6 @@
 process CHOPPER {
 
+    conda "bioconda::chopper=0.7.0"
     if (workflow.containerEngine == 'singularity') {
         container = params.chopper_singularity
     } else {

@@ -4,7 +4,6 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from pathlib import Path
 import pickle
-import pandas as pd
 import polars as pl
 
 
@@ -49,21 +48,20 @@ class ClusterSeq:
         with open(self.clstr_file, "r", encoding="UTF-8") as clstr_input:
             index = -1
             for line in clstr_input:
-                rep = False
+                rep = 'False'
                 if line.startswith(">"):
                     current_clstr = f"cluster_{line.split()[1]}"
                 else:
                     index += 1
                     if line.strip().endswith(r"*"):
-                        rep = True
+                        rep = 'True'
                     seq_name, seq = sequence_info[line.split()[2].rstrip(r"...")]
                     clstr_info[index] = seq_name, seq, seq_name.split("|")[0][1:], current_clstr, rep
 
-        seq_info_pd_df = pd.DataFrame.from_dict(clstr_info, orient="index",
-                                   columns=["seq_id", "seq", "source", "cluster", "representative"])
-
-        self.seq_info_df = pl.from_pandas(seq_info_pd_df)
-        del seq_info_pd_df
+        clstr_info = {str(k):v for k,v in clstr_info.items()}
+        self.seq_info_df = pl.from_dict(clstr_info)
+        self.seq_info_df = self.seq_info_df.transpose(column_names=["seq_id", "seq", "source", "cluster", "representative"])
+        self.seq_info_df = self.seq_info_df.with_columns(pl.col('representative')=='True')
         with open(self.output_dir.joinpath("clusters_info_polars.pkl"), "wb") as f_output:
             pickle.dump(self.seq_info_df, f_output)
 
@@ -118,7 +116,7 @@ class ClusterSeq:
         tsv_dir = self.output_dir.joinpath("tsv/")
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}.tsv")
 
-        grouped_counts = self.seq_info_df.group_by(["cluster", "source"]).agg(pl.len().alias("count"))
+        grouped_counts = self.seq_info_df.groupby(["cluster", "source"]).agg(pl.count().alias("count"))
         matrix = grouped_counts.pivot(values='count', index='cluster', columns='source').fill_null(0)
         matrix.write_csv(output_file, separator='\t')
 
@@ -136,7 +134,7 @@ class ClusterSeq:
         col_featurecounts_df = featurecounts_df.columns
         seq_clust_df = self.seq_info_df
         seq_clust_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id'))
-        df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on=col_featurecounts_df[0], how="left", coalesce=True)
+        df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on=col_featurecounts_df[0], how="left")
 
         tsv_dir = self.output_dir.joinpath("tsv/")
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_abundance.tsv")
@@ -156,9 +154,8 @@ class ClusterSeq:
         col_annotation_df = annotation_df.columns
         seq_clust_df = self.seq_info_df
         seq_rep_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id')).filter(pl.col("representative") == True)
-        df_join = seq_rep_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left", coalesce=True)
-        df_join = df_join.select(pl.col("seq_id", "cluster", "^(pfam|kegg|diam)_(name|id|E_value)$"))
-
+        df_join = seq_rep_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left")
+        df_join = df_join.select(pl.col("^(seq_id|cluster|(pfam|kegg|diam)_(name|id|E_value))$"))
         tsv_dir = self.output_dir.joinpath("tsv/")
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_annotation.tsv")
         df_join.write_csv(output_file, separator='\t')

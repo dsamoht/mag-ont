@@ -1,5 +1,6 @@
 process BRACKEN {
 
+    conda "bioconda::bracken=2.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.bracken_singularity
     } else {

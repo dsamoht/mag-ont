@@ -1,5 +1,6 @@
 process HMMER {
 
+    conda "bioconda::hmmer=3.4"
     if (workflow.containerEngine == 'singularity') {
         container = params.hmmer_singularity
     } else {

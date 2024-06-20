@@ -1,5 +1,6 @@
 process FEATURECOUNTS_SUMMARY {
 
+    conda "conda-forge::pandas=2.2.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.pandas_singularity
     } else {

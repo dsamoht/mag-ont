@@ -1,5 +1,6 @@
 process POLYPOLISH {
 
+    conda "bioconda::polypolish=0.5.0"
     if (workflow.containerEngine == 'singularity') {
         container = params.polypolish_singularity
     } else {

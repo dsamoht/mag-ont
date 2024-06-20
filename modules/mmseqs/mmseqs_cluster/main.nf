@@ -1,5 +1,6 @@
 process MMSEQS_CLUSTER {
 
+    conda "bioconda::mmseqs2=15.6f452"
     if (workflow.containerEngine == 'singularity') {
         container = params.mmseqs_singularity
     } else {

@@ -1,5 +1,6 @@
 process HYBRID_SPADES {
 
+    conda "bioconda::spades=3.15.5"
     if (workflow.containerEngine == 'singularity') {
         container = params.hybridspades_singularity
     } else {

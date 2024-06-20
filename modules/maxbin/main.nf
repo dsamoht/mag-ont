@@ -1,5 +1,6 @@
 process MAXBIN {
 
+    conda "bioconda::maxbin2=2.2.7"
     if (workflow.containerEngine == 'singularity') {
         container = params.maxbin_singularity
     } else {
