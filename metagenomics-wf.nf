@@ -10,7 +10,7 @@ workflow METAGENOMICS_WF {
 
    if (params.onlyKraken) {
         KRAKEN_ONLY()
-    }
+   }
 
    else {
         ASSEMBLY_WF()

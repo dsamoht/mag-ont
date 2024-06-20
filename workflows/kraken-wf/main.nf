@@ -11,7 +11,7 @@ workflow KRAKEN_WF {
     merged into a single file.
     """
     
-    reads = Channel.fromPath(params.krakenReads)
+    reads = Channel.fromPath(params.longReads)
     KRAKEN(reads, params.krakenDB)
     BRACKEN(KRAKEN.out.krakenOutputFile, params.krakenDB)
     KRAKENTOOLS(BRACKEN.out.brackenOutputForKrona)
