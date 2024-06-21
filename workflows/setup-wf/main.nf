@@ -30,7 +30,6 @@ workflow SETUP_WF {
     } else {
         ch_short_reads = params.shortReads
     }
-    ch_short_reads.view()
 
     mibig_fasta = Channel.fromPath(params.mibigDB)
     cog_fasta = Channel.fromPath(params.cogDB)
