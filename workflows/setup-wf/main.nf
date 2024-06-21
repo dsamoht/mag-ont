@@ -7,20 +7,30 @@ workflow SETUP_WF {
             .fromPath(params.longReads)
             .map { read ->
                         def meta = [:]
-                        meta.name           = read.getName().tokenize('.')[0]
+                        if (params.sampleName != '') {
+                            meta.name = params.sampleName
+                        } else {
+                            meta.name           = read.getName().tokenize('.')[0]
+                        }
                         return [ meta, read ]
                 }
+
     if(params.shortReads != '') {
         ch_short_reads = Channel
                 .fromFilePairs(params.shortReads)
                 .map { id, read ->
                             def meta = [:]
-                            meta.name           = id
+                            if (params.sampleName != '') {
+                                meta.name = params.sampleName + '_sr'
+                            } else {
+                                meta.name           = id
+                            }
                             return [ meta, read ]
                     }
     } else {
         ch_short_reads = params.shortReads
     }
+    ch_short_reads.view()
 
     mibig_fasta = Channel.fromPath(params.mibigDB)
     cog_fasta = Channel.fromPath(params.cogDB)
