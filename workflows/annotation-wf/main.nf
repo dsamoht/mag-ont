@@ -51,7 +51,7 @@ workflow ANNOTATION_WF {
 
     contig2bin_ch = METABAT_C2B.out.contigs2bins.
         mix(MAXBIN_C2B.out.contigs2bins).
-        collect()
+        groupTuple()
 
     DASTOOL(assembly, contig2bin_ch)
     
