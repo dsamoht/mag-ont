@@ -43,7 +43,7 @@ workflow ASSEMBLY_WF {
         FLYE_LR(long_reads)
         MEDAKA_LR(long_reads, FLYE_LR.out)
         assembly_channel = MEDAKA_LR.out
-        MINIMAP_LR(long_reads, FLYE_LR.out)
+        MINIMAP_LR(long_reads, MEDAKA_LR.out)
         SAMTOOLS_LR(MINIMAP_LR.out, "long_reads_sam")
         bam_channel = SAMTOOLS_LR.out
     }
@@ -76,8 +76,8 @@ workflow ASSEMBLY_WF {
             BWA_POST(POLYPOLISH.out, short_reads)
             SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
             SAMTOOLS_LRSR_POST_REV(BWA_POST.out.revSam, "revSam")
-            bam_channel = SAMTOOLS_SRHS_FWD.out.
-                mix(SAMTOOLS_SRHS_REV.out).
+            bam_channel = SAMTOOLS_LRSR_POST_FWD.out.
+                mix(SAMTOOLS_LRSR_POST_REV.out).
                 groupTuple()
         }
     }
