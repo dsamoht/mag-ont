@@ -9,6 +9,7 @@ include { FEATURECOUNTS                     } from '../../modules/featurecounts'
 include { FEATURECOUNTS_SUMMARY             } from '../../modules/featurecounts_summary'
 include { MMSEQS_CLUSTER                    } from '../../modules/mmseqs/mmseqs_cluster'
 include { GTDBTK                            } from '../../modules/gtdbtk'
+include { GTDBTK_C2T                        } from '../../modules/gtdbtk_contig2taxo'
 include { MAXBIN                            } from '../../modules/maxbin'
 include { MAXBIN_ADJUST_EXT                 } from '../../modules/maxbin_adjust_ext'
 include { METABAT                           } from '../../modules/metabat'
@@ -58,6 +59,7 @@ workflow ANNOTATION_WF {
     SEQKIT(DASTOOL.out.dasBins)
     CHECKM(DASTOOL.out.dasBins)
     GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+    GTDBTK_C2T(contigs2bins = contig2bin_ch, gtdbtk = GTDBTK.out.summary)
 
     if(params.profilePfam != '' || params.profileKegg != '') {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
