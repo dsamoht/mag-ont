@@ -11,11 +11,10 @@ process DIAMOND_MAKEDB {
     publishDir "${params.database_path}/", mode: 'copy'
 
     input:
-    path fasta
-    val name
+    tuple val(name), path(fasta)
 
     output:
-    path "*${name}.dmnd", emit: diamond_db
+    tuple val(name), path("*${name}.dmnd"), emit: diamond_db
 
     script:
     """

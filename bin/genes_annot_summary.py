@@ -16,7 +16,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--pfamPath", required=False)
 ap.add_argument("-k", "--keggPath", required=False)
 ap.add_argument("-l", "--koList", required=False)
-ap.add_argument("-d", "--diamPath", required=False)
+ap.add_argument("-d", "--diamPath", required=False, nargs='+')
 args = vars(ap.parse_args())
 
 namesList = ["geneId", "accession_target", "tlen",
@@ -30,7 +30,7 @@ namesList = ["geneId", "accession_target", "tlen",
 
 
 # Pfam
-df_pfam = pd.DataFrame(columns=["geneId", "genPred_len", "pfam_name", "pfam_id", "pfam_qlen", "pfam_E_value"], dtype=float)
+df_pfam = pd.DataFrame(columns=["geneId", "genPred_len"], dtype=float)
 if args['pfamPath'] != None:
     with open(args['pfamPath'], 'r') as fp:
         lines = len(fp.readlines())
@@ -45,7 +45,7 @@ if args['pfamPath'] != None:
 
 
 # Kegg
-df_kegg = pd.DataFrame(columns=["geneId", "genPred_len", "kegg_name", "kegg_id", "kegg_qlen", "kegg_E_value"], dtype=float)
+df_kegg = pd.DataFrame(columns=["geneId", "genPred_len"], dtype=float)
 if args['keggPath'] != None:
     with open(args['keggPath'], 'r') as fp:
         lines = len(fp.readlines())
@@ -73,20 +73,24 @@ if args['keggPath'] != None:
         
 
 
-# Diammond
-df_diammond = pd.DataFrame(columns=["geneId", "diam_name", "diam_seq_identity", "diam_aln_len", "diam_E_value"], dtype=float)
+# Diamond
+df_diamond = pd.DataFrame(columns=["geneId"], dtype=float)
 if args['diamPath'] != None:
-    if os.stat(args['diamPath']).st_size != 0:
-        df_diammond = pd.read_csv(args['diamPath'], sep="\t",
-                                usecols=[0, 1, 2, 3, 10], header=None)
-        df_diammond.columns = ["geneId", "diam_name", "diam_seq_identity", "diam_aln_len", "diam_E_value"]
-        df_diammond = df_diammond.sort_values(by="diam_E_value")
-        df_diammond = df_diammond.drop_duplicates(subset=["geneId"], keep="first")
+    for i in args['diamPath']:
+        if os.stat(i).st_size != 0:
+            df_db = pd.read_csv(i, sep="\t",
+                                     usecols=[0, 1, 2, 3, 10], header=None)
+            db_name = i.split(sep='/')[-1].split(sep='.matches.tsv')[0]
+            df_db.columns = ["geneId", f"{db_name}_name", f"{db_name}_seq_identity", f"{db_name}_aln_len", f"{db_name}_E_value"]
+            df_db = df_db.sort_values(by=f"{db_name}_E_value")
+            df_db = df_db.drop_duplicates(subset=["geneId"], keep="first")
+            df_diamond = pd.merge(left=df_diamond, right=df_db, left_on="geneId", right_on="geneId", how="outer")
+
 
 
 # Merge
 df_annot = pd.merge(left=df_pfam, right=df_kegg, left_on="geneId", right_on="geneId", how="outer")
-df_annot = pd.merge(left=df_annot, right=df_diammond, left_on="geneId", right_on="geneId", how="outer")
+df_annot = pd.merge(left=df_annot, right=df_diamond, left_on="geneId", right_on="geneId", how="outer")
 df_annot.insert(0, 'geneId', df_annot.pop('geneId'))
 df_annot.loc[(df_annot['genPred_len_x'].isna()) & (df_annot['genPred_len_y'].notna()), 'genPred_len_x'] = df_annot['genPred_len_y'][(df_annot['genPred_len_x'].isna()) & (df_annot['genPred_len_y'].notna())]
 df_annot = df_annot.rename(columns={"genPred_len_x":"genPred_len"})

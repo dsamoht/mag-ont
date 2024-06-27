@@ -12,8 +12,7 @@ process DIAMOND_BLASTP {
 
     input:
     tuple val(meta), path(proteins)
-    path diamond_db
-    val diamond_db_name
+    tuple val(diamond_db_name), path(diamond_db)
 
     output:
     tuple val(meta), path("${diamond_db_name}.matches.tsv"), emit: diamond_result

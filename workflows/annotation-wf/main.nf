@@ -36,14 +36,15 @@ workflow ANNOTATION_WF {
     TIARA(assembly)
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
+    genes_bac = PRODIGAL.out.genesFaa.collect()
     METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
     METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
     FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
     //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
     //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
-    DIAMOND_BLASTP(PRODIGAL.out.genesFaa, diamond_db, "mibig")
-    CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
+    DIAMOND_BLASTP(genes_bac, diamond_db)
+    //CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
     MAXBIN_ADJUST_EXT(MAXBIN.out.maxbinBins)
@@ -63,9 +64,9 @@ workflow ANNOTATION_WF {
 
     if(params.profilePfam != '' || params.profileKegg != '') {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
-        genes = PRODIGAL.out.genesFaa.collect()
-        HMMER(genes = genes, profiles.filter{ it.count('') == 0 })
-        HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = DIAMOND_BLASTP.out.diamond_result)
+        HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
+        diamond = DIAMOND_BLASTP.out.diamond_result.collect().groupTuple()
+        HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = diamond)
     }
 
     if(params.step2_inputDir != '') {

@@ -3,4 +3,4 @@
 .nextflow
 test/*
 .DS_store
-*mibig*
+*.dmnd*

@@ -31,10 +31,13 @@ workflow SETUP_WF {
         ch_short_reads = params.shortReads
     }
 
-    mibig_fasta = Channel.fromPath(params.mibigDB)
-    cog_fasta = Channel.fromPath(params.cogDB)
-    DIAMOND_MAKEDB(mibig_fasta, "mibig")
-    //DIAMOND_MAKEDB(cog_fasta, "cog")
+    fasta_db_ch = Channel
+            .fromPath(params.fastaDBs)
+            .map { db ->
+                    def name = db.getName().split('.fasta')[0]
+                    return [name, db]
+            }
+    DIAMOND_MAKEDB(fasta_db_ch)
 
     emit:
     diamond_db = DIAMOND_MAKEDB.out.diamond_db
