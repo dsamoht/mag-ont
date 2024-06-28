@@ -10,6 +10,8 @@ workflow QC_WF {
     if (params.longReads != "") {
         CHOPPER(ch_long_reads)
         filt_long_reads = CHOPPER.out
+    } else {
+        filt_long_reads = ch_long_reads
     }
 
     filt_short_reads = ch_short_reads
