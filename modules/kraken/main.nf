@@ -12,13 +12,20 @@ process KRAKEN {
     input:
     tuple val(meta), path(rawReads)
     path db
+    val read_type
 
     output:
     tuple val(meta), path('tax.kraken'), emit: krakenOutputFile
     tuple val(meta), path('kraken.out'), emit: krakenStdOutput
 
     script:
-    """
-    kraken2 --db ${db} --report tax.kraken ${rawReads} --threads ${task.cpus} > kraken.out
-    """
+    if(read_type == "paired") {
+        """
+        kraken2 --db ${db} --report tax.kraken --paired ${rawReads} --threads ${task.cpus} > kraken.out
+        """
+    } else if(read_type == "long") {
+        """
+        kraken2 --db ${db} --report tax.kraken ${rawReads} --threads ${task.cpus} > kraken.out
+        """
+    }
 }

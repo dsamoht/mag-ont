@@ -78,7 +78,7 @@ workflow METAGENOMICS_WF {
                ANNOTATION_WF(ASSEMBLY_WF.out.assembly, ASSEMBLY_WF.out.sorted_bam, ASSEMBLY_WF.out.read_type, SETUP_WF.out.diamond_db)
 
                if (!params.skipKraken) {
-                    KRAKEN(long_reads)
+                    KRAKEN(long_reads, short_reads)
                }
           }
      } else {
