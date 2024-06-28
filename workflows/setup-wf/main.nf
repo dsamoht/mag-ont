@@ -3,7 +3,8 @@ include { DIAMOND_MAKEDB } from '../../modules/diamond/diamond_makedb'
 
 workflow SETUP_WF {
 
-    ch_long_reads = Channel
+    if(params.longReads != '') {
+        ch_long_reads = Channel
             .fromPath(params.longReads)
             .map { read ->
                         def meta = [:]
@@ -14,6 +15,10 @@ workflow SETUP_WF {
                         }
                         return [ meta, read ]
                 }
+    } else {
+        ch_long_reads = params.longReads
+    }
+    
 
     if(params.shortReads != '') {
         ch_short_reads = Channel
