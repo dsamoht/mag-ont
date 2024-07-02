@@ -26,7 +26,7 @@ workflow SETUP_WF {
                 .map { id, read ->
                             def meta = [:]
                             if (params.sampleName != '') {
-                                meta.name = params.sampleName + '_sr'
+                                meta.name = params.sampleName
                             } else {
                                 meta.name           = id
                             }
