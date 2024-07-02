@@ -4,32 +4,20 @@ include {CLSTR_ANALYSIS                     } from '../../modules/clstr_analysis
 
 workflow GROUP_WF {
 
-    genes_files = Channel
-            .fromPath(params.step2_inputDir + "/**.faa")
-            .collect()
-            .map { files ->
+    if(params.step2_sheet != '') {
+                results_ch = Channel.fromPath(params.step2_sheet)
+                .splitText() {it.split('\t')[1].split('\n')[0]}
+                .collect()
+                .map { files ->
                         def meta = [:]
                         meta.name           = params.step2_name
                         return [ meta, files ]
                 }
-    annot_files = Channel
-            .fromPath(params.step2_inputDir + "/**genes_annot_summary.tsv")
-            .collect()
-            .map { files ->
-                        def meta = [:]
-                        meta.name           = params.step2_name
-                        return [ meta, files ]
-                }
-    abund_files = Channel
-            .fromPath(params.step2_inputDir + "/**genes_abundance.tsv")
-            .collect()
-            .map { files ->
-                        def meta = [:]
-                        meta.name           = params.step2_name
-                        return [ meta, files ]
-                }
+    } else {
+        exit 1, "An input sheet is required for step 2. Please provide one using --step2_sheet <path>"
+    }
 
-    CONCATENATE_FILES(genes_files, annot_files, abund_files)
+    CONCATENATE_FILES(results_ch)
     CDHIT(CONCATENATE_FILES.out.genesConcat)
     CLSTR_ANALYSIS(CDHIT.out.clstr_file, CONCATENATE_FILES.out.genesConcat, CONCATENATE_FILES.out.genesAnnotConcat, CONCATENATE_FILES.out.genesAbundConcat)
 

@@ -1,21 +1,18 @@
 process PREPARE_STEP2 {
 
-    publishDir "${params.step2_inputDir}/${meta['name']}", mode: 'copy'
+    //publishDir params.outdir, mode: 'copy'
 
     input:
     tuple val(meta), path(genes)
     tuple val(meta), path(annotation)
     tuple val(meta), path(abundance)
+    path step2_sheet
 
     output:
-    tuple val(meta), path("${meta['name']}_genes.faa")
-    tuple val(meta), path("${meta['name']}_genes_annot_summary.tsv")
-    tuple val(meta), path("${meta['name']}_genes_abundance.tsv")
+    tuple val(meta), path(step2_sheet), emit: step2Sheet
 
     script:
     """
-    cp ${genes} ${meta['name']}_genes.faa
-    cp ${annotation} ${meta['name']}_genes_annot_summary.tsv
-    cp ${abundance}  ${meta['name']}_genes_abundance.tsv
+    echo "${meta['name']}\t${params.outdir}" >> ${step2_sheet}
     """
 }
