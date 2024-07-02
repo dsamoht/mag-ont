@@ -155,7 +155,7 @@ class ClusterSeq:
         seq_clust_df = self.seq_info_df
         seq_rep_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id')).filter(pl.col("representative") == True)
         df_join = seq_rep_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left")
-        df_join = df_join.select(pl.col("^(seq_id|cluster|(pfam|kegg|diam)_(name|id|E_value))$"))
+        df_join = df_join.select(pl.col("^(seq_id|cluster|(.*)_(name|id|E_value))$"))
         tsv_dir = self.output_dir.joinpath("tsv/")
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_annotation.tsv")
         df_join.write_csv(output_file, separator='\t')
