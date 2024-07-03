@@ -57,13 +57,14 @@ log.info info
 
 log.info info
 
-if (params.longReads == '' && params.shortReads == '') {
-    exit 1, "Either longReads or shortReads is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
-}
 
 workflow METAGENOMICS_WF {
      
      if (!params.step2) {
+
+          if (params.longReads == '' && params.shortReads == '') {
+               exit 1, "Either longReads or shortReads is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
+          }
 
           if (params.onlyKraken) {
           KRAKEN_ONLY()
