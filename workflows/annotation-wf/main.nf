@@ -65,7 +65,7 @@ workflow ANNOTATION_WF {
     if(params.profilePfam != '' || params.profileKegg != '') {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
         HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
-        diamond = DIAMOND_BLASTP.out.diamond_result.collect().groupTuple()
+        diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
         HMMER_SUMMARY(hmmerDomTable = HMMER.out[1].groupTuple(), koList = params.koList, diamond_result = diamond)
     }
 
