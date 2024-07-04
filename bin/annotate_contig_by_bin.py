@@ -23,4 +23,5 @@ contig2bins_df = pd.read_csv(args['contig2bins'], sep='\t', header=None, names=[
 
 contig_annotation_df = pd.merge(left=contig2bins_df, right=gtdbk_df, left_on='binId', right_on='user_genome', how='left')
 contig_annotation_df = contig_annotation_df.drop(['binId', 'user_genome'], axis=1)
+contig_annotation_df = contig_annotation_df.dropna(axis=0)
 contig_annotation_df.to_csv(args['output'], sep='\t', index=False)
