@@ -14,7 +14,8 @@ process CLSTR_ANALYSIS {
     tuple val(meta), path(genes)
     tuple val(meta), path(annotation)
     tuple val(meta), path(abundance)
-    path gtdbtk
+    path bin_annot_concat
+    path c2b_concat
     
     output:
     tuple val(meta), path("clusters_info_polars.pkl"), emit: clstrPolars
@@ -22,9 +23,12 @@ process CLSTR_ANALYSIS {
     tuple val(meta), path("**_abundance.tsv"), emit: clstrAbundance
 
     script:
-    def gtdbtk_res = gtdbtk.name != 'NO_FILE' ? "-t $gtdbtk" : ''
     """
-    clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance} ${gtdbtk_res}
+    clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance}
+    if ! [ -f NO_FILE ]; then
+    cp ${bin_annot_concat} tsv/${bin_annot_concat}
+    cp ${c2b_concat} tsv/${c2b_concat}
+    fi
     """
 
 }

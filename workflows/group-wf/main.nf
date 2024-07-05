@@ -19,7 +19,8 @@ workflow GROUP_WF {
 
     CONCATENATE_FILES(results_ch)
     CDHIT(CONCATENATE_FILES.out.genesConcat)
-    gtdbtk_concat = CONCATENATE_FILES.out.gtdbtkConcat.ifEmpty("$projectDir/database/NO_FILE")
-    CLSTR_ANALYSIS(CDHIT.out.clstr_file, CONCATENATE_FILES.out.genesConcat, CONCATENATE_FILES.out.genesAnnotConcat, CONCATENATE_FILES.out.genesAbundConcat, gtdbtk_concat)
+    bin_annot_concat = CONCATENATE_FILES.out.binAnnotConcat.ifEmpty("$projectDir/database/NO_FILE")
+    c2b_concat = CONCATENATE_FILES.out.c2bConcat.ifEmpty("$projectDir/database/NO_FILE")
+    CLSTR_ANALYSIS(CDHIT.out.clstr_file, CONCATENATE_FILES.out.genesConcat, CONCATENATE_FILES.out.genesAnnotConcat, CONCATENATE_FILES.out.genesAbundConcat, bin_annot_concat, c2b_concat)
 
 }
