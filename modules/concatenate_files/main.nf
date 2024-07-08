@@ -37,7 +37,7 @@ process CONCATENATE_FILES {
     awk 'FNR==1 && NR!=1{next;}{print}' \$c2b_res > contigs2bins_all.tsv
     fi
     cat ${genes_files} > genes_all.faa
-    awk 'FNR==1 && NR!=1{next;}{print}' ${annot_files} > genes_annot_all.tsv
+    concatenate_tsv.py -i ${annot_files} -o genes_annot_all.tsv
     awk 'FNR==1 && NR!=1{next;}{print}' ${abund_files} > genes_abund_all.tsv
     """
 }

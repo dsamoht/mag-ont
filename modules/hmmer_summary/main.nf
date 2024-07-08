@@ -10,12 +10,12 @@ process HMMER_SUMMARY {
     publishDir "${params.outdir}/hmmer", mode: 'copy'
 
     input:
-    tuple val(meta), path(hmmerTable)
+    tuple val(meta1), path(hmmerTable)
     path koList
-    tuple val(meta), path(diamond_result)
+    tuple val(meta2), path(diamond_result)
 
     output:
-    tuple val(meta), path('genes_annot_summary.tsv'), emit: hmmerSummary
+    tuple val(meta2), path('genes_annot_summary.tsv'), emit: hmmerSummary
 
     script:
     hmmerTablePfam = hmmerTable.grep(~/.*pfam.*/)

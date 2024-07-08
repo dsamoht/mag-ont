@@ -66,8 +66,17 @@ workflow ANNOTATION_WF {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
         HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
         diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
-        HMMER_SUMMARY(hmmerTable = HMMER.out[0].groupTuple(), koList = params.koList, diamond_result = diamond)
+        hmmerTable = HMMER.out[0].groupTuple()
+    } else {
+        hmmerTable = Channel
+            .fromPath("$projectDir/database/NO_FILE")
+            .map { read ->
+                        def meta = [:]
+                        meta.name           = "no_name"
+                        return [ meta, read ]
+                }
     }
+    HMMER_SUMMARY(hmmerTable = hmmerTable, koList = params.koList, diamond_result = diamond)
 
     if(params.step2_sheet == '') {
                 step2_sheet_ch = Channel.fromPath(params.step2_sheet + 'step2_input_sheet.tsv')

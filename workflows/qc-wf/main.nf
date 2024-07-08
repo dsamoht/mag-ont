@@ -1,4 +1,5 @@
 include { CHOPPER                                           } from '../../modules/chopper'
+include { FASTP                                             } from '../../modules/fastp'
 
 workflow QC_WF {
 
@@ -14,7 +15,12 @@ workflow QC_WF {
         filt_long_reads = ch_long_reads
     }
 
-    filt_short_reads = ch_short_reads
+    if (params.shortReads != "") {
+        FASTP(ch_short_reads)
+        filt_short_reads = FASTP.out
+    } else {
+        filt_short_reads = ch_short_reads
+    }
 
     emit:
     long_reads = filt_long_reads

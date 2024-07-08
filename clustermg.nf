@@ -65,6 +65,9 @@ workflow METAGENOMICS_WF {
           if (params.longReads == '' && params.shortReads == '') {
                exit 1, "Either longReads or shortReads is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
           }
+          if (params.fastaDBs == '') {
+               exit 1, "Missing parameter 'fastaDBs'. Please provide at least one fasta database using --fastaDBs <path>."
+          }
 
           if (params.onlyKraken) {
           KRAKEN_ONLY()
