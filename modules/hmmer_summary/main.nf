@@ -10,7 +10,7 @@ process HMMER_SUMMARY {
     publishDir "${params.outdir}/hmmer", mode: 'copy'
 
     input:
-    tuple val(meta), path(hmmerDomTable)
+    tuple val(meta), path(hmmerTable)
     path koList
     tuple val(meta), path(diamond_result)
 
@@ -18,19 +18,19 @@ process HMMER_SUMMARY {
     tuple val(meta), path('genes_annot_summary.tsv'), emit: hmmerSummary
 
     script:
-    hmmerDomTablePfam = hmmerDomTable.grep(~/.*pfam.*/)
-    hmmerDomTableKegg = hmmerDomTable.grep(~/.*kegg.*/)
-    if(hmmerDomTablePfam.isEmpty()) {
-        hmmerDomTablePfam = hmmerDomTablePfam.join('')
+    hmmerTablePfam = hmmerTable.grep(~/.*pfam.*/)
+    hmmerTableKegg = hmmerTable.grep(~/.*kegg.*/)
+    if(hmmerTablePfam.isEmpty()) {
+        hmmerTablePfam = hmmerTablePfam.join('')
     } else {
-        hmmerDomTablePfam = '-p ' + hmmerDomTablePfam.join('')
+        hmmerTablePfam = '-p ' + hmmerTablePfam.join('')
     }
-    if(hmmerDomTableKegg.isEmpty()) {
-        hmmerDomTableKegg = hmmerDomTableKegg.join('')
+    if(hmmerTableKegg.isEmpty()) {
+        hmmerTableKegg = hmmerTableKegg.join('')
     } else {
-        hmmerDomTableKegg = '-k ' + hmmerDomTableKegg.join('')
+        hmmerTableKegg = '-k ' + hmmerTableKegg.join('')
     }
     """
-    genes_annot_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList} -d ${diamond_result}
+    genes_annot_summary.py ${hmmerTablePfam} ${hmmerTableKegg} -l ${koList} -d ${diamond_result}
     """
 }
