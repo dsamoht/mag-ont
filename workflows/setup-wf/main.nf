@@ -36,16 +36,33 @@ workflow SETUP_WF {
         ch_short_reads = params.shortReads
     }
 
-    fasta_db_ch = Channel
+    if(params.fastaDBs != '') {
+        fasta_db_ch = Channel
             .fromPath(params.fastaDBs)
             .map { db ->
                     def name = db.getName().split('.fasta')[0]
                     return [name, db]
             }
-    DIAMOND_MAKEDB(fasta_db_ch)
+        DIAMOND_MAKEDB(fasta_db_ch)
+        fasta_diam_ch = DIAMOND_MAKEDB.out.diamond_db
+    } else {
+        fasta_diam_ch = Channel.empty()
+    }
+
+    if(params.diamondDBs != '') {
+        diamond_db_ch = Channel
+            .fromPath(params.diamondDBs)
+            .map { db ->
+                    def name = db.getName().split('.dmnd')[0]
+                    return [name, db]
+            }
+    } else {
+        diamond_db_ch = Channel.empty()
+    }
+    diamond_db_ch = diamond_db_ch.concat(fasta_diam_ch)
 
     emit:
-    diamond_db = DIAMOND_MAKEDB.out.diamond_db
+    diamond_db = diamond_db_ch
     ch_long_reads = ch_long_reads
     ch_short_reads = ch_short_reads
 

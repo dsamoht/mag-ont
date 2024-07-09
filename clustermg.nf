@@ -25,10 +25,10 @@ info = """
 Usage:
      
      STEP 1) assembly and annotation:
-     nextflow run clustermg.nf -profile hpc,singularity --longReads PATH --output PATH
+     nextflow run clustermg.nf -profile hpc,singularity --longReads PATH --outdir PATH --fastaDBs PATH
 
      STEP 2) clustering
-     nextflow run clustermg.nf -profile hpc,singularity --cluster-wf --input PATH
+     nextflow run clustermg.nf -profile hpc,singularity --step2 --step2_sheet PATH --outdir PATH
    
 Input:
 
@@ -39,6 +39,7 @@ Input:
      --shortReads PATH: path to raw paired-end short reads (compressed or uncompressed)
      --fastaDBs PATH: path to fasta database(s) for Diamond blastp. To use multiple databases,
                       use "" and a glob pattern. Ex. --fastaDBs "path/*.fasta.gz"
+     --diamondDBs PATH: path to diamond (.dmnd) database(s) for Diamond blastp. Can be used with or instead of '--fastaDBs'
 
      STEP 2:
      -profile PROFILE(S): local/hpc,docker/singularity
@@ -55,6 +56,8 @@ Optional commands:
      --profilePfam: in step 1, run hmmer hmmesearch with given Pfam hmm profile
      --profilePfam: in step 1, run hmmer hmmesearch with given Kegg hmm profile
      --metaeuk_db: in step 1, database used to predict eukaryotic genes with Metaeuk. If empty, do not run Metaeuk
+     --gtdbtkDB: in step 1, databse gtdb used for gtdb-tk. If empty, do not run gtdb-tk
+     --database_path: in step 1, path to directory where to store diamond databases (default 'database')
 """
 
 if( params.help ) {
@@ -69,7 +72,7 @@ log.info info
 workflow METAGENOMICS_WF {
 
      if (!params.outdir) {
-          exit 1, "Missing parameter 'outdir'. Please provide a directory using --outdir <path>"
+          exit 1, "Missing parameter 'outdir'. Please provide an output directory using --outdir <path>"
      }
      
      if (!params.step2) {
@@ -77,15 +80,13 @@ workflow METAGENOMICS_WF {
           if (params.longReads == '' && params.shortReads == '') {
                exit 1, "Either 'longReads' or 'shortReads' is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
           }
-          if (params.fastaDBs == '') {
-               exit 1, "Missing parameter 'fastaDBs'. Please provide at least one fasta database using --fastaDBs <path>"
+          if (params.fastaDBs == '' && params.diamondDBs == '') {
+               exit 1, "Either 'fastaDBs' or 'diamondDBs' is required. Please provide at least one using --fastaDBs <path> or --diamondDBs <path>."
           }
           if (!params.skipKraken && params.krakenDB == '') {
                exit 1,  "Missing parameter 'krakenDB'. Please provide a kraken database using --krakenDB <path> or skip Kraken using --skipKraken"
           }
-          if (params.fastaDBs == '') {
-               exit 1, "Missing parameter 'fastaDBs'. Please provide at least one fasta database using --fastaDBs <path>."
-          }
+
 
           if (params.onlyKraken) {
           KRAKEN_ONLY()
