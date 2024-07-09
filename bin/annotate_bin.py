@@ -3,38 +3,44 @@
 Join the gtdbtk taxonomic classification of the bins with the contig ID of each contig inside those bins.
 
 usage:
-python annotate_bin.py -c [path to contig2bins.tsv, required] -g [path to gtdtk.tsv, required] -o [output file path and name, optional]
+python annotate_bin.py -c [path to contig2bins.tsv, required] -g [path to gtdtk.tsv, optional] -o [output file path and name, optional]
 
 output:
 contig_taxo_annot.tsv : gtdbtk taxonomic classification for each binned contig
 """
 import pandas as pd
 import argparse
+import os
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-b", "--contig2bins", required=True)
-ap.add_argument("-g", "--gtdbtk", required=True)
+ap.add_argument("-g", "--gtdbtk", required=False)
 ap.add_argument("-s", "--seqkit", required=True)
 ap.add_argument("-c", "--checkm", required=True)
 ap.add_argument("-o", "--outdir", required=False, default='.')
 args = vars(ap.parse_args())
 
-gtdbk_df = pd.read_csv(args['gtdbtk'], sep='\t', usecols=['user_genome', 'classification'])
+gtdbk_df = pd.DataFrame(columns=["binId"], dtype=float)
+if args['gtdbtk'] != None and os.stat(args['gtdbtk']).st_size != 0:
+    gtdbk_df = pd.read_csv(args['gtdbtk'], sep='\t', usecols=['user_genome', 'classification'])
+    gtdbk_df = gtdbk_df.rename({'user_genome': 'binId'}, axis=1)
+    gtdbk_df['binId'] = gtdbk_df['binId'].str.replace('_sub', '')
+
 contig2bins_df = pd.read_csv(args['contig2bins'], sep='\t', header=None, names=['contigId', 'binId'])
+
 seqkit_df = pd.read_csv(args['seqkit'], sep='\t', usecols=['file', 'num_seqs', 'sum_len', 'N50'])
-seqkit_df['file'] = seqkit_df['file'].str.replace('(_sub\.fa|\.fa)', '', regex=True)
-checkm_df = pd.read_csv(args['checkm'], sep='\t', usecols=['Bin Id', 'Completeness', 'Contamination'])
-checkm_df['Bin Id'] = checkm_df['Bin Id'].str.replace('_sub', '')
+seqkit_df = seqkit_df.rename({'file': 'binId'}, axis=1)
+seqkit_df['binId'] = seqkit_df['binId'].str.replace('\.fa', '', regex=True)
+is_sub = seqkit_df['binId'].str.contains('_sub', regex=False).rename('is_sub')
+seqkit_df['is_sub'] = is_sub
+seqkit_df['binId'] = seqkit_df['binId'].str.replace('_sub', '')
 
-is_sub = gtdbk_df['user_genome'].str.contains('_sub', regex=False).rename('is_sub')
-gtdbk_df['is_sub'] = is_sub
-gtdbk_df['user_genome'] = gtdbk_df['user_genome'].str.replace('_sub', '')
+checkm_df = pd.read_csv(args['checkm'], sep='\t', usecols=['Bin Id', 'Marker lineage', 'Completeness', 'Contamination'])
+checkm_df = checkm_df.rename({'Bin Id': 'binId', 'Marker lineage': 'checkm_lineage'}, axis=1)
+checkm_df['binId'] = checkm_df['binId'].str.replace('_sub', '')
 
-bin_annotation_df = gtdbk_df.merge(right=seqkit_df, left_on='user_genome', right_on='file')
-bin_annotation_df = bin_annotation_df.merge(right=checkm_df, left_on='user_genome', right_on='Bin Id')
-bin_annotation_df = bin_annotation_df.drop(labels=['file', 'Bin Id'], axis=1)
-bin_annotation_df = bin_annotation_df.rename({'user_genome': 'binId'}, axis=1)
-
+bin_annotation_df = pd.merge(left=gtdbk_df, right=seqkit_df, left_on='binId', right_on='binId', how='outer')
+bin_annotation_df = bin_annotation_df.merge(right=checkm_df, left_on='binId', right_on='binId')
 contig2bins_df = contig2bins_df.merge(right=bin_annotation_df, left_on='binId', right_on='binId', how='left')
 contig2bins_df = contig2bins_df.dropna(axis=0)
 contig2bins_df = contig2bins_df.sort_values(by=['is_sub'])

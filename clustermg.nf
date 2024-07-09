@@ -34,19 +34,27 @@ Input:
 
      STEP 1:
      -profile PROFILE(S): local/hpc,docker/singularity
-     --output PATH: path to output directory
+     --outdir PATH: path to output directory
      --longReads PATH: path to raw long reads (compressed or uncompressed)
      --shortReads PATH: path to raw paired-end short reads (compressed or uncompressed)
+     --fastaDBs PATH: path to fasta database(s) for Diamond blastp. To use multiple databases,
+                      use "" and a glob pattern. Ex. --fastaDBs "path/*.fasta.gz"
 
      STEP 2:
      -profile PROFILE(S): local/hpc,docker/singularity
-     --cluster-wf: to cluster single experiments together
-     --input PATH: path to the directory containing annotated metagenomes from STEP 1.
+     --outdir PATH: path to output directory
+     --step2: to cluster single experiments together
+     --step2_sheet PATH: path to tsv file containing result directory path for each sample
 
 Optional commands:
      --skipKraken: in step 1, do not run `kraken`
      --onlyKraken: in step 1, run only `kraken` (no assembly - step 2 will be unavailable)
-     --hybridspades: use `spades` for hybrid assembly (default `flye`+`medaka`+`polypolish`)
+     --skipQC: in step 1, skip the quality control step
+     --hybridspades: in step 1, use `spades` for hybrid assembly (default `flye`+`medaka`+`polypolish`)
+     --sampleName: in step 1, name of the sample, all sample names in step 2 must be unique (default file name)
+     --profilePfam: in step 1, run hmmer hmmesearch with given Pfam hmm profile
+     --profilePfam: in step 1, run hmmer hmmesearch with given Kegg hmm profile
+     --metaeuk_db: in step 1, database used to predict eukaryotic genes with Metaeuk. If empty, do not run Metaeuk
 """
 
 if( params.help ) {
@@ -59,11 +67,21 @@ log.info info
 
 
 workflow METAGENOMICS_WF {
+
+     if (!params.outdir) {
+          exit 1, "Missing parameter 'outdir'. Please provide a directory using --outdir <path>"
+     }
      
      if (!params.step2) {
 
           if (params.longReads == '' && params.shortReads == '') {
-               exit 1, "Either longReads or shortReads is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
+               exit 1, "Either 'longReads' or 'shortReads' is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
+          }
+          if (params.fastaDBs == '') {
+               exit 1, "Missing parameter 'fastaDBs'. Please provide at least one fasta database using --fastaDBs <path>"
+          }
+          if (!params.skipKraken && params.krakenDB == '') {
+               exit 1,  "Missing parameter 'krakenDB'. Please provide a kraken database using --krakenDB <path> or skip Kraken using --skipKraken"
           }
           if (params.fastaDBs == '') {
                exit 1, "Missing parameter 'fastaDBs'. Please provide at least one fasta database using --fastaDBs <path>."

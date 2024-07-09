@@ -12,7 +12,7 @@ process FEATURECOUNTS {
 
     input:
     tuple val(meta), path(prodigal_genes_gff)
-    tuple val(meta), path(metaeuk_genes_gff)
+    tuple val(meta1), path(metaeuk_genes_gff)
     tuple val(meta), path(sorted_bam)
     val read_type
 

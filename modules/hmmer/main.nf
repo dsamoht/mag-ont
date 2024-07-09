@@ -19,6 +19,6 @@ process HMMER {
     
     script:
     """
-    hmmsearch -E 0.001 -o /dev/null --tblout hmmer_table_${type}.txt ${profile} ${genes}
+    hmmsearch -E 0.001 -o /dev/null --tblout hmmer_table_${type}.txt --cpu ${task.cpus - 1} ${profile} ${genes}
     """
 }

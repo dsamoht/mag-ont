@@ -37,13 +37,25 @@ workflow ANNOTATION_WF {
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
     genes_bac = PRODIGAL.out.genesFaa.collect()
-    METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
-    METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
+    if (params.metaeuk_db != '') {
+        METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
+        genes_euk = METAEUK_EASY_PREDICT.out.euk_proteins
+    } else {
+        genes_euk = Channel
+            .fromPath("$projectDir/database/NO_FILE")
+            .map { read ->
+                        def meta = [:]
+                        meta.name           = "no_name"
+                        return [ meta, read ]
+                }
+    }
+    METAEUK_MODIFY_GFF(genes_euk)
     FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
     //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
     //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
     DIAMOND_BLASTP(genes_bac, diamond_db)
+    diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
     //CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
@@ -59,13 +71,23 @@ workflow ANNOTATION_WF {
     
     SEQKIT(DASTOOL.out.dasBins)
     CHECKM(DASTOOL.out.dasBins)
-    GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
-    BIN_ANNOTATION(contigs2bins = contig2bin_ch, gtdbtk = GTDBTK.out.summary, seqkitStats = SEQKIT.out.seqkitStats, checkmStats = CHECKM.out.checkmStats)
+    if (params.gtdbtkDB != '') {
+        GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
+        gtdbtk_summary = GTDBTK.out.summary
+    } else {
+        gtdbtk_summary = Channel
+            .fromPath("$projectDir/database/NO_FILE")
+            .map { read ->
+                        def meta = [:]
+                        meta.name           = "no_name"
+                        return [ meta, read ]
+                }
+    }
+    BIN_ANNOTATION(contigs2bins = contig2bin_ch, gtdbtk = gtdbtk_summary, seqkitStats = SEQKIT.out.seqkitStats, checkmStats = CHECKM.out.checkmStats)
 
     if(params.profilePfam != '' || params.profileKegg != '') {
         profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
         HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
-        diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
         hmmerTable = HMMER.out[0].groupTuple()
     } else {
         hmmerTable = Channel
