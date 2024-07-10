@@ -11,10 +11,8 @@ include { BWA as BWA_PRE                                    } from '../../module
 include { BWA as BWA_POST                                   } from '../../modules/bwa'
 include { SAMTOOLS as SAMTOOLS_SR_POST                      } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_LR                           } from '../../modules/samtools'
-include { SAMTOOLS as SAMTOOLS_SRHS_FWD                     } from '../../modules/samtools'
-include { SAMTOOLS as SAMTOOLS_SRHS_REV                     } from '../../modules/samtools'
-include { SAMTOOLS as SAMTOOLS_LRSR_POST_FWD                } from '../../modules/samtools'
-include { SAMTOOLS as SAMTOOLS_LRSR_POST_REV                } from '../../modules/samtools'
+include { SAMTOOLS as SAMTOOLS_SRHS                         } from '../../modules/samtools'
+include { SAMTOOLS as SAMTOOLS_LRSR_POST                    } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_LRSR_LR                      } from '../../modules/samtools'
 include { SAMTOOLS as SAMTOOLS_LRHS                         } from '../../modules/samtools'
 include { MINIMAP as MINIMAP_LR                             } from '../../modules/minimap'
@@ -56,29 +54,28 @@ workflow ASSEMBLY_WF {
             assembly_channel = HYBRID_SPADES.out
             MINIMAP_HS(HYBRID_SPADES.out, long_reads)
             SAMTOOLS_LRHS(MINIMAP_HS.out, "lr_sam")
-            BWA_HS(HYBRID_SPADES.out, short_reads)
-            SAMTOOLS_SRHS_FWD(BWA_HS.out.fwdSam, "fwd_sam")
-            SAMTOOLS_SRHS_REV(BWA_HS.out.revSam, "rev_sam")
+            BWA_HS(HYBRID_SPADES.out, short_reads, sep = false)
+            SAMTOOLS_SRHS(BWA_HS.out.alnPeSam, "sr_sam")
             
-            bam_channel = SAMTOOLS_SRHS_FWD.out.
-                mix(SAMTOOLS_SRHS_REV.out).
-                groupTuple()
+            bam_channel = SAMTOOLS_SRHS.out//.
+                //mix(SAMTOOLS_LRHS.out).
+                //groupTuple()
             
         }
         else if (params.hybrid_assembler == "") {
             FLYE_LRSR(long_reads)
             MEDAKA_LRSR(long_reads, FLYE_LRSR.out)
-            BWA_PRE(MEDAKA_LRSR.out, short_reads)
+            BWA_PRE(MEDAKA_LRSR.out, short_reads, sep = true)
             POLYPOLISH(MEDAKA_LRSR.out, BWA_PRE.out.fwdSam, BWA_PRE.out.revSam)
             assembly_channel = POLYPOLISH.out
             MINIMAP_LRSR(POLYPOLISH.out, long_reads)
             SAMTOOLS_LRSR_LR(MINIMAP_LRSR.out, "lrSam")
-            BWA_POST(POLYPOLISH.out, short_reads)
-            SAMTOOLS_LRSR_POST_FWD(BWA_POST.out.fwdSam, "fwdSam")
-            SAMTOOLS_LRSR_POST_REV(BWA_POST.out.revSam, "revSam")
-            bam_channel = SAMTOOLS_LRSR_POST_FWD.out.
-                mix(SAMTOOLS_LRSR_POST_REV.out).
-                groupTuple()
+            BWA_POST(POLYPOLISH.out, short_reads, sep = false)
+            SAMTOOLS_LRSR_POST(BWA_POST.out.alnPeSam, "sr_sam")
+
+            bam_channel = SAMTOOLS_LRSR_POST.out//.
+                //mix(SAMTOOLS_LRSR_LR.out).
+                //groupTuple()
         }
     }
 
