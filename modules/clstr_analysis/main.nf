@@ -19,15 +19,20 @@ process CLSTR_ANALYSIS {
     
     output:
     tuple val(meta), path("clusters_info_polars.pkl"), emit: clstrPolars
-    tuple val(meta), path("**_annotation.tsv"), emit: clstrAnnotation
-    tuple val(meta), path("**_abundance.tsv"), emit: clstrAbundance
+    tuple val(meta), path("abundance_clusters_polars.pkl"), emit: abundPolars
+    tuple val(meta), path("annotation_clusters_polars.pkl"), emit: annotPolars
+    tuple val(meta), path("bin_annotation_all.pkl"), emit: binPolars, optional: true
+    tuple val(meta), path("contigs2bins_all.pkl"), emit: c2bPolars, optional: true
+    //tuple val(meta), path("**_annotation.tsv"), emit: clstrAnnotation
+    //tuple val(meta), path("**_abundance.tsv"), emit: clstrAbundance
 
     script:
     """
+    if ! [ -f NO_FILE ]
+    then
+    clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance} -b ${bin_annot_concat} -t ${c2b_concat}
+    else
     clstr_utilities.py -c ${clusters} -f ${genes} -n ${annotation} -a ${abundance}
-    if ! [ -f NO_FILE ]; then
-    cp ${bin_annot_concat} tsv/${bin_annot_concat}
-    cp ${c2b_concat} tsv/${c2b_concat}
     fi
     """
 

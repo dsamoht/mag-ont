@@ -1,5 +1,12 @@
 process CONCATENATE_FILES {
 
+    conda "conda-forge::pandas=2.2.1"
+    if (workflow.containerEngine == 'singularity') {
+        container = params.pandas_singularity
+    } else {
+        container = params.pandas_docker
+    }
+
     publishDir "${params.outdir}/concat_files", mode: 'copy'
 
     input:
