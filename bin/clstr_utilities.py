@@ -67,8 +67,8 @@ class ClusterSeq:
         contig_names = self.seq_info_df['seq_id'].str.replace(pattern=r"(_[0-9]*$)", value='')
         contig_names = contig_names.rename("contigId")
         self.seq_info_df = self.seq_info_df.insert_at_idx(1, contig_names)
-        with open(self.output_dir.joinpath("clusters_info_polars.pkl"), "wb") as f_output:
-            pickle.dump(self.seq_info_df, f_output)
+        output_file = self.output_dir.joinpath(f"clusters_info.tsv")
+        self.seq_info_df.write_csv(output_file, separator='\t')
 
 
     def contiguity_network(self, file: str | Path) -> None:
@@ -139,13 +139,10 @@ class ClusterSeq:
         col_featurecounts_df = featurecounts_df.columns
         seq_clust_df = self.seq_info_df
         df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on=col_featurecounts_df[0], how="left")
-
-        tsv_dir = self.output_dir.joinpath("tsv/")
-        output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_abundance.tsv")
         cluster_counts = df_join.pivot(index="cluster", columns="source", values=col_featurecounts_df[1], aggregate_function="sum")
+
+        output_file = self.output_dir.joinpath("clusters_abundance.tsv")
         cluster_counts.write_csv(output_file, separator='\t')
-        with open(self.output_dir.joinpath("abundance_clusters_polars.pkl"), "wb") as f_output:
-            pickle.dump(cluster_counts, f_output)
 
 
     def cluster_annotation(self, annotation_table: str | Path) -> None:
@@ -161,11 +158,9 @@ class ClusterSeq:
         seq_clust_df = self.seq_info_df
         df_join = seq_clust_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left")
         df_join = df_join.select(pl.col("^(seq_id|cluster|(.*)_(name|id|E_value))$"))
-        tsv_dir = self.output_dir.joinpath("tsv/")
-        output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_annotation.tsv")
+
+        output_file = self.output_dir.joinpath("clusters_annotation.tsv")
         df_join.write_csv(output_file, separator='\t')
-        with open(self.output_dir.joinpath("annotation_clusters_polars.pkl"), "wb") as f_output:
-            pickle.dump(df_join, f_output)
 
 
     def to_polars(self, tsv_table: str | Path) -> None:
