@@ -157,6 +157,7 @@ class ClusterSeq:
         col_annotation_df = annotation_df.columns
         seq_clust_df = self.seq_info_df
         df_join = seq_clust_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left")
+        df_join = df_join.filter(pl.col("representative"))
         df_join = df_join.select(pl.col("^(seq_id|cluster|(.*)_(name|id|E_value))$"))
 
         output_file = self.output_dir.joinpath("clusters_annotation.tsv")
