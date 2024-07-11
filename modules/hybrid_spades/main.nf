@@ -1,5 +1,6 @@
 process HYBRID_SPADES {
 
+    conda "bioconda::spades=3.15.5"
     if (workflow.containerEngine == 'singularity') {
         container = params.hybridspades_singularity
     } else {
@@ -24,5 +25,7 @@ process HYBRID_SPADES {
         --nanopore ${longReads} \
         -o spades
     mv spades/contigs.fasta contigs.fna
+    sed -i 's/_length_.*//' contigs.fna
+    sed -i 's/>NODE_/>${meta['name']}|NODE_/' contigs.fna
     """
 }

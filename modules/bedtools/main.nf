@@ -1,5 +1,6 @@
 process BEDTOOLS {
 
+    conda "bioconda::bedtools=2.24"
     if (workflow.containerEngine == 'singularity') {
         container = params.bedtools_singularity
     } else {

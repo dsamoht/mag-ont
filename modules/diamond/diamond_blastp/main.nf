@@ -1,5 +1,6 @@
 process DIAMOND_BLASTP {
 
+    conda "bioconda::diamond=2.1.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.diamond_singularity
     } else {
@@ -11,8 +12,7 @@ process DIAMOND_BLASTP {
 
     input:
     tuple val(meta), path(proteins)
-    path diamond_db
-    val diamond_db_name
+    tuple val(diamond_db_name), path(diamond_db)
 
     output:
     tuple val(meta), path("${diamond_db_name}.matches.tsv"), emit: diamond_result

@@ -1,5 +1,6 @@
 process HMMER_SUMMARY {
 
+    conda "conda-forge::pandas=2.2.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.pandas_singularity
     } else {
@@ -9,27 +10,27 @@ process HMMER_SUMMARY {
     publishDir "${params.outdir}/hmmer", mode: 'copy'
 
     input:
-    tuple val(meta), path(hmmerDomTable)
+    tuple val(meta1), path(hmmerTable)
     path koList
-    tuple val(meta), path(diamond_result)
+    tuple val(meta2), path(diamond_result)
 
     output:
-    tuple val(meta), path('contig_annotation.tsv'), emit: hmmerSummary
+    tuple val(meta2), path('genes_annot_summary.tsv'), emit: hmmerSummary
 
     script:
-    hmmerDomTablePfam = hmmerDomTable.grep(~/.*pfam.*/)
-    hmmerDomTableKegg = hmmerDomTable.grep(~/.*kegg.*/)
-    if(hmmerDomTablePfam.isEmpty()) {
-        hmmerDomTablePfam = hmmerDomTablePfam.join('')
+    hmmerTablePfam = hmmerTable.grep(~/.*pfam.*/)
+    hmmerTableKegg = hmmerTable.grep(~/.*kegg.*/)
+    if(hmmerTablePfam.isEmpty()) {
+        hmmerTablePfam = hmmerTablePfam.join('')
     } else {
-        hmmerDomTablePfam = '-p ' + hmmerDomTablePfam.join('')
+        hmmerTablePfam = '-p ' + hmmerTablePfam.join('')
     }
-    if(hmmerDomTableKegg.isEmpty()) {
-        hmmerDomTableKegg = hmmerDomTableKegg.join('')
+    if(hmmerTableKegg.isEmpty()) {
+        hmmerTableKegg = hmmerTableKegg.join('')
     } else {
-        hmmerDomTableKegg = '-k ' + hmmerDomTableKegg.join('')
+        hmmerTableKegg = '-k ' + hmmerTableKegg.join('')
     }
     """
-    hmmer_summary.py ${hmmerDomTablePfam} ${hmmerDomTableKegg} -l ${koList} -d ${diamond_result}
+    genes_annot_summary.py ${hmmerTablePfam} ${hmmerTableKegg} -l ${koList} -d ${diamond_result}
     """
 }

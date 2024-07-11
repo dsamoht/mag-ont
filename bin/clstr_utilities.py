@@ -1,9 +1,9 @@
+#!/usr/bin/env python
 """Utilities."""
 from __future__ import annotations
 from argparse import ArgumentParser
 from pathlib import Path
 import pickle
-import pandas as pd
 import polars as pl
 
 
@@ -48,23 +48,27 @@ class ClusterSeq:
         with open(self.clstr_file, "r", encoding="UTF-8") as clstr_input:
             index = -1
             for line in clstr_input:
-                rep = False
+                rep = 'False'
                 if line.startswith(">"):
                     current_clstr = f"cluster_{line.split()[1]}"
                 else:
                     index += 1
                     if line.strip().endswith(r"*"):
-                        rep = True
+                        rep = 'True'
                     seq_name, seq = sequence_info[line.split()[2].rstrip(r"...")]
                     clstr_info[index] = seq_name, seq, seq_name.split("|")[0][1:], current_clstr, rep
 
-        seq_info_pd_df = pd.DataFrame.from_dict(clstr_info, orient="index",
-                                   columns=["seq_id", "seq", "source", "cluster", "representative"])
-
-        self.seq_info_df = pl.from_pandas(seq_info_pd_df)
-        del seq_info_pd_df
-        with open(self.output_dir.joinpath("clusters_info_polars.pkl"), "wb") as f_output:
-            pickle.dump(self.seq_info_df, f_output)
+        clstr_info = {str(k):v for k,v in clstr_info.items()}
+        self.seq_info_df = pl.from_dict(clstr_info)
+        self.seq_info_df = self.seq_info_df.transpose(column_names=["seq_id", "seq", "source", "cluster", "representative"])
+        self.seq_info_df = self.seq_info_df.with_columns(pl.col('representative')=='True')
+        self.seq_info_df = self.seq_info_df.rename({"seq_id": "seq_name_fasta"})
+        self.seq_info_df = self.seq_info_df.insert_at_idx(0, self.seq_info_df['seq_name_fasta'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id'))
+        contig_names = self.seq_info_df['seq_id'].str.replace(pattern=r"(_[0-9]*$)", value='')
+        contig_names = contig_names.rename("contigId")
+        self.seq_info_df = self.seq_info_df.insert_at_idx(1, contig_names)
+        output_file = self.output_dir.joinpath(f"clusters_info.tsv")
+        self.seq_info_df.write_csv(output_file, separator='\t')
 
 
     def contiguity_network(self, file: str | Path) -> None:
@@ -117,7 +121,7 @@ class ClusterSeq:
         tsv_dir = self.output_dir.joinpath("tsv/")
         output_file = tsv_dir.joinpath(f"{self.clstr_base_name}.tsv")
 
-        grouped_counts = self.seq_info_df.group_by(["cluster", "source"]).agg(pl.len().alias("count"))
+        grouped_counts = self.seq_info_df.groupby(["cluster", "source"]).agg(pl.count().alias("count"))
         matrix = grouped_counts.pivot(values='count', index='cluster', columns='source').fill_null(0)
         matrix.write_csv(output_file, separator='\t')
 
@@ -134,12 +138,10 @@ class ClusterSeq:
         featurecounts_df = pl.read_csv(featurecounts_table, separator='\t')
         col_featurecounts_df = featurecounts_df.columns
         seq_clust_df = self.seq_info_df
-        seq_clust_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id'))
-        df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on=col_featurecounts_df[0], how="left", coalesce=True)
-
-        tsv_dir = self.output_dir.joinpath("tsv/")
-        output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_abundance.tsv")
+        df_join = seq_clust_df.join(featurecounts_df, left_on="seq_id", right_on=col_featurecounts_df[0], how="left")
         cluster_counts = df_join.pivot(index="cluster", columns="source", values=col_featurecounts_df[1], aggregate_function="sum")
+
+        output_file = self.output_dir.joinpath("clusters_abundance.tsv")
         cluster_counts.write_csv(output_file, separator='\t')
 
 
@@ -154,13 +156,21 @@ class ClusterSeq:
         annotation_df = pl.read_csv(annotation_table, separator='\t')
         col_annotation_df = annotation_df.columns
         seq_clust_df = self.seq_info_df
-        seq_rep_df = seq_clust_df.with_columns(seq_clust_df['seq_id'].str.extract(r"^>(\S*)", group_index=1).alias('seq_id')).filter(pl.col("representative") == True)
-        df_join = seq_rep_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left", coalesce=True)
-        df_join = df_join.select(pl.col("seq_id", "cluster", "^(pfam|kegg|diam)_(name|id|E_value)$"))
+        df_join = seq_clust_df.join(annotation_df, left_on="seq_id", right_on=col_annotation_df[0], how="left")
+        df_join = df_join.filter(pl.col("representative"))
+        df_join = df_join.select(pl.col("^(seq_id|cluster|(.*)_(name|id|E_value))$"))
 
-        tsv_dir = self.output_dir.joinpath("tsv/")
-        output_file = tsv_dir.joinpath(f"{self.clstr_base_name}_annotation.tsv")
+        output_file = self.output_dir.joinpath("clusters_annotation.tsv")
         df_join.write_csv(output_file, separator='\t')
+
+
+    def to_polars(self, tsv_table: str | Path) -> None:
+        """
+        
+        """
+        table = pl.read_csv(tsv_table, separator='\t')
+        with open(self.output_dir.joinpath(f"{tsv_table.split('/')[-1].split('.')[0]}.pkl"), "wb") as f_output:
+            pickle.dump(table, f_output)
 
 
     def _clstr_rep_fasta(self) -> None:
@@ -179,13 +189,15 @@ if __name__ == '__main__':
                                             with software `CD-HIT`.''')
     parser.add_argument('-c', '--clstr', help='''.clstr file (CD-HIT's output)''')
     parser.add_argument('-f', '--fasta', help='''source .faa file (CD-HIT's input)''')
-    parser.add_argument('-o', '--output', help='''output directory''')
+    parser.add_argument('-o', '--output', help='''output directory''', default='./')
     parser.add_argument('-e', '--extract', help='''file containing clusters of interest
                                                    (1 per line) -> output: 1 fasta file
                                                    per cluster.''')
     parser.add_argument('-a', '--abundance', help='''featurecounts abundance table''')
     parser.add_argument('-n', '--annotation', help='''hmmer and diammond annotation in a tsv file
                                                     generated by hmmer_summary.py ''')
+    parser.add_argument('-b', '--binAnnot', help='''bin annotation table''')
+    parser.add_argument('-t', '--contigs2bins', help='''contigs2bins table''')
 
     args = parser.parse_args()
 
@@ -197,3 +209,7 @@ if __name__ == '__main__':
         exp.featurecounts_matrix_from_cdhit(args.abundance)
     if args.annotation:
         exp.cluster_annotation(args.annotation)
+    if args.binAnnot:
+        exp.to_polars(args.binAnnot)
+    if args.contigs2bins:
+        exp.to_polars(args.contigs2bins)

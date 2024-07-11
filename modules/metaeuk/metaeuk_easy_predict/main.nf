@@ -1,5 +1,6 @@
 process METAEUK_EASY_PREDICT {
 
+    conda "bioconda::metaeuk=6.a5d39d9"
     if (workflow.containerEngine == 'singularity') {
         container = params.metaeuk_singularity
     } else {

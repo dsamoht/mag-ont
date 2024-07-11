@@ -1,5 +1,6 @@
 process MINIMAP {
 
+    conda "bioconda::minimap2=2.26"
     if (workflow.containerEngine == 'singularity') {
         container = params.minimap_singularity
     } else {

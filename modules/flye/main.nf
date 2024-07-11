@@ -1,5 +1,6 @@
 process FLYE {
 
+    conda "bioconda::flye=2.9.2"
     if (workflow.containerEngine == 'singularity') {
         container = params.flye_singularity
     } else {
@@ -17,5 +18,6 @@ process FLYE {
     script:
     """
     flye --nano-raw ${rawReads} -o flye --meta --threads ${task.cpus}
+    sed -i 's/>contig_/>${meta['name']}|contig_/' flye/assembly.fasta
     """
 }

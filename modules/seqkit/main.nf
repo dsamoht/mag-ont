@@ -1,5 +1,6 @@
 process SEQKIT {
 
+    conda "bioconda::seqkit=2.5.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.seqkit_singularity
     } else {

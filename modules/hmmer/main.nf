@@ -1,5 +1,6 @@
 process HMMER {
 
+    conda "bioconda::hmmer=3.4"
     if (workflow.containerEngine == 'singularity') {
         container = params.hmmer_singularity
     } else {
@@ -13,11 +14,11 @@ process HMMER {
     tuple val(type), path(profile)
 
     output:
-    tuple val(meta), path("hmmer_${type}.out")
-    tuple val(meta), path("hmmer_dom-table_${type}.txt")
+    tuple val(meta), path("hmmer_table_${type}.txt")
+    //tuple val(meta), path("hmmer_${type}.out")
     
     script:
     """
-    hmmsearch -E 0.001 -o hmmer_${type}.out --domtbl hmmer_dom-table_${type}.txt ${profile} ${genes}
+    hmmsearch -E 0.001 -o /dev/null --tblout hmmer_table_${type}.txt --cpu ${task.cpus - 1} ${profile} ${genes}
     """
 }

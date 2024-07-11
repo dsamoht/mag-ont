@@ -13,6 +13,7 @@ workflow KRAKEN_WF {
     """
     take:
     long_reads
+    short_reads
 
     main:
     //if (params.krakenReads == ""){
@@ -21,7 +22,13 @@ workflow KRAKEN_WF {
     //newest_reads = Channel.watchPath("$projectDir/test_data/*.f*.gz").view()
     //reads = Channel.fromPath("$projectDir/test_data/*.f*.gz")
     //CONCATENATE_FASTQ(newest_reads, reads)
-    KRAKEN(long_reads, params.krakenDB)
+    if (params.longReads != '') {
+        read_type = "long"
+        KRAKEN(long_reads, params.krakenDB, read_type)
+    } else {
+        read_type = "paired"
+        KRAKEN(short_reads, params.krakenDB, read_type)
+    }
     BRACKEN(KRAKEN.out.krakenOutputFile, params.krakenDB)
     KRAKENTOOLS_KRONA(BRACKEN.out.brackenOutputForKrona)
     KRONA(KRAKENTOOLS_KRONA.out)

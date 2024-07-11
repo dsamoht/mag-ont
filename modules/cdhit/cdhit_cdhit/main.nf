@@ -1,5 +1,6 @@
 process CDHIT_CDHIT {
 
+    conda "bioconda::cd-hit=4.8.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.cdhit_singularity
     } else {

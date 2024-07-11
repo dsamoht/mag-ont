@@ -1,5 +1,6 @@
 process BOWTIE {
 
+    conda "bioconda::bowtie2=2.5.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.bowtie_singularity
     } else {
