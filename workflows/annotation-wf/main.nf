@@ -100,11 +100,6 @@ workflow ANNOTATION_WF {
     }
     HMMER_SUMMARY(hmmerTable = hmmerTable, koList = params.koList, diamond_result = diamond)
 
-    if(params.step2_sheet == '') {
-                step2_sheet_ch = Channel.fromPath(params.step2_sheet + 'step2_input_sheet.tsv')
-        } else {
-                step2_sheet_ch = Channel.fromPath(params.step2_sheet)
-        }
-    PREPARE_STEP2(PRODIGAL.out.genesFaa, HMMER_SUMMARY.out.hmmerSummary, FEATURECOUNTS_SUMMARY.out.featurecountsSummary, step2_sheet_ch)
+    PREPARE_STEP2(PRODIGAL.out.genesFaa, HMMER_SUMMARY.out.hmmerSummary, FEATURECOUNTS_SUMMARY.out.featurecountsSummary)
 
 }
