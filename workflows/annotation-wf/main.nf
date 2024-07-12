@@ -37,20 +37,16 @@ workflow ANNOTATION_WF {
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
     genes_bac = PRODIGAL.out.genesFaa.collect()
+    bac_gff = PRODIGAL.out.genesGff
     if (params.metaeuk_db != '') {
         METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
-        genes_euk = METAEUK_EASY_PREDICT.out.euk_proteins
+        METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
+        euk_gff = METAEUK_MODIFY_GFF.out.euk_gff_modif
     } else {
-        genes_euk = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        euk_gff = Channel.empty()
     }
-    METAEUK_MODIFY_GFF(genes_euk)
-    FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
+    gff_ch = bac_gff.mix(euk_gff).groupTuple()
+    FEATURECOUNTS(gff_ch, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
     //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
     //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
