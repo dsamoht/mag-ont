@@ -86,13 +86,8 @@ workflow ANNOTATION_WF {
         HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
         hmmerTable = HMMER.out[0].groupTuple()
     } else {
-        hmmerTable = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        hmmerTable = Channel.fromPath("$projectDir/database/NO_FILE")
+        hmmerTable = diamond.map{ it[0] }.combine(hmmerTable)
     }
     HMMER_SUMMARY(hmmerTable = hmmerTable, koList = params.koList, diamond_result = diamond)
 
