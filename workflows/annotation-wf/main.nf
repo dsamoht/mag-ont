@@ -48,10 +48,13 @@ workflow ANNOTATION_WF {
     gff_ch = bac_gff.mix(euk_gff).groupTuple()
     FEATURECOUNTS(gff_ch, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
-    //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
-    //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
-    DIAMOND_BLASTP(genes_bac, diamond_db)
-    diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
+    if (params.fastaDBs != '' || params.diamondDBs != '') {
+        DIAMOND_BLASTP(genes_bac, diamond_db)
+        diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
+    } else {
+        diamond = Channel.fromPath("$projectDir/database/NO_FILE")
+        diamond = genes_bac.map{ it[0] }.combine(diamond)
+    }
     //CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
@@ -71,13 +74,8 @@ workflow ANNOTATION_WF {
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
         gtdbtk_summary = GTDBTK.out.summary
     } else {
-        gtdbtk_summary = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        gtdbtk_summary = Channel.fromPath("$projectDir/database/NO_FILE")
+        gtdbtk_summary = DASTOOL.out.dasBins.map{ it[0] }.combine(gtdbtk_summary)
     }
     BIN_ANNOTATION(contigs2bins = contig2bin_ch, gtdbtk = gtdbtk_summary, seqkitStats = SEQKIT.out.seqkitStats, checkmStats = CHECKM.out.checkmStats)
 

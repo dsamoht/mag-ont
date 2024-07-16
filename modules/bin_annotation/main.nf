@@ -11,7 +11,7 @@ process BIN_ANNOTATION {
 
     input:
     tuple val(meta), path(contigs2bins)
-    tuple val(meta1), path(gtdbtk)
+    tuple val(meta), path(gtdbtk)
     tuple val(meta), path(seqkitStats)
     tuple val(meta), path(checkmStats)
 

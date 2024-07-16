@@ -37,10 +37,6 @@ Input:
      --outdir PATH: path to output directory
      --longReads PATH: path to raw long reads (compressed or uncompressed)
      --shortReads PATH: path to raw paired-end short reads (compressed or uncompressed)
-     --fastaDBs PATH: path to fasta database(s) for Diamond blastp. To use multiple databases,
-                      use "" and a glob pattern Ex. --fastaDBs "path/*.fasta.gz or
-                      a list Ex. --fastaDBs path/db1.fasta.gz,path/db2.fasta.gz
-     --diamondDBs PATH: path to diamond (.dmnd) database(s) for Diamond blastp. Can be used with or instead of '--fastaDBs'
 
      STEP 2:
      -profile PROFILE(S): local/hpc,docker/singularity
@@ -54,6 +50,9 @@ Optional commands:
      --skipQC: in step 1, skip the quality control step
      --hybridspades: in step 1, use `spades` for hybrid assembly (default `flye`+`medaka`+`polypolish`)
      --sampleName: in step 1, name of the sample, all sample names in step 2 must be unique (default file name)
+     --fastaDBs PATH: path to fasta database(s) for Diamond blastp. To use multiple databases,
+                      use "" and a glob pattern Ex. --fastaDBs "path/*.fasta.gz or a list Ex. --fastaDBs path/db1.fasta.gz,path/db2.fasta.gz
+     --diamondDBs PATH: path to diamond (.dmnd) database(s) for Diamond blastp. Can be used with or instead of '--fastaDBs'
      --hmmProfiles: in step 1, path to hmm profiles. Ex. --hmmProfiles "path/*.hmm.gz" or --hmmProfiles path/Pfam.hmm.gz,path/Kegg.hmm.gz
      --metaeuk_db: in step 1, database used to predict eukaryotic genes with Metaeuk. If empty, do not run Metaeuk
      --gtdbtkDB: in step 1, databse gtdb used for gtdb-tk. If empty, do not run gtdb-tk
@@ -79,9 +78,6 @@ workflow METAGENOMICS_WF {
 
           if (params.longReads == '' && params.shortReads == '') {
                exit 1, "Either 'longReads' or 'shortReads' is required. Please provide at least one using --longReads <path> or --shortReads <path>. Provide both for hybrid assembly."
-          }
-          if (params.fastaDBs == '' && params.diamondDBs == '') {
-               exit 1, "Either 'fastaDBs' or 'diamondDBs' is required. Please provide at least one using --fastaDBs <path> or --diamondDBs <path>."
           }
           if (!params.skipKraken && params.krakenDB == '') {
                exit 1,  "Missing parameter 'krakenDB'. Please provide a kraken database using --krakenDB <path> or skip Kraken using --skipKraken"
