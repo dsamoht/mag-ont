@@ -37,8 +37,9 @@ workflow SETUP_WF {
     }
 
     if(params.fastaDBs != '') {
+        fastaDBsList = params.fastaDBs.split(',') as List
         fasta_db_ch = Channel
-            .fromPath(params.fastaDBs)
+            .fromPath(fastaDBsList)
             .map { db ->
                     def name = db.getName().split('.fasta')[0]
                     return [name, db]
@@ -50,8 +51,9 @@ workflow SETUP_WF {
     }
 
     if(params.diamondDBs != '') {
+        diamondDBsList = params.diamondDBs.split(',') as List
         diamond_db_ch = Channel
-            .fromPath(params.diamondDBs)
+            .fromPath(diamondDBsList)
             .map { db ->
                     def name = db.getName().split('.dmnd')[0]
                     return [name, db]
