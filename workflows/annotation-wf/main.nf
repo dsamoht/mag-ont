@@ -81,10 +81,16 @@ workflow ANNOTATION_WF {
     }
     BIN_ANNOTATION(contigs2bins = contig2bin_ch, gtdbtk = gtdbtk_summary, seqkitStats = SEQKIT.out.seqkitStats, checkmStats = CHECKM.out.checkmStats)
 
-    if(params.profilePfam != '' || params.profileKegg != '') {
-        profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
-        HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
-        hmmerTable = HMMER.out[0].groupTuple()
+    if(params.hmmProfiles != '') {
+        profilesList = params.hmmProfiles.split(',') as List
+        profiles = Channel
+                        .fromPath(profilesList)
+                        .map {profile -> 
+                                def name = profile.getName().split('.hmm')[0]
+                                return [name, profile]
+                        }
+        HMMER(genes = genes_bac, profiles)
+        hmmerTable = HMMER.out.hmmerTable.groupTuple()
     } else {
         hmmerTable = Channel.fromPath("$projectDir/database/NO_FILE")
         hmmerTable = diamond.map{ it[0] }.combine(hmmerTable)
