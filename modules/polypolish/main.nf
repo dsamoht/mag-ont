@@ -1,6 +1,6 @@
 process POLYPOLISH {
 
-    conda "bioconda::polypolish=0.5.0"
+    conda "bioconda::polypolish=0.6.0"
     if (workflow.containerEngine == 'singularity') {
         container = params.polypolish_singularity
     } else {
@@ -19,8 +19,7 @@ process POLYPOLISH {
 
     script:
     """
-    polypolish_insert_filter.py --in1 ${fwdSam} --in2 ${revSam} --out1 filtered_1.sam --out2 filtered_2.sam
-    polypolish ${inputAssembly} filtered_1.sam filtered_2.sam > consensus_polished.fasta
-    sed -i 's/_polypolish//' consensus_polished.fasta
+    polypolish filter --in1 ${fwdSam} --in2 ${revSam} --out1 filtered_1.sam --out2 filtered_2.sam
+    polypolish polish ${inputAssembly} filtered_1.sam filtered_2.sam > consensus_polished.fasta
     """
 }
