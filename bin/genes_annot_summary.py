@@ -3,7 +3,7 @@
 Write an annotation summary table (genes_annot_summary.tsv) with results from hmmer hmmsearch and/or Diammond blastp results.
 
 usage:
-python genes_annot_summmary.py -t [hmmer tables, optional] -l [koList, required with -k] -d [Diammond blastp tsv output, optional]
+python genes_annot_summmary.py -t [hmmer tables, optional] -l [koList, used if hmmsearch was made on Kegg profiles, optional] -d [Diammond blastp tsv output, optional]
 
 output:
 genes_annot_summary.tsv : best annotations for each genes by given inputs

@@ -166,7 +166,7 @@ class ClusterSeq:
 
     def to_polars(self, tsv_table: str | Path) -> None:
         """
-        
+        Write a pickled polars table from tsv file.
         """
         table = pl.read_csv(tsv_table, separator='\t')
         with open(self.output_dir.joinpath(f"{tsv_table.split('/')[-1].split('.')[0]}.pkl"), "wb") as f_output:
