@@ -19,6 +19,10 @@ process HMMER_SUMMARY {
 
     script:
     """
+    if compgen -G "hmmer_table_*.txt" > /dev/null; then
     genes_annot_summary.py -t ${hmmerTable} -l ${koList} -d ${diamond_result}
+    else
+    genes_annot_summary.py -d ${diamond_result}
+    fi
     """
 }

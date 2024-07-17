@@ -90,7 +90,7 @@ workflow ANNOTATION_WF {
         HMMER(genes = genes_bac, profiles)
         hmmerTable = HMMER.out.hmmerTable.groupTuple()
     } else {
-        hmmerTable = Channel.fromPath("$projectDir/database/NO_FILE")
+        hmmerTable = Channel.fromPath("empty_table.txt")
         hmmerTable = diamond.map{ it[0] }.combine(hmmerTable)
     }
     HMMER_SUMMARY(hmmerTable = hmmerTable, koList = params.koList, diamond_result = diamond)
