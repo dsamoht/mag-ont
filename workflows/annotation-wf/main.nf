@@ -22,6 +22,7 @@ include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeu
 include { HMMER                             } from '../../modules/hmmer'
 include { HMMER_SUMMARY                     } from '../../modules/hmmer_summary'
 include { PREPARE_STEP2                     } from '../../modules/prepare_step2'
+include { CONCATENATE                       } from '../../modules/concatenate'
 
 
 workflow ANNOTATION_WF {
@@ -36,12 +37,15 @@ workflow ANNOTATION_WF {
     TIARA(assembly)
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
-    genes_bac = PRODIGAL.out.genesFaa.collect()
+    genes_pred = PRODIGAL.out.genesFaa.collect()
     bac_gff = PRODIGAL.out.genesGff
     if (params.metaeuk_db != '') {
         METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
         METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
-        euk_gff = METAEUK_MODIFY_GFF.out.euk_gff_modif
+        euk_gff = METAEUK_EASY_PREDICT.out.euk_gff
+        genes_bac_euk = PRODIGAL.out.genesFaa.mix(METAEUK_EASY_PREDICT.out.euk_proteins).groupTuple()
+        CONCATENATE(genes_bac_euk, "genes_pred.faa")
+        genes_pred = CONCATENATE.out.concatFile.collect()
     } else {
         euk_gff = Channel.empty()
     }
@@ -49,11 +53,11 @@ workflow ANNOTATION_WF {
     FEATURECOUNTS(gff_ch, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
     if (params.fastaDBs != '' || params.diamondDBs != '') {
-        DIAMOND_BLASTP(genes_bac, diamond_db)
+        DIAMOND_BLASTP(genes_pred, diamond_db)
         diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
     } else {
         diamond = Channel.fromPath("$projectDir/database/NO_FILE")
-        diamond = genes_bac.map{ it[0] }.combine(diamond)
+        diamond = genes_pred.map{ it[0] }.combine(diamond)
     }
     //CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
@@ -87,7 +91,7 @@ workflow ANNOTATION_WF {
                                 def name = profile.getName().split('.hmm')[0]
                                 return [name, profile]
                         }
-        HMMER(genes = genes_bac, profiles)
+        HMMER(genes = genes_pred, profiles)
         hmmerTable = HMMER.out.hmmerTable.groupTuple()
     } else {
         hmmerTable = Channel.fromPath("empty_table.txt")

@@ -17,8 +17,10 @@ ap.add_argument("-p", "--path", required=True)
 args = vars(ap.parse_args())
 
 df_fc = pd.read_csv(args['path'], sep="\t", skiprows=1)
-pos_contig = df_fc['Geneid'].str.split('_').str[1]
-pos_contig = "_" + pos_contig
+pos_contig = df_fc['Geneid'].where(df_fc['Geneid'].str.contains('|', regex=False), '')
+pos_contig = pos_contig.str.split('|').str[0]
+pos_contig = "_" + pos_contig + "_" + df_fc['Geneid'].str.split('_').str[-1]
+pos_contig = pos_contig.str.replace('__', '_', regex=False)
 df_fc.Chr = df_fc.Chr + pos_contig
 df_fc = df_fc.drop(["Geneid", "Start", "End", "Strand",	"Length"], axis=1)
 df_fc = df_fc.rename(columns={"Chr":"geneId"})

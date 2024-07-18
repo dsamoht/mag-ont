@@ -21,13 +21,13 @@ process FEATURECOUNTS {
 
     script:
     if ("${read_type}" == "long") {
-        options = "-L -t CDS -g ID -s 0"
+        options = "-L -t CDS,gene -g ID -s 0"
     } else {
-        options = "-p -t CDS -g ID -s 0"
+        options = "-p -t CDS,gene -g ID -s 0"
     }
     def genes = genes_gff.join(' ')
     """
-    cat ${genes} | grep "CDS" > global_cds.gff 
-    featureCounts ${options} -a global_cds.gff -o featureCounts.txt ${sorted_bam}
+    cat ${genes} | > global.gff 
+    featureCounts ${options} -a global.gff -o featureCounts.txt ${sorted_bam}
     """
 }
