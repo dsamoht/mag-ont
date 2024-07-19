@@ -18,7 +18,7 @@ include { SEQKIT                            } from '../../modules/seqkit'
 include { TIARA                             } from '../../modules/tiara/tiara_tiara'
 include { TIARA_SPLIT_BY_DOMAIN             } from '../../modules/tiara/tiara_split_by_domain'
 include { METAEUK_EASY_PREDICT              } from '../../modules/metaeuk/metaeuk_easy_predict'
-include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeuk_modify_gff'
+include { METAEUK_MODIFY                    } from '../../modules/metaeuk/metaeuk_modify'
 include { HMMER                             } from '../../modules/hmmer'
 include { HMMER_SUMMARY                     } from '../../modules/hmmer_summary'
 include { PREPARE_STEP2                     } from '../../modules/prepare_step2'
@@ -41,9 +41,9 @@ workflow ANNOTATION_WF {
     bac_gff = PRODIGAL.out.genesGff
     if (params.metaeuk_db != '') {
         METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
-        METAEUK_MODIFY_GFF(METAEUK_EASY_PREDICT.out.euk_proteins)
+        METAEUK_MODIFY(METAEUK_EASY_PREDICT.out.euk_proteins)
         euk_gff = METAEUK_EASY_PREDICT.out.euk_gff
-        genes_bac_euk = PRODIGAL.out.genesFaa.mix(METAEUK_EASY_PREDICT.out.euk_proteins).groupTuple()
+        genes_bac_euk = PRODIGAL.out.genesFaa.mix(METAEUK_MODIFY.out.euk_fas_modif).groupTuple()
         CONCATENATE(genes_bac_euk, "genes_pred.faa")
         genes_pred = CONCATENATE.out.concatFile.collect()
     } else {
