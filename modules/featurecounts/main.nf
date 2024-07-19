@@ -27,7 +27,7 @@ process FEATURECOUNTS {
     }
     def genes = genes_gff.join(' ')
     """
-    cat ${genes} | > global.gff 
+    cat ${genes} > global.gff 
     featureCounts ${options} -a global.gff -o featureCounts.txt ${sorted_bam}
     """
 }

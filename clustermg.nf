@@ -82,6 +82,9 @@ workflow METAGENOMICS_WF {
           if (!params.skipKraken && params.krakenDB == '') {
                exit 1,  "Missing parameter 'krakenDB'. Please provide a kraken database using --krakenDB <path> or skip Kraken using --skipKraken"
           }
+          if (params.sampleName.contains("|")) {
+               exit 1, "'sampleName' can't contain the character '|'"
+          }
 
 
           if (params.onlyKraken) {

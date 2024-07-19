@@ -12,6 +12,9 @@ workflow SETUP_WF {
                             meta.name = params.sampleName
                         } else {
                             meta.name           = read.getName().tokenize('.')[0]
+                            if (meta.name.contains("|")) {
+                                exit 1, "Input file name can't contain the character '|'"
+                            }
                         }
                         return [ meta, read ]
                 }
@@ -29,6 +32,9 @@ workflow SETUP_WF {
                                 meta.name = params.sampleName
                             } else {
                                 meta.name           = id
+                                if (meta.name.contains("|")) {
+                                    exit 1, "Input file name can't contain the character '|'"
+                                }
                             }
                             return [ meta, read ]
                     }

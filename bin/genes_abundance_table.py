@@ -18,13 +18,18 @@ args = vars(ap.parse_args())
 
 df_fc = pd.read_csv(args['path'], sep="\t", skiprows=1)
 pos_contig = df_fc['Geneid'].where(df_fc['Geneid'].str.contains('|', regex=False), '')
-pos_contig = pos_contig.str.split('|').str[0]
-pos_contig = "_" + pos_contig + "_" + df_fc['Geneid'].str.split('_').str[-1]
-pos_contig = pos_contig.str.replace('__', '_', regex=False)
+def extract_elements(lst):
+    if len(lst) >= 2:
+        return (lst[0], lst[-2])
+    else:
+        return ""
+pos_contig = pos_contig.str.split('|').apply(extract_elements).str.join('_')
+pos_contig = "_" + pos_contig + df_fc['Geneid'].where(pos_contig=="", "").str.split("_").str[-1]
 df_fc.Chr = df_fc.Chr + pos_contig
 df_fc = df_fc.drop(["Geneid", "Start", "End", "Strand",	"Length"], axis=1)
 df_fc = df_fc.rename(columns={"Chr":"geneId"})
 
+## Sum all counts columns for each geneId
 # if df_fc.shape[1] > 2:
 #     abund = df_fc.sum(axis=1, numeric_only=True)
 #     df_fc.insert(1, column="Abundance", value=abund)
