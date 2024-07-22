@@ -1,5 +1,6 @@
 process CHECKM {
 
+    conda "bioconda::checkm-genome=1.2.2"
     if (workflow.containerEngine == 'singularity') {
         container = params.checkm_singularity
     } else {
@@ -11,10 +12,10 @@ process CHECKM {
     publishDir "${params.outdir}/checkm", mode: 'copy'
 
     input:
-    path dasBins, stageAs: "input_bins/*"
+    tuple val(meta), path(dasBins, stageAs: "input_bins/*")
 
     output:
-    path "checkm_qa.tsv", emit: checkmStats, optional: true
+    tuple val(meta), path("checkm_qa.tsv"), emit: checkmStats, optional: true
 
     script:
     """

@@ -5,10 +5,10 @@ process MAXBIN_ADJUST_EXT {
     publishDir "${params.outdir}/maxbin", mode: 'copy'
 
     input:
-    path maxbinBins
+    tuple val(meta), path(maxbinBins)
 
     output:
-    path "*maxbin-bin*.fa", emit: renamed_maxbinBins, optional: true
+    tuple val(meta), path("*maxbin-bin*.fa"), emit: renamed_maxbinBins, optional: true
 
     script:
     """

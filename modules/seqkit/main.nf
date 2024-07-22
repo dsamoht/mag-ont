@@ -1,5 +1,6 @@
 process SEQKIT {
 
+    conda "bioconda::seqkit=2.5.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.seqkit_singularity
     } else {
@@ -11,10 +12,10 @@ process SEQKIT {
     publishDir "${params.outdir}/seqkit/", mode: 'copy'
 
     input:
-    path bins
+    tuple val(meta), path(bins)
 
     output:
-    path 'stats.tsv', emit: seqkitStats
+    tuple val(meta), (path 'stats.tsv'), emit: seqkitStats
 
     script:
     """

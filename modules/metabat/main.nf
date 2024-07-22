@@ -1,5 +1,6 @@
 process METABAT {
 
+    conda "bioconda::metabat2=2.15"
     if (workflow.containerEngine == 'singularity') {
         container = params.metabat_singularity
     } else {
@@ -11,12 +12,12 @@ process METABAT {
     publishDir "${params.outdir}/metabat", mode: 'copy'
 
     input:
-    path assembly
-    path sorted_bam
+    tuple val(meta), path(assembly)
+    tuple val(meta), path(sorted_bam)
 
     output:
-    path "*metabat-bin*.fa", emit: metabatBins, optional: true
-    path "depth.txt", emit: metabatDepth
+    tuple val(meta), path("*metabat-bin*.fa"), emit: metabatBins, optional: true
+    tuple val(meta), path("depth.txt"), emit: metabatDepth
 
     script:
     """

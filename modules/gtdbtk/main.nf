@@ -1,5 +1,6 @@
 process GTDBTK {
 
+    conda "bioconda::gtdbtk=2.3.2"
     if (workflow.containerEngine == 'singularity') {
         container = params.gtdbtk_singularity
     } else {
@@ -11,11 +12,11 @@ process GTDBTK {
     publishDir "${params.outdir}/gtdbtk", mode: 'copy'
 
     input:
-    path "bins/*"
+    tuple val(meta), path("bins/*")
     path gtdbtk_db
 
     output:
-    path "gtdbtk.*.summary.tsv", emit: summary
+    tuple val(meta), path("gtdbtk.*.summary.tsv"), emit: summary
 
     script:
     """

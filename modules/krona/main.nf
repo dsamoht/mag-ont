@@ -1,5 +1,6 @@
 process KRONA {
 
+    conda "bioconda::krona=2.8.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.krona_singularity
     } else {
@@ -10,10 +11,10 @@ process KRONA {
     errorStrategy 'ignore'
 
     input:
-    path krakentoolsOutput
+    tuple val(meta), path(krakentoolsOutput)
 
     output:
-    path 'krona.html', emit: kronaPlotHtml, optional: true
+    tuple val(meta), path('krona.html'), emit: kronaPlotHtml, optional: true
 
     script:
     """

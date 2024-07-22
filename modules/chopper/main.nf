@@ -1,5 +1,6 @@
 process CHOPPER {
 
+    conda "bioconda::chopper=0.7.0"
     if (workflow.containerEngine == 'singularity') {
         container = params.chopper_singularity
     } else {
@@ -11,13 +12,13 @@ process CHOPPER {
     publishDir "${params.outdir}/chopper", mode: 'copy'
 
     input:
-    path raw_reads
+    tuple val(meta), path(raw_reads)
 
     output:
-    path "qc_reads.fastq.gz", emit: qc_reads
+    tuple val(meta), path("qc_reads.fastq.gz"), emit: qc_reads
 
     script:
     """
-    zcat ${raw_reads} | chopper --headcrop 40 -l 500 -q 10 --threads ${task.cpus} | gzip > qc_reads.fastq.gz
+    zcat ${raw_reads} | chopper --headcrop 40 --threads ${task.cpus} | chopper -l 500 --threads ${task.cpus} | chopper -q 10 --threads ${task.cpus} | gzip > qc_reads.fastq.gz
     """
 }

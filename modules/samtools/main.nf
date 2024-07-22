@@ -1,5 +1,6 @@
 process SAMTOOLS {
 
+    conda "bioconda::samtools=1.18"
     if (workflow.containerEngine == 'singularity') {
         container = params.samtools_singularity
     } else {
@@ -9,11 +10,11 @@ process SAMTOOLS {
     publishDir "${params.outdir}/samtools", mode: 'copy'
 
     input:
-    path samFile
+    tuple val(meta), path(samFile)
     val origin
 
     output:
-    path '*.map.sorted.bam', emit: bamFile
+    tuple val(meta), path('*.map.sorted.bam'), emit: bamFile
 
     script:
     """

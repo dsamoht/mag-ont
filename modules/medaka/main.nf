@@ -1,5 +1,6 @@
 process MEDAKA {
 
+    conda "bioconda::medaka=1.11.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.medaka_singularity
     } else {
@@ -9,11 +10,11 @@ process MEDAKA {
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    path rawReads
-    path flyeAssembly
+    tuple val(meta), path(rawReads)
+    tuple val(meta), path(flyeAssembly)
 
     output:
-    path '*/consensus.fasta', emit: medakaOutFile
+    tuple val(meta), path('*/consensus.fasta'), emit: medakaOutFile
 
     script:
     """

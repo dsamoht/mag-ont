@@ -1,5 +1,6 @@
 process MAXBIN {
 
+    conda "bioconda::maxbin2=2.2.7"
     if (workflow.containerEngine == 'singularity') {
         container = params.maxbin_singularity
     } else {
@@ -8,12 +9,12 @@ process MAXBIN {
     errorStrategy 'ignore'
 
     input:
-    path medakaOutFile
-    path metabatDepth
+    tuple val(meta), path(medakaOutFile)
+    tuple val(meta), path(metabatDepth)
 
     output:
-    path "*maxbin-bin*.fa*", emit: maxbinBins, optional: true
-    path "abundances.txt", emit: maxbinAbundance
+    tuple val(meta), path("*maxbin-bin*.fa*"), emit: maxbinBins, optional: true
+    tuple val(meta), path("abundances.txt"), emit: maxbinAbundance
 
     script:
     """

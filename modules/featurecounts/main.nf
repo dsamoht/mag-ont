@@ -1,5 +1,6 @@
 process FEATURECOUNTS {
 
+    conda "bioconda::subread=2.0.1"
     if (workflow.containerEngine == 'singularity') {
         container = params.subread_singularity
     } else {
@@ -10,16 +11,23 @@ process FEATURECOUNTS {
     publishDir "${params.outdir}/featurecounts", mode: 'copy'
 
     input:
-    path genesGff
-    path sorted_bam
+    tuple val(meta), path(genes_gff)
+    tuple val(meta), path(sorted_bam)
+    val read_type
 
     output:
-    path "*featureCounts.txt", emit: counts
-    path "*featureCounts.txt.summary", emit: summary
+    tuple val(meta), path("*featureCounts.txt"), emit: counts
+    tuple val(meta), path("*featureCounts.txt.summary"), emit: summary
 
     script:
+    if ("${read_type}" == "long") {
+        options = "-L -t CDS,gene -g ID -s 0"
+    } else {
+        options = "-p -t CDS,gene -g ID -s 0"
+    }
+    def genes = genes_gff.join(' ')
     """
-    featureCounts -L -O --largestOverlap -t CDS -g ID -s 0 -a ${genesGff} -o featureCounts.txt ${sorted_bam}
+    cat ${genes} > global.gff 
+    featureCounts ${options} -a global.gff -o featureCounts.txt ${sorted_bam}
     """
 }
-

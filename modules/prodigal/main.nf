@@ -1,5 +1,6 @@
 process PRODIGAL {
 
+    conda "bioconda::prodigal=2.6.3"
     if (workflow.containerEngine == 'singularity') {
         container = params.prodigal_singularity
     } else {
@@ -9,15 +10,16 @@ process PRODIGAL {
     publishDir "${params.outdir}/prodigal/", mode: 'copy'
 
     input:
-    path assembly
+    tuple val(meta), path(assembly)
 
     output:
-    path 'genes.gff', emit: genesGff
-    path 'genes.faa', emit: genesFaa
-    path 'genes.fna', emit: genesFna
+    tuple val(meta), path('genes_cds.gff'), emit: genesGff
+    tuple val(meta), path('genes.faa'), emit: genesFaa
+    tuple val(meta), path('genes.fna'), emit: genesFna
 
     script:
     """
     prodigal -i ${assembly} -f gff -o genes.gff -a genes.faa -d genes.fna -p meta
+    grep "CDS" genes.gff > genes_cds.gff
     """
 }

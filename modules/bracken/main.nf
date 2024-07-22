@@ -1,5 +1,6 @@
 process BRACKEN {
 
+    conda "bioconda::bracken=2.9"
     if (workflow.containerEngine == 'singularity') {
         container = params.bracken_singularity
     } else {
@@ -11,13 +12,13 @@ process BRACKEN {
     errorStrategy 'ignore'
 
     input:
-    path krakenOutputFile
+    tuple val(meta), path(krakenOutputFile)
     path db
 
     output:
-    path 'tax.bracken', emit: brackenOutputFile, optional: true
-    path 'tax_bracken_species.kraken', emit: brackenOutputForKrona, optional: true
-    path 'krona.html', emit: kronaPlotHtml, optional: true
+    tuple val(meta), path('tax.bracken'), emit: brackenOutputFile, optional: true
+    tuple val(meta), path('tax_bracken_species.kraken'), emit: brackenOutputForKrona, optional: true
+    tuple val(meta), path('krona.html'), emit: kronaPlotHtml, optional: true
 
     script:
     """
