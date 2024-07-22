@@ -34,7 +34,7 @@ nextflow run metagenomics-wf.nf -profile {docker,singularity},test
 ```
 __Run on your data__:  
 ```
-nextflow run metagenomics-wf.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
+nextflow run metagenomics-wf.nf -profile {docker,singularity},{local,hpc} --longReads sample.fastq.gz --outdir results/
 ```
 
 ## Acknowledgement
