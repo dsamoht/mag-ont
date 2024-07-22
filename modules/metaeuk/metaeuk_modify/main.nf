@@ -13,12 +13,10 @@ process METAEUK_MODIFY {
     tuple val(meta), path(euk_fas)
 
     output:
-    tuple val(meta), path("euk_genes_modif.gff"), emit: euk_gff_modif
     tuple val(meta), path("euk_genes_modif.fas"), emit: euk_fas_modif
 
     script:
     """
-    modify_metaeuk_gff.py -f ${euk_fas} -g euk_genes_modif.gff
     modify_metaeuk_fasta.py -f ${euk_fas} -o euk_genes_modif.fas
     """
 }
