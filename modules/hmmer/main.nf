@@ -11,14 +11,14 @@ process HMMER {
 
     input:
     tuple val(meta), path(genes)
-    tuple val(type), path(profile)
+    tuple val(name), path(profile)
 
     output:
-    tuple val(meta), path("hmmer_table_${type}.txt")
+    tuple val(meta), path("hmmer_table_${name}.txt"), emit: hmmerTable
     //tuple val(meta), path("hmmer_${type}.out")
     
     script:
     """
-    hmmsearch -E 0.001 -o /dev/null --tblout hmmer_table_${type}.txt --cpu ${task.cpus - 1} ${profile} ${genes}
+    hmmsearch -E 0.001 -o /dev/null --tblout hmmer_table_${name}.txt --cpu ${task.cpus - 1} ${profile} ${genes}
     """
 }

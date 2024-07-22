@@ -3,7 +3,7 @@
 Concatenate multiple tsv files
 
 usage:
-python concatenate_tsv.py -i [paths to tsv files, required] -o [output file path and name, required]
+python concatenate_tsv.py -i [paths to tsv files, required] -o [output file path, required]
 
 output:
 Single tsv file

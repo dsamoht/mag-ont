@@ -11,8 +11,7 @@ process FEATURECOUNTS {
     publishDir "${params.outdir}/featurecounts", mode: 'copy'
 
     input:
-    tuple val(meta), path(prodigal_genes_gff)
-    tuple val(meta1), path(metaeuk_genes_gff)
+    tuple val(meta), path(genes_gff)
     tuple val(meta), path(sorted_bam)
     val read_type
 
@@ -22,12 +21,13 @@ process FEATURECOUNTS {
 
     script:
     if ("${read_type}" == "long") {
-        options = "-L -t CDS -g ID -s 0"
+        options = "-L -t CDS,gene -g ID -s 0"
     } else {
-        options = "-p -t CDS -g ID -s 0"
+        options = "-p -t CDS,gene -g ID -s 0"
     }
+    def genes = genes_gff.join(' ')
     """
-    cat ${prodigal_genes_gff} ${metaeuk_genes_gff} | grep "CDS" > global_cds.gff 
-    featureCounts ${options} -a global_cds.gff -o featureCounts.txt ${sorted_bam}
+    cat ${genes} > global.gff 
+    featureCounts ${options} -a global.gff -o featureCounts.txt ${sorted_bam}
     """
 }

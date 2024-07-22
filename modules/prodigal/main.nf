@@ -13,12 +13,13 @@ process PRODIGAL {
     tuple val(meta), path(assembly)
 
     output:
-    tuple val(meta), path('genes.gff'), emit: genesGff
+    tuple val(meta), path('genes_cds.gff'), emit: genesGff
     tuple val(meta), path('genes.faa'), emit: genesFaa
     tuple val(meta), path('genes.fna'), emit: genesFna
 
     script:
     """
     prodigal -i ${assembly} -f gff -o genes.gff -a genes.faa -d genes.fna -p meta
+    grep "CDS" genes.gff > genes_cds.gff
     """
 }

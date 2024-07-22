@@ -10,27 +10,19 @@ process HMMER_SUMMARY {
     publishDir "${params.outdir}/hmmer", mode: 'copy'
 
     input:
-    tuple val(meta1), path(hmmerTable)
+    tuple val(meta), path(hmmerTable)
     path koList
-    tuple val(meta2), path(diamond_result)
+    tuple val(meta), path(diamond_result)
 
     output:
-    tuple val(meta2), path('genes_annot_summary.tsv'), emit: hmmerSummary
+    tuple val(meta), path('genes_annot_summary.tsv'), emit: hmmerSummary
 
     script:
-    hmmerTablePfam = hmmerTable.grep(~/.*pfam.*/)
-    hmmerTableKegg = hmmerTable.grep(~/.*kegg.*/)
-    if(hmmerTablePfam.isEmpty()) {
-        hmmerTablePfam = hmmerTablePfam.join('')
-    } else {
-        hmmerTablePfam = '-p ' + hmmerTablePfam.join('')
-    }
-    if(hmmerTableKegg.isEmpty()) {
-        hmmerTableKegg = hmmerTableKegg.join('')
-    } else {
-        hmmerTableKegg = '-k ' + hmmerTableKegg.join('')
-    }
     """
-    genes_annot_summary.py ${hmmerTablePfam} ${hmmerTableKegg} -l ${koList} -d ${diamond_result}
+    if compgen -G "hmmer_table_*.txt" > /dev/null; then
+    genes_annot_summary.py -t ${hmmerTable} -l ${koList} -d ${diamond_result}
+    else
+    genes_annot_summary.py -d ${diamond_result}
+    fi
     """
 }

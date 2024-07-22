@@ -3,10 +3,11 @@
 Join the gtdbtk taxonomic classification of the bins with the contig ID of each contig inside those bins.
 
 usage:
-python annotate_bin.py -c [path to contig2bins.tsv, required] -g [path to gtdtk.tsv, optional] -o [output file path and name, optional]
+python annotate_bin.py -b [path to contig2bins.tsv, required] -g [path to gtdtk.tsv, optional] -s [path to seqkit tsv output, optional] -c [path to checkm tsv output, optional] -o [output directory path, default current directory]
 
 output:
-contig_taxo_annot.tsv : gtdbtk taxonomic classification for each binned contig
+contigs2bins.tsv : contig2bins tsv file with all binned contigs and their associated binId
+bin_annotation.tsv : summary of gtdb-tk, checkm and seqkit annotation for each bin
 """
 import pandas as pd
 import argparse

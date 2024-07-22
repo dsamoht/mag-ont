@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-Write an annotation summary table (genes_annot_summary.tsv) with results from hmmer using Pfam and/or Kegg Ortholog profiles and/or Diammond blastp results.
+Write an annotation summary table (genes_annot_summary.tsv) with results from hmmer hmmsearch and/or Diammond blastp results.
 
 usage:
-python genes_annot_summmary.py -p [Pfam hmmer table, optional] -k [Kegg hmmer table, optional] -l [koList, required with -k] -d [Diammond blastp tsv output, optional]
+python genes_annot_summmary.py -t [hmmer tables, optional] -l [koList, used if hmmsearch was made on Kegg profiles, optional] -d [Diammond blastp tsv output, optional]
 
 output:
 genes_annot_summary.tsv : best annotations for each genes by given inputs
@@ -13,8 +13,7 @@ import os
 import argparse
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-p", "--pfamPath", required=False)
-ap.add_argument("-k", "--keggPath", required=False)
+ap.add_argument("-t", "--hmmerTable", required=False, nargs='+')
 ap.add_argument("-l", "--koList", required=False)
 ap.add_argument("-d", "--diamPath", required=False, nargs='+')
 args = vars(ap.parse_args())
@@ -27,48 +26,35 @@ namesList = ["geneId", "accession_target",
                     "rep", "inc"]
 
 
-# Pfam
-df_pfam = pd.DataFrame(columns=["geneId"], dtype=float)
-if args['pfamPath'] != None:
-    with open(args['pfamPath'], 'r') as fp:
-        lines = len(fp.readlines())
-    if lines > 13:
-        df_pfam = pd.read_csv(args['pfamPath'], sep=" ", skiprows=3, skipfooter=10, header=None,
-                        skipinitialspace=True, usecols=list(range(0, 18)),
-                        names=namesList, na_values="-", engine="python")
-        df_pfam = df_pfam.sort_values(by="full_E_value")
-        df_pfam = df_pfam.drop_duplicates(subset=["geneId"], keep="first")
-        df_pfam = df_pfam.iloc[:,[0,2,3,4]]
-        df_pfam.columns = ["geneId", "pfam_name", "pfam_id", "pfam_E_value"]
-
-
-# Kegg
-df_kegg = pd.DataFrame(columns=["geneId"], dtype=float)
-if args['keggPath'] != None:
-    with open(args['keggPath'], 'r') as fp:
-        lines = len(fp.readlines())
-    if lines > 13:
-        def swap_columns(df, col1, col2):
-            col_list = list(df.columns)
-            x, y = col_list.index(col1), col_list.index(col2)
-            col_list[y], col_list[x] = col_list[x], col_list[y]
-            df = df[col_list]
-            return df
-
-        ko_list = pd.read_csv(args['koList'], sep="\t")
-        df_kegg = pd.read_csv(args['keggPath'], sep=" ", skiprows=3, skipfooter=10, header=None,
-                        skipinitialspace=True, usecols=list(range(0, 18)),
-                        na_values="-", engine="python")
-        df_kegg = swap_columns(df_kegg, 2, 3)
-        df_kegg.columns = namesList
-        df_kegg = pd.merge(left=df_kegg, right=ko_list.iloc[:,[0, 11]], left_on="accession_query", right_on="knum")
-        df_kegg.query_name = df_kegg.definition
-        df_kegg = df_kegg.drop(["knum", "definition"], axis=1)
-        df_kegg = df_kegg.sort_values(by="full_E_value")
-        df_kegg = df_kegg.drop_duplicates(subset=["geneId"], keep="first")
-        df_kegg = df_kegg.iloc[:,[0,2,3,4]]
-        df_kegg.columns = ["geneId", "kegg_name", "kegg_id", "kegg_E_value"]
-        
+# Hmmer
+df_hmmer = pd.DataFrame(columns=["geneId"], dtype=float)
+if args['hmmerTable'] != None:
+    for i in args['hmmerTable']:
+        with open(i, 'r') as file:
+            lines = len(file.readlines())
+        if lines > 13:
+            df_table = pd.read_csv(i, sep=" ", skiprows=3, skipfooter=10, header=None,
+                            skipinitialspace=True, usecols=list(range(0, 18)),
+                            na_values="-", engine="python")
+            if df_table[2].str.fullmatch(r'K[0-9]{5}').all() and df_table[3].isna().all():
+                def swap_columns(df, col1, col2):
+                    col_list = list(df.columns)
+                    x, y = col_list.index(col1), col_list.index(col2)
+                    col_list[y], col_list[x] = col_list[x], col_list[y]
+                    df = df[col_list]
+                    return df
+                df_table = swap_columns(df_table, 2, 3)
+                if args['koList'] != None:
+                    ko_list = pd.read_csv(args['koList'], sep="\t")
+                    df_table = pd.merge(left=df_table, right=ko_list.iloc[:,[0, 11]], left_on=2, right_on="knum")
+                    df_table.insert(2, 'name', df_table.pop('definition'))
+                    df_table = df_table.drop([3, "knum"], axis=1)
+            df_table = df_table.iloc[:,[0,2,3,4]]
+            table_name = i.split(sep='hmmer_table_')[-1].split(sep='.txt')[0]
+            df_table.columns = ["geneId", f"{table_name}_name", f"{table_name}_id", f"{table_name}_E_value"]
+            df_table = df_table.sort_values(by=f"{table_name}_E_value")
+            df_table = df_table.drop_duplicates(subset=["geneId"], keep="first")
+            df_hmmer = pd.merge(left=df_hmmer, right=df_table, left_on="geneId", right_on="geneId", how="outer")
 
 
 # Diamond
@@ -85,9 +71,6 @@ if args['diamPath'] != None:
             df_diamond = pd.merge(left=df_diamond, right=df_db, left_on="geneId", right_on="geneId", how="outer")
 
 
-
 # Merge
-df_annot = pd.merge(left=df_pfam, right=df_kegg, left_on="geneId", right_on="geneId", how="outer")
-df_annot = pd.merge(left=df_annot, right=df_diamond, left_on="geneId", right_on="geneId", how="outer")
-df_annot.insert(0, 'geneId', df_annot.pop('geneId'))
+df_annot = pd.merge(left=df_hmmer, right=df_diamond, left_on="geneId", right_on="geneId", how="outer")
 df_annot.to_csv("genes_annot_summary.tsv", sep="\t", index=False)

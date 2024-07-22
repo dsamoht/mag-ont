@@ -18,10 +18,11 @@ include { SEQKIT                            } from '../../modules/seqkit'
 include { TIARA                             } from '../../modules/tiara/tiara_tiara'
 include { TIARA_SPLIT_BY_DOMAIN             } from '../../modules/tiara/tiara_split_by_domain'
 include { METAEUK_EASY_PREDICT              } from '../../modules/metaeuk/metaeuk_easy_predict'
-include { METAEUK_MODIFY_GFF                } from '../../modules/metaeuk/metaeuk_modify_gff'
+include { METAEUK_MODIFY                    } from '../../modules/metaeuk/metaeuk_modify'
 include { HMMER                             } from '../../modules/hmmer'
 include { HMMER_SUMMARY                     } from '../../modules/hmmer_summary'
 include { PREPARE_STEP2                     } from '../../modules/prepare_step2'
+include { CONCATENATE                       } from '../../modules/concatenate'
 
 
 workflow ANNOTATION_WF {
@@ -36,26 +37,28 @@ workflow ANNOTATION_WF {
     TIARA(assembly)
     TIARA_SPLIT_BY_DOMAIN(TIARA.out, assembly)
     PRODIGAL(TIARA_SPLIT_BY_DOMAIN.out.bac_contigs)
-    genes_bac = PRODIGAL.out.genesFaa.collect()
+    genes_pred = PRODIGAL.out.genesFaa.collect()
+    bac_gff = PRODIGAL.out.genesGff
     if (params.metaeuk_db != '') {
         METAEUK_EASY_PREDICT(TIARA_SPLIT_BY_DOMAIN.out.euk_contigs, params.metaeuk_db)
-        genes_euk = METAEUK_EASY_PREDICT.out.euk_proteins
+        METAEUK_MODIFY(METAEUK_EASY_PREDICT.out.euk_proteins)
+        euk_gff = METAEUK_EASY_PREDICT.out.euk_gff
+        genes_bac_euk = PRODIGAL.out.genesFaa.mix(METAEUK_MODIFY.out.euk_fas_modif).groupTuple()
+        CONCATENATE(genes_bac_euk, "genes_pred.faa")
+        genes_pred = CONCATENATE.out.concatFile.collect()
     } else {
-        genes_euk = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        euk_gff = Channel.empty()
     }
-    METAEUK_MODIFY_GFF(genes_euk)
-    FEATURECOUNTS(PRODIGAL.out.genesGff, METAEUK_MODIFY_GFF.out, sorted_bam, read_type)
+    gff_ch = bac_gff.mix(euk_gff).groupTuple()
+    FEATURECOUNTS(gff_ch, sorted_bam, read_type)
     FEATURECOUNTS_SUMMARY(FEATURECOUNTS.out.counts)
-    //mibig_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/mibig_prot_seqs_3.1.fasta")
-    //mibig_dmnd_path = Channel.fromPath("/Users/thomas/Desktop/mag-ont/database/mibig.dmnd")
-    DIAMOND_BLASTP(genes_bac, diamond_db)
-    diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
+    if (params.fastaDBs != '' || params.diamondDBs != '') {
+        DIAMOND_BLASTP(genes_pred, diamond_db)
+        diamond = DIAMOND_BLASTP.out.diamond_result.groupTuple()
+    } else {
+        diamond = Channel.fromPath("$projectDir/database/NO_FILE")
+        diamond = genes_pred.map{ it[0] }.combine(diamond)
+    }
     //CDHIT_2d(PRODIGAL.out.genesFaa, params.mibigDB, "mibig")
     METABAT(assembly, sorted_bam)
     MAXBIN(assembly, METABAT.out.metabatDepth)
@@ -75,28 +78,24 @@ workflow ANNOTATION_WF {
         GTDBTK(DASTOOL.out.dasBins, params.gtdbtkDB)
         gtdbtk_summary = GTDBTK.out.summary
     } else {
-        gtdbtk_summary = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        gtdbtk_summary = Channel.fromPath("$projectDir/database/NO_FILE")
+        gtdbtk_summary = DASTOOL.out.dasBins.map{ it[0] }.combine(gtdbtk_summary)
     }
     BIN_ANNOTATION(contigs2bins = contig2bin_ch, gtdbtk = gtdbtk_summary, seqkitStats = SEQKIT.out.seqkitStats, checkmStats = CHECKM.out.checkmStats)
 
-    if(params.profilePfam != '' || params.profileKegg != '') {
-        profiles = Channel.of(["pfam", params.profilePfam], ["kegg", params.profileKegg])
-        HMMER(genes = genes_bac, profiles.filter{ it.count('') == 0 })
-        hmmerTable = HMMER.out[0].groupTuple()
+    if(params.hmmProfiles != '') {
+        profilesList = params.hmmProfiles.split(',') as List
+        profiles = Channel
+                        .fromPath(profilesList)
+                        .map {profile -> 
+                                def name = profile.getName().split('.hmm')[0]
+                                return [name, profile]
+                        }
+        HMMER(genes = genes_pred, profiles)
+        hmmerTable = HMMER.out.hmmerTable.groupTuple()
     } else {
-        hmmerTable = Channel
-            .fromPath("$projectDir/database/NO_FILE")
-            .map { read ->
-                        def meta = [:]
-                        meta.name           = "no_name"
-                        return [ meta, read ]
-                }
+        hmmerTable = Channel.fromPath("empty_table.txt")
+        hmmerTable = diamond.map{ it[0] }.combine(hmmerTable)
     }
     HMMER_SUMMARY(hmmerTable = hmmerTable, koList = params.koList, diamond_result = diamond)
 
