@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Modify header of metaeuk fasta output
+Modify names of sequences in metaeuk fasta output
 
 usage:
-python modify_metaeuk_fasta.py
+python modify_metaeuk_fasta.py -f [metaeuk fasta output, required] -o [output file path, required]
 
 output:
-
+<output> fasta file with renamed sequences names
 """
 import argparse
 
