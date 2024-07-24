@@ -8,7 +8,7 @@ This is a two-steps pipeline:
 - __step 2__: clustering of metagenomes based on gene families
 
 
-![alt text](/img/mag-ont_schema.png)
+![alt text](img/clustermg_schema.png)
 
 The pipeline supports paired-end reads (`megahit` assembly), long reads (`flye` assembly) or both (`spades` or `flye + polypolish` assembly)
 
