@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
+Sample a fasta file with a corresponding file of headers.
+
 usage:
 python fasta_sampler.py [FASTA] [HEADERS] > [SAMPLED_FASTA]
+
+output:
+[SAMPLED_FASTA] : fasta file containing sequences in [HEADERS]
 """
 
 import sys
