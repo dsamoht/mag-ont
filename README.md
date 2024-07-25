@@ -4,25 +4,22 @@
 
 # Introduction
 This is a two-steps pipeline:
-- __step 1__: assembly and annotation of individual metagenome
-- __step 2__: clustering of metagenomes based on gene families
+- __step 1__ : sample-wise assembly and annotation of individual metagenome
+- __step 2__ : clustering of annotated metagenomes from __step 1__ based on gene families
 
 
 ![alt text](img/clustermg_schema.png)
-
-The pipeline supports paired-end reads (`megahit` assembly), long reads (`flye` assembly) or both (`spades` or `flye + polypolish` assembly)
 
 ## Dependencies
 - __Software :__  
   - [Nextflow](https://www.nextflow.io/)  
   - [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
 
-- __Database :__  
-  - [COG database](https://ftp.ncbi.nih.gov/pub/COG/COG2020/data/cog-20.fa.gz)
+- __Database :__
+  - Reference proteome(s) in fasta format (i.e. [COG](https://ftp.ncbi.nih.gov/pub/COG/COG2020/data/cog-20.fa.gz), [UniRef100](https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref100/uniref100.fasta.gz), etc.)
   - [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)
-  -  [KEGG profiles](https://www.genome.jp/ftp/db/kofam/profiles.tar.gz) and [KO list](https://www.genome.jp/ftp/db/kofam/ko_list.gz)
+  - HMM profiles databases ([KEGG profiles](https://www.genome.jp/ftp/db/kofam/profiles.tar.gz), [Pfam database](https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz), etc.)
   - A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
-  - [Pfam database](https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz)
 
 - __Edit__ these lines in *nextflow.config* file:  
   ```
