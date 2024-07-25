@@ -23,25 +23,40 @@ This is a two-steps pipeline:
 
 - __Edit__ these lines in *nextflow.config* file:  
   ```
-  cogDB = '/path/to/extracted/cog/database'
+  fastaDBs = '/path/to/extracted/proteome/database'
   gtdbtkDB = '/path/to/extracted/gtdbtk/database'
-  keggProfiles = '/path/to/extracted/kegg/profiles'  
+  hmmProfiles = '/path/to/extracted/hmm/profiles'  
   koList = '/path/to/extracted/ko/list'   
   krakenDB = '/path/to/extracted/kraken2/database'
-  pfamDB = '/path/to/extracted/pfam/database'
   ```
 ## How to run the pipeline
 __Test your setup and download the containers for off-line use (run once):__
 ```
-nextflow run metagenomics-wf.nf \\
+nextflow run clustermg.nf \\
   -profile singularity,local,test
+
+nextflow run clustermg.nf \\
+  -profile singularity,local,test
+  --step2 \\
+  --step2_sheet test/step2_input_sheet.tsv
 ```
-__Run on your data__:
+__Run step 1 on your data__:
 ```
-nextflow run metagenomics-wf.nf \\
-  -profile singularity,hpc \\
-  --reads sample.fastq.gz \\
-  --outdir results/
+nextflow run clustermg.nf \\
+  -profile singularity,local \\
+  --longReads lr_sample.fastq.gz \\
+  --shortReads sr_sample.fastq.gz \\
+  --sampleName NAME \\
+  --outdir results_1/
+```
+__Run step 2 on your data__:
+```
+cat results_*/step2_input_sheet.tsv > input_sheet.tsv
+nextflow run clustermg.nf \\
+  -profile singularity,local \\
+  --step2 \\
+  --step2_sheet input_sheet.tsv \\
+  --outdir results_step2/
 ```
 
 ## Acknowledgement
