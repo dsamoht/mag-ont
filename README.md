@@ -21,13 +21,14 @@ This is a two-steps pipeline:
   - HMM profiles databases ([KEGG profiles](https://www.genome.jp/ftp/db/kofam/profiles.tar.gz), [Pfam database](https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz), etc.)
   - A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
 
-- __Edit__ these lines in *nextflow.config* file:  
+- You  can __edit__ these lines in *nextflow.config* file:  
   ```
   fastaDBs = '/path/to/extracted/proteome/database'
   gtdbtkDB = '/path/to/extracted/gtdbtk/database'
   hmmProfiles = '/path/to/extracted/hmm/profiles'  
   koList = '/path/to/extracted/ko/list'   
   krakenDB = '/path/to/extracted/kraken2/database'
+  database_path = '/path/where/to/store/dmnd/databases'
   ```
 ## How to run the pipeline
 __Test your setup and download the containers for off-line use (run once):__
@@ -46,7 +47,7 @@ nextflow run clustermg.nf \\
   -profile singularity,local \\
   --longReads lr_sample.fastq.gz \\
   --shortReads sr_sample.fastq.gz \\
-  --sampleName NAME \\
+  --sampleName sample_1 \\
   --outdir results_1/
 ```
 __Run step 2 on your data__:
