@@ -15,7 +15,7 @@ process TIARA_SPLIT_BY_DOMAIN {
     grep '^>' ${contigs} > contigs_names
     grep eukarya ${tiara_classification} | sed -E 's/eukarya.*\$//' | sed -E 's/[[:space:]]*\$//' > euk_contigs.txt
     grep organelle ${tiara_classification} | sed -E 's/organelle.*\$//g' | sed -E 's/[[:space:]]*\$//g' >> euk_contigs.txt
-    grep -Fvf euk_contigs.txt contigs_names > bac_contigs.txt
+    grep -Fvwf euk_contigs.txt contigs_names > bac_contigs.txt
     fasta_sampler.py ${contigs} euk_contigs.txt > euk_contigs.fa
     fasta_sampler.py ${contigs} bac_contigs.txt > bac_contigs.fa
     """
