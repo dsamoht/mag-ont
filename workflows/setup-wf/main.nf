@@ -47,7 +47,7 @@ workflow SETUP_WF {
         fasta_db_ch = Channel
             .fromPath(fastaDBsList)
             .map { db ->
-                    def name = db.getName().split('.fasta')[0]
+                    def name = db.getName().tokenize('.')[0]
                     return [name, db]
             }
         DIAMOND_MAKEDB(fasta_db_ch)
