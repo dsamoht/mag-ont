@@ -88,7 +88,7 @@ workflow METAGENOMICS_WF {
 
 
           if (params.onlyKraken) {
-          KRAKEN_ONLY()
+          KRAKEN_ONLY(long_reads, short_reads)
 
           } else {
                SETUP_WF()
