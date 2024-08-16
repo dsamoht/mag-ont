@@ -11,14 +11,18 @@ Single tsv file
 import pandas as pd
 import argparse
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", required=True, nargs='+')
-ap.add_argument("-o", "--output", required=True)
-args = vars(ap.parse_args())
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--input", required=True, nargs='+')
+    ap.add_argument("-o", "--output", required=True)
+    args = vars(ap.parse_args())
 
-df_list = []
-for tsv in args['input']:
-    df_list.append(pd.read_csv(tsv, sep='\t'))
+    df_list = []
+    for tsv in args['input']:
+        df_list.append(pd.read_csv(tsv, sep='\t'))
 
-df = pd.concat(df_list, ignore_index=True)
-df.to_csv(args['output'], sep="\t", index=False)
+    df = pd.concat(df_list, ignore_index=True)
+    df.to_csv(args['output'], sep="\t", index=False)
+
+if __name__ == "__main__":
+    main()
