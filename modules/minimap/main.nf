@@ -1,6 +1,5 @@
 process MINIMAP {
 
-    conda "bioconda::minimap2=2.26"
     if (workflow.containerEngine == 'singularity') {
         container = params.minimap_singularity
     } else {
@@ -8,15 +7,14 @@ process MINIMAP {
     }
 
     input:
-    tuple val(meta), path(rawReads)
-    tuple val(meta), path(medakaOutFile)
+    path reads
+    path assembly
 
     output:
-    tuple val(meta), path('map.sam'), emit: samFileOut
+    path('map.sam'), emit: sam
 
     script:
     """
-
-    minimap2 -ax map-ont ${medakaOutFile} ${rawReads} > map.sam
+    minimap2 -ax map-ont ${assembly} ${reads} > map.sam
     """
 }

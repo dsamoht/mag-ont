@@ -1,22 +1,19 @@
 process DASTOOL {
 
-    conda "bioconda::das_tool=1.1.6"
     if (workflow.containerEngine == 'singularity') {
         container = params.dastool_singularity
     } else {
         container = params.dastool_docker
     }
 
-    errorStrategy 'ignore'
-
     publishDir "${params.outdir}/dastool", mode: 'copy', saveAs: { filename -> new File(filename).getName() }
 
     input:
-    tuple val(meta), path(assembly)
-    tuple val(meta), path(contig2bin)
+    path assembly
+    path contig2bin
 
     output:
-    tuple val(meta), path("das-bin*/*bin*.fa"), emit: dasBins, optional: true
+    path("das-bin*/*bin*.fa"), emit: dasBins, optional: true
 
     script:
     def contig2binList = contig2bin.join(",")

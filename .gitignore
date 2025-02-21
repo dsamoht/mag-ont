@@ -3,4 +3,3 @@
 .nextflow
 test/*
 .DS_store
-*.dmnd*
