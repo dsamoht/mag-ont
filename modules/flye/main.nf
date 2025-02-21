@@ -1,6 +1,5 @@
 process FLYE {
 
-    conda "bioconda::flye=2.9.2"
     if (workflow.containerEngine == 'singularity') {
         container = params.flye_singularity
     } else {
@@ -10,14 +9,13 @@ process FLYE {
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    tuple val(meta), path(rawReads)
+    path reads
 
     output:
-    tuple val(meta), path('*/assembly.fasta'), emit: flyeAssembly
+    path('*/assembly.fasta'), emit: assembly
 
     script:
     """
-    flye --nano-raw ${rawReads} -o flye --meta --threads ${task.cpus}
-    sed -i 's/>contig_/>${meta['name']}|contig_/' flye/assembly.fasta
+    flye --nano-raw ${reads} -o flye --threads ${task.cpus}
     """
 }

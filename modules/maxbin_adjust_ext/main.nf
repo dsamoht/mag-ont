@@ -1,20 +1,18 @@
 process MAXBIN_ADJUST_EXT {
 
-    errorStrategy 'ignore'
-
     publishDir "${params.outdir}/maxbin", mode: 'copy'
 
     input:
-    tuple val(meta), path(maxbinBins)
+    path maxbin_bins
 
     output:
-    tuple val(meta), path("*maxbin-bin*.fa"), emit: renamed_maxbinBins, optional: true
+    path("*maxbin-bin*.fa"), emit: renamed_maxbin_bins, optional: true
 
     script:
     """
-    if [ -n "${maxbinBins}" ]
+    if [ -n "${maxbin_bins}" ]
     then
-        for file in ${maxbinBins}; do
+        for file in ${maxbin_bins}; do
             [[ \${file} =~ (.*).fasta ]];
             bin="\${BASH_REMATCH[1]}"
             mv \${file} \${bin}.fa
