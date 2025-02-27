@@ -43,7 +43,7 @@ nextflow run main.nf \
   --reads lr_sample.fastq.gz \
   --outdir mag-ont_output
 ```
-# Output example
+## Output example
 
 | file | num_seqs | sum_len  | min_len | avg_len   | max_len  | Q1 | Q2 | Q3 | N50 | GC(%) | completeness | contamination | domain | phylum | class | order | family | genre | species | closest_placement_reference | closest_placement_ani |warnings |
 |-------|----------|----------|---------|-----------|----------|---------|---------|---------|---------|-------|--------------|---------------|------------|-----------------|------------------|-------------------|------------------|----------------|--------------------------|-----------------------------|------------------------|-----------------------------------------------|
