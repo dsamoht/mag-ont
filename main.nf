@@ -15,7 +15,7 @@ include { MEDAKA                            } from './modules/medaka'
 include { METABAT                           } from './modules/metabat'
 include { MINIMAP                           } from './modules/minimap'
 include { NANOSTAT                          } from './modules/nanostat'
-include { PORECHOP                          } from './modules/porechop'
+include { PORECHOP_ABI                      } from './modules/porechop_abi'
 include { SAMTOOLS                          } from './modules/samtools'
 include { SEQKIT                            } from './modules/seqkit'
 
@@ -63,7 +63,8 @@ workflow MAG_ONT {
      }
          
      reads_ch = Channel.fromPath(params.reads)
-     ch_porechop_out = PORECHOP(reads_ch)
+     ch_hybracter_out = HYBRACTER(reads_ch)
+     ch_porechop_out = PORECHOP_ABI(reads_ch)
      ch_qc_reads = CHOPPER(ch_porechop_out.porechopped_reads)
      ch_nanostats_out = NANOSTAT(ch_qc_reads)
      ch_fastqc_out = FASTQC(ch_qc_reads)
