@@ -63,7 +63,6 @@ workflow MAG_ONT {
      }
          
      reads_ch = Channel.fromPath(params.reads)
-     ch_hybracter_out = HYBRACTER(reads_ch)
      ch_porechop_out = PORECHOP_ABI(reads_ch)
      ch_qc_reads = CHOPPER(ch_porechop_out.porechopped_reads)
      ch_nanostats_out = NANOSTAT(ch_qc_reads)
