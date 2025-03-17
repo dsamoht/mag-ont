@@ -15,7 +15,8 @@ process FLYE {
     path('*/assembly.fasta'), emit: assembly
 
     script:
+    def args = params.meta ? '--meta' : ''
     """
-    flye --nano-raw ${reads} -o flye --threads ${task.cpus}
+    flye --nano-raw ${reads} -o flye --threads ${task.cpus} ${args}
     """
 }

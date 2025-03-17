@@ -41,6 +41,8 @@ Input:
      -profile PROFILE(S): local/hpc (select according to available ressources), docker/singularity (container engine) default: local,docker
      --outdir PATH: path to output directory
      --reads PATH: path to raw long reads (compressed or uncompressed)
+Optional flags:
+     --meta : to use metagenomic mode for assembly
 """
 
 if( params.help ) {
