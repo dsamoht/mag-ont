@@ -10,10 +10,9 @@
 |_| |_| |_|\__,_|\__, |      \___/|_| |_|\__|
                  |___/                       
 
-Workflow for genome assembly with Oxford Nanopore reads.
+Automation of genome assembly with Oxford Nanopore reads.
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: still no release
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ```
