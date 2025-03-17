@@ -15,6 +15,6 @@ process PORECHOP_ABI {
 
     script:
     """
-    porechop_abi --ab_initio -i ${reads} -o porechopped_reads.fastq.gz > porechop.log
+    porechop_abi --ab_initio --discard_middle -i ${reads} -o porechopped_reads.fastq.gz > porechop.log
     """
 }
