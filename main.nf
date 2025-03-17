@@ -63,6 +63,10 @@ workflow MAG_ONT {
      if (params.reads == '') {
           exit 1, "Missing parameter 'reads'. Please provide an input set of reads using --reads PATH"
      }
+
+     if (params.meta) {
+          log.info "[INFO] Pipeline running in metagenomic mode"
+     }
          
      reads_ch = Channel.fromPath(params.reads)
      ch_porechop_out = PORECHOP_ABI(reads_ch)
