@@ -1,10 +1,6 @@
 process FLYE {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.flye_singularity
-    } else {
-        container = params.flye_docker
-    }
+    container = "quay.io/biocontainers/flye:2.9.6--py310h275bdba_0"
 
     publishDir "${params.outdir}", mode: 'copy'
 
@@ -15,8 +11,11 @@ process FLYE {
     path('*/assembly.fasta'), emit: assembly
 
     script:
-    def args = params.meta ? '--meta' : ''
     """
-    flye --nano-raw ${reads} -o flye --threads ${task.cpus} ${args}
+    flye \
+        --nano-hq ${reads} \
+        -o flye \
+        --threads ${task.cpus} \
+        --meta
     """
 }
