@@ -6,13 +6,15 @@ process SEQKIT {
         container = params.seqkit_docker
     }
 
+    errorStrategy 'ignore'
+
     publishDir "${params.outdir}/seqkit/", mode: 'copy'
 
     input:
     path bins
 
     output:
-    path('stats.tsv'), emit: seqkit_stats
+    path 'stats.tsv', emit: seqkitStats
 
     script:
     """

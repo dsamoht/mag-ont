@@ -6,6 +6,8 @@ process GTDBTK {
         container = params.gtdbtk_docker
     }
     
+    errorStrategy 'ignore'
+
     publishDir "${params.outdir}/gtdbtk", mode: 'copy'
 
     input:
@@ -13,7 +15,7 @@ process GTDBTK {
     path gtdbtk_db
 
     output:
-    path("gtdbtk.*.summary.tsv"), emit: summary
+    path "gtdbtk.*.summary.tsv", emit: summary
 
     script:
     """

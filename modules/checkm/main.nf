@@ -6,13 +6,15 @@ process CHECKM {
         container = params.checkm_docker
     }
     
+    errorStrategy 'ignore'
+
     publishDir "${params.outdir}/checkm", mode: 'copy'
 
     input:
-    path(dasBins, stageAs: "input_bins/*")
+    path dasBins, stageAs: "input_bins/*"
 
     output:
-    path("checkm_qa.tsv"), emit: checkm_stats, optional: true
+    path "checkm_qa.tsv", emit: checkmStats, optional: true
 
     script:
     """

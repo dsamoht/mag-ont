@@ -6,17 +6,17 @@ process MEDAKA {
         container = params.medaka_docker
     }
 
-    publishDir "${params.outdir}/medaka", mode: 'copy'
+    publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    path reads
-    path assembly
+    path rawReads
+    path flyeAssembly
 
     output:
-    path('*/consensus.fasta'), emit: consensus
+    path '*/consensus.fasta', emit: medakaOutFile
 
     script:
     """
-    medaka_consensus -i ${reads} -d ${assembly} -o medaka -f -t ${task.cpus}
+    medaka_consensus -i ${rawReads} -d ${flyeAssembly} -o medaka -f -t ${task.cpus}
     """
 }

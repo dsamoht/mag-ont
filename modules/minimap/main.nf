@@ -7,14 +7,14 @@ process MINIMAP {
     }
 
     input:
-    path reads
-    path assembly
+    path rawReads
+    path medakaOutFile
 
     output:
-    path('map.sam'), emit: sam
+    path 'map.sam', emit: samFileOut
 
     script:
     """
-    minimap2 -ax map-ont ${assembly} ${reads} > map.sam
+    minimap2 -a ${medakaOutFile} ${rawReads} > map.sam
     """
 }

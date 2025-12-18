@@ -2,48 +2,39 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-```
-                                         _   
- _ __ ___   __ _  __ _        ___  _ __ | |_ 
-| '_ ` _ \ / _` |/ _` |_____ / _ \| '_ \| __|
-| | | | | | (_| | (_| |_____| (_) | | | | |_ 
-|_| |_| |_|\__,_|\__, |      \___/|_| |_|\__|
-                 |___/                       
+# Metagenome-assembled genomes from long reads
+## Introduction
+![alt text](/img/mag-ont_schema.png)
 
-Automation of genome assembly with Oxford Nanopore reads.
-     
-     Github: https://github.com/dsamoht/mag-ont
+> *__Note__* : this is a *long-reads-first* pipeline. If you give both long reads and paired-end short reads, the draft assembly will first be done with long reads, then "polished" with short reads.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-```
-# Installation
 ## Dependencies
 - __Software :__  
-  - [Nextflow](https://www.nextflow.io/)  
-  - [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
+  [Nextflow](https://www.nextflow.io/)  
+  [Docker](https://www.docker.com/) and/or [Apptainer/Singularity](https://apptainer.org/)  
 
-- __Database :__
-  - [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)
+- __Data :__  
+  [GTDB-Tk database](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)  
+  A pre-built [Kraken2 database](https://benlangmead.github.io/aws-indexes/k2)
 
-- __Edit__ this line in *nextflow.config* file:  
+- __Edit__ *nextflow.config* :  
   ```
-  gtdbtk_db = '/absolute/path/to/extracted/gtdbtk/release'
+  gtdbtkDB = '/path/to/extracted/gtdbtk/database'    
+  krakenDB = '/path/to/extracted/kraken2/database'
   ```
-## Installation
-__1) Test your setup and download the containers for future use (to run once):__
+## How to run the pipeline
+__This command will test the setup and download the containers for off-line use__:  
 ```
-nextflow run main.nf \
-  -profile {docker,singularity},local,test
+nextflow run mag-ont.nf -profile {docker,singularity},test
 ```
-__2) Run on your data__:
+__Run on your data__:  
 ```
-nextflow run main.nf \
-  -profile {docker,singularity},{hpc,local} \
-  --reads lr_sample.fastq.gz \
-  --outdir mag-ont_output
+nextflow run mag-ont.nf -profile {docker,singularity},{local,hpc} --reads sample.fastq.gz --outdir results/
 ```
-## Output example
 
-| file | num_seqs | sum_len  | min_len | avg_len   | max_len  | Q1 | Q2 | Q3 | N50 | GC(%) | completeness | contamination | domain | phylum | class | order | family | genre | species | closest_placement_reference | closest_placement_ani |warnings |
-|-------|----------|----------|---------|-----------|----------|---------|---------|---------|---------|-------|--------------|---------------|------------|-----------------|------------------|-------------------|------------------|----------------|--------------------------|-----------------------------|------------------------|-----------------------------------------------|
-| bin.001.fa  | 6 | 5139974  | 6816    | 856662.3  | 4778146  | 27273.0 | 94520.5 | 138698.0| 4778146| 39.51 | 97.13        | 0.34          | d__Bacteria| p__Cyanobacteriota | c__Cyanobacteriia | o__Cyanobacteriales | f__Microcoleaceae | g__Planktothrix | s__Planktothrix agardhii | GCA_003609755.1             | 98.67                  | Genome;has;more;than;10.0%;of;markers;with;multiple;hits |
+## Acknowledgement
+This pipeline is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) :  
+> nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
+>Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
+>NAR Genom Bioinform. 2022 Feb 2;4(1)  
+>. doi: [10.1093/nargab/lqac007](https://academic.oup.com/nargab/article/4/1/lqac007/6520104)

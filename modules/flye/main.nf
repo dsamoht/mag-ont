@@ -1,21 +1,21 @@
 process FLYE {
 
-    container = "quay.io/biocontainers/flye:2.9.6--py310h275bdba_0"
+    if (workflow.containerEngine == 'singularity') {
+        container = params.flye_singularity
+    } else {
+        container = params.flye_docker
+    }
 
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    path reads
+    path rawReads
 
     output:
-    path('*/assembly.fasta'), emit: assembly
+    path '*/assembly.fasta', emit: flyeAssembly
 
     script:
     """
-    flye \
-        --nano-hq ${reads} \
-        -o flye \
-        --threads ${task.cpus} \
-        --meta
+    flye --nano-raw ${rawReads} -o flye --meta --threads ${task.cpus}
     """
 }

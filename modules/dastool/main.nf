@@ -6,6 +6,8 @@ process DASTOOL {
         container = params.dastool_docker
     }
 
+    errorStrategy 'ignore'
+
     publishDir "${params.outdir}/dastool", mode: 'copy', saveAs: { filename -> new File(filename).getName() }
 
     input:
@@ -13,7 +15,7 @@ process DASTOOL {
     path contig2bin
 
     output:
-    path("das-bin*/*bin*.fa"), emit: dasBins, optional: true
+    path "das-bin*/*bin*.fa", emit: dasBins, optional: true
 
     script:
     def contig2binList = contig2bin.join(",")
