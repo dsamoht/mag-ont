@@ -1,20 +1,27 @@
 process PORECHOP_ABI {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.porechop_abi_singularity
-    } else {
-        container = params.porechop_abi_docker
-    }
+    tag "${meta.sample_id}"
+
+    container params.porechop_abi_container
 
     input:
-    path reads
+    tuple val(meta), path(reads)
 
     output:
-    path("*porechopped_reads.fastq.gz"), emit: porechopped_reads
-    path("*porechop.log"), emit: log
+    tuple val(meta), path("*.fastq.gz"), emit: reads
+    tuple val(meta), path("*.log"), emit: log
+    path "versions.yml", emit: versions
 
     script:
     """
-    porechop_abi --ab_initio --discard_middle -i ${reads} -o porechopped_reads.fastq.gz > porechop.log
+    porechop_abi \
+        --ab_initio \
+        --discard_middle \
+        -i ${reads} \
+        -o ${meta.sample_id}.porechopped.fastq.gz > ${meta.sample_id}.porechop.log
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        porechop_abi: \$( porechop_abi --version )
+    END_VERSIONS
     """
 }

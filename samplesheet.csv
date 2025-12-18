@@ -1,0 +1,4 @@
+sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
+test_lr_1,1,,/Users/thomas/Documents/bioinformatics/software/mag-ont/test_data/test_lr_01.fastq.gz,,,
+test_lr_2,2,,,,,
+test_lr_3,2,,/Users/thomas/Documents/bioinformatics/software/mag-ont/test_data/test_lr_03.fastq.gz,,,

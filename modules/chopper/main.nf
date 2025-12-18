@@ -1,21 +1,28 @@
 process CHOPPER {
+   
+    tag "${meta.sample_id}"
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.chopper_singularity
-    } else {
-        container = params.chopper_docker
-    }
+    container params.chopper_container
 
     publishDir "${params.outdir}/chopper", mode: 'copy'
 
     input:
-    path(reads)
+    tuple val(meta), path(reads)
 
     output:
-    path("qc_reads.fastq.gz"), emit: qc_reads
+    tuple val(meta), path("*.choppered.fastq.gz"), emit: fastq
+    path "versions.yml"                          , emit: versions
 
     script:
     """
-    zcat ${reads} | chopper -l 500 --threads ${task.cpus} | chopper -q 10 --threads ${task.cpus} | gzip > qc_reads.fastq.gz
+    zcat ${reads} \
+        | chopper -l 500 --threads ${task.cpus} \
+        | chopper -q 10 --threads ${task.cpus} \
+        | gzip > ${meta.sample_id}.choppered.fastq.gz
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        chopper: \$(chopper --version 2>&1 | cut -d ' ' -f 2)
+    END_VERSIONS
     """
 }
