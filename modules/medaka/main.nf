@@ -1,22 +1,29 @@
 process MEDAKA {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.medaka_singularity
-    } else {
-        container = params.medaka_docker
-    }
+    tag "group_${meta.group}"
 
-    publishDir "${params.outdir}/medaka", mode: 'copy'
+    container params.medaka_container
 
     input:
-    path reads
-    path assembly
+    tuple val(meta), path(reads), path(assembly)
 
     output:
-    path('*/consensus.fasta'), emit: consensus
+    tuple val(meta), path("*.consensus.fasta"), emit: fasta
+    path "versions.yml"                       , emit: versions
 
     script:
     """
-    medaka_consensus -i ${reads} -d ${assembly} -o medaka -f -t ${task.cpus}
+    medaka_consensus \
+        -t ${task.cpus} \
+        -i ${reads} \
+        -d ${assembly} \
+        -o ./
+
+    mv consensus.fasta ${meta.group}.consensus.fasta
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
+    END_VERSIONS
     """
 }

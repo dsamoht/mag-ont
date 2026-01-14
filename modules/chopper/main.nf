@@ -16,8 +16,8 @@ process CHOPPER {
     script:
     """
     zcat ${reads} \
-        | chopper -l 500 --threads ${task.cpus} \
-        | chopper -q 10 --threads ${task.cpus} \
+        | chopper -l ${params.chopper_minlength} --threads ${task.cpus} \
+        | chopper -q ${params.chopper_minq} --threads ${task.cpus} \
         | gzip > ${meta.sample_id}.choppered.fastq.gz
 
     cat <<-END_VERSIONS > versions.yml

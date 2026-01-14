@@ -1,21 +1,26 @@
 process SAMTOOLS {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.samtools_singularity
-    } else {
-        container = params.samtools_docker
-    }
+    tag "${meta.sample_id}"
 
-    publishDir "${params.outdir}/samtools", mode: 'copy'
+    container params.samtools_container
 
     input:
-    path sam_file
+    tuple val(meta), path(sam)
 
     output:
-    path('sorted.bam'), emit: bam_file
+    tuple val(meta), path('*.bam'), path('*.bam.bai'), emit: bam_pair
+    path("versions.yml"), emit: versions
 
     script:
+    def output_bam = "${meta.sample_id}.bam"
     """
-    samtools view -bS ${sam_file} | samtools sort -o sorted.bam -
+    samtools view -@ ${task.cpus} -bS ${sam} | \
+    samtools sort -@ ${task.cpus} -o ${output_bam} -
+    samtools index ${output_bam}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
     """
 }

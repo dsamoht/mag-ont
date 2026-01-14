@@ -1,20 +1,29 @@
 process MINIMAP {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.minimap_singularity
-    } else {
-        container = params.minimap_docker
-    }
+    tag "${meta_reads.sample_id}"
+    container params.minimap_container
 
     input:
-    path reads
-    path assembly
+    tuple val(meta_reads), path(reads)
+    tuple val(meta_reference), path(reference)
 
     output:
-    path('map.sam'), emit: sam
+    tuple val(meta_reads), path('*.sam'), emit: sam
+    path("versions.yml"), emit: versions
 
     script:
+    def output_sam = "${meta_reads.sample_id}.sam"
     """
-    minimap2 -ax map-ont ${assembly} ${reads} > map.sam
+    minimap2 \
+        -ax map-ont \
+        -t $task.cpus \
+        ${reference} \
+        ${reads} \
+        > ${output_sam}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        minimap2: \$(minimap2 --version 2>&1)
+    END_VERSIONS
     """
 }

@@ -1,23 +1,35 @@
 process SEMIBIN {
 
-    container "/project/roshab/software/singularity_images/semibin2_2.2.0_jinlongru.sif"
+    tag "group_${meta}"
 
-    publishDir "${params.output}/semibin2", mode: 'copy'
+    container params.semibin_container
 
     input:
-    path assembly
-    path bam_files
+    tuple val(meta), path(assembly)
+    tuple val(bam_meta), path(bams)
+    val(strategy_type)
 
     output:
-    path("semibin_output/output_bins/*.fa"), emit: semibin_bins, optional: true
+    tuple val(meta), path("semibin_output/output_bins/*.fa"), emit: semibin_bins, optional: true
 
     script:
+    def type_flag = strategy_type == 'long' ? '--sequencing-type long_read' : ''
     """
-    SemiBin2 single_easy_bin -i ${assembly} -b ${bam_files} -o semibin_output --sequencing-type long_read --threads ${task.cpus}
+    SemiBin2 single_easy_bin \
+        -i ${assembly} \
+        -b ${bams} \
+        -o semibin_output \
+        --threads ${task.cpus} \
+         ${type_flag}
 
     for f in semibin_output/output_bins/*.fa.gz; do
         [ -f "\$f" ] || continue
         gunzip "\$f"
     done
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        SemiBin: \$( SemiBin2 --version )
+    END_VERSIONS
     """
 }
