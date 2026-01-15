@@ -1,23 +1,30 @@
 process GTDBTK {
 
-    if (workflow.containerEngine == 'singularity') {
-        container = params.gtdbtk_singularity
-    } else {
-        container = params.gtdbtk_docker
-    }
-    
-    publishDir "${params.outdir}/gtdbtk", mode: 'copy'
+    tag "group_${meta}"
+
+    container params.gtdbtk_container
 
     input:
-    path "bins/*"
-    path gtdbtk_db
+    tuple val(meta), path(bins, stageAs: "bins/*")
+    path(gtdbtk_db)
 
     output:
-    path("gtdbtk.*.summary.tsv"), emit: summary
+    tuple val(meta), path("gtdbtk.*.summary.tsv"), emit: gtdbtk_summary, optional: true
 
     script:
     """
     export GTDBTK_DATA_PATH=${gtdbtk_db}
-    gtdbtk classify_wf --genome_dir bins --out_dir . --skip_ani_screen --extension .fa --cpus ${task.cpus}
+    gtdbtk classify_wf \
+	--genome_dir bins \
+	--out_dir . \
+	--skip_ani_screen \
+	--extension .fa \
+	--cpus ${task.cpus}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        gtdbtk: \$(echo \$(gtdbtk --version 2>/dev/null) | sed "s/gtdbtk: version //; s/ Copyright.*//")
+        gtdb_db: \$(grep VERSION_DATA \$GTDBTK_DATA_PATH/metadata/metadata.txt | sed "s/VERSION_DATA=//")
+    END_VERSIONS
     """
 }
