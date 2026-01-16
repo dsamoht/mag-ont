@@ -23,6 +23,10 @@ process DASTOOL {
         -o das-bin \
         --write_bins \
         --score_threshold=-9999
+    
+    if [ -d das-bin*_DASTool_bins ]; then
+    mv das-bin*_DASTool_bins/*.fa . 2>/dev/null || true
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
