@@ -157,12 +157,12 @@ workflow BINNING {
     
     // Run GTDB-Tk
     ch_gtdbtk_out = GTDBTK(
-	ch_dastool_out.dastool_bins,
+    ch_dastool_out.dastool_bins,
         params.gtdbtk_db
     )
     ch_coverm_input = ch_dastool_out.dastool_bins
         .join(
-	    ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
+        ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
         )
 
     // Run CoverM

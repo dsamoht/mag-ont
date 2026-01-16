@@ -67,8 +67,8 @@ workflow MAG_ONT {
 
      // Channel of input long reads
      ch_long_reads = ch_dispatched
-    	.filter { sample -> sample.long_reads }
-    	.map { sample ->
+        .filter { sample -> sample.long_reads }
+        .map { sample ->
                [
                     [
                          sample_id    : sample.sample_id,
@@ -80,8 +80,8 @@ workflow MAG_ONT {
           }
      
      ch_needs_qc = ch_long_reads
-    	.filter { meta, reads ->
-        	!params.skip_qc && !meta.has_assembly
+        .filter { meta, reads ->
+            !params.skip_qc && !meta.has_assembly
         }
 
      ch_skip_qc = ch_long_reads
@@ -113,15 +113,15 @@ workflow MAG_ONT {
           .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
           .groupTuple()
 
-	ch_binning_input = ch_assembly
+    ch_binning_input = ch_assembly
           .map { meta, assembly -> [ meta.group, meta, assembly ] }
           .join(ch_long_reads_grouped, remainder: true)
           .join(ch_short_reads_grouped, remainder: true)
           .map { it ->
-               def group_id   = it[0]
-               def meta       = it[1]
-               def assembly   = it[2]
-               def long_reads = it[3] ?: []
+               def group_id    = it[0]
+               def meta        = it[1]
+               def assembly    = it[2]
+               def long_reads  = it[3] ?: []
                def short_reads = it[4] ?: []
                
                // Consolidate everything into the meta object
