@@ -1,6 +1,7 @@
 process BWA_MEM {
     
     tag "${meta_reads.sample_id}"
+
     container params.bwamem2_container
 
     input:

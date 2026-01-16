@@ -4,7 +4,7 @@ process GTDBTK {
 
     container params.gtdbtk_container
 
-    publishDir "${params.outdir}/group_${meta}/gtdbtk", mode: 'copy'
+    publishDir "${params.outdir}/group_${meta}/binning/gtdbtk", mode: "copy"
 
     input:
     tuple val(meta), path(bins, stageAs: "bins/*")

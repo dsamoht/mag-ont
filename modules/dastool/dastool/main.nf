@@ -4,13 +4,13 @@ process DASTOOL {
 
     container params.dastool_container
 
-    publishDir "${params.outdir}/group_${meta}/dastool", mode: 'copy'
+    publishDir "${params.outdir}/group_${meta}/binning/dastool", mode: "copy"
 
     input:
     tuple val(meta), path(assembly), path(contig2bin)
 
     output:
-    tuple val(meta), path("das-bin*/*bin*.fa"), emit: dastool_bins, optional: true
+    tuple val(meta), path("*bin*.fa"), emit: dastool_bins, optional: true
 
     script:
     def contig2binList = contig2bin.join(",")

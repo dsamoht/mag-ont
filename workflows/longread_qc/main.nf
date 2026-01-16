@@ -13,7 +13,9 @@ workflow LONGREAD_QC {
     
     if (!params.skip_qc) {
         if (!params.skip_nanoplot) {
-            NANOPLOT_RAW(ch_raw_long_reads)
+            ch_nanoplot_raw_input = ch_raw_long_reads
+                .map { meta, read -> [ meta, "raw", read ] }
+            NANOPLOT_RAW(ch_nanoplot_raw_input)
             ch_versions = ch_versions.mix(NANOPLOT_RAW.out.versions)
         }
         
@@ -31,7 +33,9 @@ workflow LONGREAD_QC {
         ch_choppered_reads = CHOPPER.out.fastq
         
         if (!params.skip_nanoplot) {
-            NANOPLOT_QC(ch_choppered_reads)
+            ch_nanoplot_qc_input = ch_choppered_reads
+                .map { meta, read -> [ meta, "qc", read ] }
+            NANOPLOT_QC(ch_nanoplot_qc_input)
             ch_versions = ch_versions.mix(NANOPLOT_QC.out.versions)
         }
         

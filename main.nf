@@ -113,7 +113,6 @@ workflow MAG_ONT {
           .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
           .groupTuple()
 
-
 	ch_binning_input = ch_assembly
           .map { meta, assembly -> [ meta.group, meta, assembly ] }
           .join(ch_long_reads_grouped, remainder: true)

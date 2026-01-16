@@ -4,8 +4,10 @@ process NANOPLOT {
 
     container params.nanoplot_container
 
+    publishDir "${params.outdir}/${meta.group}/reads_qc/nanoplot_${step}", mode: "copy"
+
     input:
-    tuple val(meta), path(fastq)
+    tuple val(meta), val(step), path(fastq)
 
     output:
     tuple val(meta), path("*.html")                 , emit: html
@@ -15,9 +17,9 @@ process NANOPLOT {
 
     script:
     """
-    NanoPlot \\
-        --fastq $fastq \\
-        -t $task.cpus \\
+    NanoPlot \
+        --fastq $fastq \
+        -t $task.cpus
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

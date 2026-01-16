@@ -4,7 +4,7 @@ process CHECKM {
 
     container params.checkm_container
 
-    publishDir "${params.outdir}/group_${meta}/checkm", mode: 'copy'
+    publishDir "${params.outdir}/group_${meta}/binning/checkm", mode: "copy"
 
     input:
     tuple val(meta), path(bins, stageAs: "bins/*")
