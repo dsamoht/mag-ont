@@ -4,7 +4,9 @@ process FLYE {
 
     container params.flye_container
 
-    errorStrategy 'finish'
+    publishDir "${params.outdir}/group_${meta.group}/assembly/flye", mode: "copy"
+
+    errorStrategy "finish"
 
     input:
     tuple val(meta), path(reads)

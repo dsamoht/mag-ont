@@ -4,6 +4,8 @@ process DASTOOL_CONTIG2BIN {
 
     container params.pandas_container
 
+    publishDir "${params.outdir}/${meta.group}/binning/dastool", mode: "copy"
+
     input:
     tuple val(meta), val(software), path(bins, stageAs: "input_bins/*")
 
