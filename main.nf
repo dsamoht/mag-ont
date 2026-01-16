@@ -94,7 +94,7 @@ workflow MAG_ONT {
      ch_long_reads_final = ch_qc_long_reads.mix(ch_skip_qc)
 
      // Group channels by group
-     ch_grouped_reads = ch_qc_long_reads
+     ch_grouped_reads = ch_long_reads_final
         .map { meta, reads -> [ meta.group, meta, reads ] }
         .groupTuple(by: 0)
         .map { group, metas, reads_list ->
