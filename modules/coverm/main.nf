@@ -4,6 +4,8 @@ process COVERM {
 
     container params.coverm_container
 
+    publishDir "${params.outdir}/group_${meta}/coverm", mode: 'copy'
+
     input:
     tuple val(meta), path(dastool_bins, stageAs: "bins/*")
     tuple val(meta), path(bam_files)
