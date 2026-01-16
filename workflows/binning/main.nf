@@ -4,8 +4,10 @@ include { BWA_MEM            } from '../../modules/bwa'
 include { CHECKM             } from '../../modules/checkm'
 include { COMEBIN            } from '../../modules/comebin'
 include { CONCOCT            } from '../../modules/concoct'
+include { COVERM             } from '../../modules/coverm'
 include { DASTOOL            } from '../../modules/dastool/dastool'
 include { DASTOOL_CONTIG2BIN } from '../../modules/dastool/dastool_contig2bin'
+include { GTDBTK             } from '../../modules/gtdbtk'
 include { MAXBIN             } from '../../modules/maxbin/maxbin'
 include { MAXBIN_ABUND       } from '../../modules/maxbin/maxbin_abundance'
 include { METABAT            } from '../../modules/metabat'
@@ -147,11 +149,13 @@ workflow BINNING {
     ch_dastool_out = DASTOOL(ch_dastool_input)
 
     ch_dastool_out.dastool_bins.view()
+    
     // Run CheckM
     ch_checkm_out = CHECKM(
         ch_dastool_out.dastool_bins
     )
-        // Run GTDB-Tk
+    
+    // Run GTDB-Tk
     ch_gtdbtk_out = GTDBTK(
 	ch_dastool_out.dastool_bins,
         params.gtdbtk_db
@@ -161,6 +165,7 @@ workflow BINNING {
 	    ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
         )
 
+    // Run CoverM
     ch_coverm_out = COVERM(
         ch_coverm_input.map { it -> [ it[0], it[1] ] }, // [ meta, bin(s) ]
         ch_coverm_input.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
