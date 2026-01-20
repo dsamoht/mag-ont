@@ -147,8 +147,6 @@ workflow BINNING {
 
     // Run DAS_Tool
     ch_dastool_out = DASTOOL(ch_dastool_input)
-
-    ch_dastool_out.dastool_bins.view()
     
     // Run CheckM
     ch_checkm_out = CHECKM(
@@ -169,6 +167,20 @@ workflow BINNING {
     ch_coverm_out = COVERM(
         ch_coverm_input.map { it -> [ it[0], it[1] ] }, // [ meta, bin(s) ]
         ch_coverm_input.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
+    )
+
+        // Summary
+    ch_summarize = ch_dastool_out.dastool_bins           // [group, [bin1.fa, bin2.fa]]
+        .join(ch_checkm_out.checkm_stats)                   // [group, bins, checkm_tsv]
+        .join(ch_coverm_out.coverm_stats)               // [group, bins, checkm, coverm_tsv]
+        .join(ch_gtdbtk_out.gtdbtk_summary)
+
+    // Run Summary
+    ch_summary_out = MAG_SUMMARY(
+        ch_summarize.map{ it -> [ it[0], it[1] ] },
+        ch_summarize.map{ it -> [ it[0], it[2] ] },
+        ch_summarize.map{ it -> [ it[0], it[4] ] },
+        ch_summarize.map{ it -> [ it[0], it[3] ] }
     )
 
 }
