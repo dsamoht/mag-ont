@@ -23,11 +23,12 @@ tailored for Oxford Nanopore reads
   - [GTDB-Tk database - release 226](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data) (uncompressed)
 
 ## Installation
-Once the dependencies are installed, you can directly use the pipeline. You just have to choose a container engine and a workload capacity (local : 8 cpus, hpc : 20 cpus). Profiles can be edited in [nextflow.config](./nextflow.config).  
+Once the dependencies are installed, you can directly use the pipeline. You just have to choose a container engine and a workload capacity (test: 1 cpu, local : 8 cpus, hpc : 20 cpus). Profiles can be edited in [nextflow.config](./nextflow.config).  
 
 ```
 nextflow run dsamoht/mag-ont \
-  -profile docker,local \
-  --input ./test_data/sample_sheet.csv \
+  -profile {docker/singularity},{test/local/hpc} \
+  --gtdbtk_db /path/to/uncompressed/gtdb \
+  --input ./test_data/samplesheet.csv \
   --outdir ./test_data/test_out
 ```
