@@ -14,7 +14,7 @@ Automation of metagenome assembly and binning
 with support for Oxford Nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.1.0
+     Version: v1.2.0
 
 ```
 
@@ -48,7 +48,7 @@ nextflow run main.nf \
 ```
 
 
-## Sample Sheet Specification
+## Sample sheet specification
 
 The pipeline uses a CSV sample sheet to manage input data and define how samples are grouped for co-assembly and binning.
 
