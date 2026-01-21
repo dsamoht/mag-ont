@@ -16,7 +16,7 @@ info = """
                  |___/                       
 
 Automation of metagenome assembly and binning
-tailored for Oxford Nanopore reads
+with support for Oxford Nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
      Version: v1.1.0
@@ -25,7 +25,7 @@ tailored for Oxford Nanopore reads
 Usage:
      nextflow run main.nf -profile local,docker --input FILE --outdir PATH
 Input:
-     -profile PROFILE(S): local/hpc (select according to available ressources), docker/singularity (container engine) default: local,docker
+     -profile PROFILE(S): test/local/hpc (select according to available ressources), apptainer/docker/singularity (container engine)
      --outdir PATH: path to output directory
      --input FILE: path to input sample sheet (CSV format)
 """

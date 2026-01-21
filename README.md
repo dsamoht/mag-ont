@@ -11,7 +11,7 @@
                  |___/                       
 
 Automation of metagenome assembly and binning
-tailored for Oxford Nanopore reads
+with support for Oxford Nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
      Version: v1.1.0
