@@ -2,8 +2,6 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-![alt text](/assets/img/mag-ont_v1.2.0.png)
-
 ```
                                          _   
  _ __ ___   __ _  __ _        ___  _ __ | |_ 
@@ -17,8 +15,9 @@ with support for Oxford Nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
      Version: v1.2.0
-
 ```
+
+![alt text](/assets/img/mag-ont_v1.2.0.png)
 
 ## Software dependencies
 
