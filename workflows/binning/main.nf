@@ -8,6 +8,7 @@ include { COVERM             } from '../../modules/coverm'
 include { DASTOOL            } from '../../modules/dastool/dastool'
 include { DASTOOL_CONTIG2BIN } from '../../modules/dastool/dastool_contig2bin'
 include { GTDBTK             } from '../../modules/gtdbtk'
+include { MAG_SUMMARY        } from '../../modules/mag_summary'
 include { MAXBIN             } from '../../modules/maxbin/maxbin'
 include { MAXBIN_ABUND       } from '../../modules/maxbin/maxbin_abundance'
 include { METABAT            } from '../../modules/metabat'
@@ -170,9 +171,9 @@ workflow BINNING {
     )
 
         // Summary
-    ch_summarize = ch_dastool_out.dastool_bins           // [group, [bin1.fa, bin2.fa]]
-        .join(ch_checkm_out.checkm_stats)                   // [group, bins, checkm_tsv]
-        .join(ch_coverm_out.coverm_stats)               // [group, bins, checkm, coverm_tsv]
+    ch_summarize = ch_dastool_out.dastool_bins
+        .join(ch_checkm_out.checkm_stats)
+        .join(ch_coverm_out.coverm_stats)
         .join(ch_gtdbtk_out.gtdbtk_summary)
 
     // Run Summary
