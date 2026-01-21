@@ -95,20 +95,22 @@ workflow MAG_ONT {
 
      // Group channels by group
      ch_grouped_reads = ch_long_reads_final
-        .map { meta, reads -> [ meta.group, meta, reads ] }
-        .groupTuple(by: 0)
-        .map { group, metas, reads_list ->
-            [ [ group: group, sample_ids: metas.sample_id ], reads_list ]
-        }
+          .map { meta, reads -> [ meta.group, meta, reads ] }
+          .groupTuple(by: 0)
+          .map { group, metas, reads_list ->
+               def has_assembly = metas.any { it.has_assembly }
+               [ [ group: group, sample_ids: metas.sample_id, has_assembly: has_assembly ], reads_list ]
+          }
 
-     // Concatenate reads for each group if the group contains multiple samples (for co-assembly)
-     ch_qc_reads_to_assembly = CAT_FASTQ(ch_grouped_reads).reads
-     
-     // Long read assembly
+     ch_reads_to_assemble = ch_grouped_reads
+          .filter { meta, reads -> !meta.has_assembly }
+
+     ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble).reads
+          
      ch_generated_assembly = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly).assembly
+          
      ch_assembly = ch_generated_assembly.mix(ch_input_assembly)
 
-     // Re-group long reads for the join (carrying metadata)
      ch_long_reads_grouped = ch_long_reads_final
           .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
           .groupTuple()
