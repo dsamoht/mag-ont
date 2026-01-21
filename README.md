@@ -102,3 +102,9 @@ sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
 sample_1,group_A,./ref/asm.fa,./data/s1_ont.fq.gz,./data/s1_R1.fq.gz,./data/s1_R2.fq.gz
 ```
 
+## Acknowledgement
+This pipeline is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) :  
+> nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
+>Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
+>NAR Genom Bioinform. 2022 Feb 2;4(1)  
+>doi: [10.1093/nargab/lqac007](https://academic.oup.com/nargab/article/4/1/lqac007/6520104)
