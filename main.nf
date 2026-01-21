@@ -19,13 +19,13 @@ Automation of metagenome assembly and binning
 with support for Oxford Nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.1.0
+     Version: v1.2.0
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
      nextflow run main.nf -profile local,docker --input FILE --outdir PATH
 Input:
-     -profile PROFILE(S): test/local/hpc (select according to available ressources), apptainer/docker/singularity (container engine)
+     -profile PROFILE(S): test/local/hpc (select according to available ressources), apptainer/docker/singularity (container engine), install (to pre-download containers)
      --outdir PATH: path to output directory
      --input FILE: path to input sample sheet (CSV format)
 """
