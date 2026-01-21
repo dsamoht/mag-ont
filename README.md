@@ -26,7 +26,7 @@ tailored for Oxford Nanopore reads
 Once the dependencies are installed, you can directly use the pipeline. You just have to choose a container engine and a workload capacity (test: 1 cpu, local : 8 cpus, hpc : 20 cpus). Profiles can be edited in [nextflow.config](./nextflow.config).  
 
 ```
-nextflow run dsamoht/mag-ont \
+nextflow run main.nf \
   -profile {docker/singularity},{test/local/hpc} \
   --gtdbtk_db /path/to/uncompressed/gtdb \
   --input ./test_data/samplesheet.csv \
