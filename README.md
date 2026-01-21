@@ -28,7 +28,7 @@ Once the dependencies are installed, you can directly use the pipeline. You just
 ```
 nextflow run main.nf \
   -profile {docker/singularity},{test/local/hpc} \
-  --gtdbtk_db /path/to/uncompressed/gtdb \
+  --gtdbtk_db /path/to/uncompressed/db \
   --input ./test_data/samplesheet.csv \
   --outdir ./test_data/test_out
 ```
