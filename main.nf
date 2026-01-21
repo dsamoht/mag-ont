@@ -139,7 +139,31 @@ workflow MAG_ONT {
 
 }
 
-workflow {
+process DOWNLOAD_IMAGE {
 
-    MAG_ONT()
+    tag "${container_url}"
+    container "${container_url}"
+
+    input:
+    val container_url
+
+    script:
+    """
+    echo "Successfully pulled ${container_url}"
+    """
+}
+
+workflow install {
+    def container_list = params.findAll { it.key.endsWith('_container') }.values()
+    ch_containers = Channel.fromList(container_list)
+    DOWNLOAD_IMAGE(ch_containers)
+}
+
+
+workflow {
+    if (workflow.profile.contains('install')) {
+        install()
+    } else {
+        MAG_ONT()
+    }
 }
