@@ -67,18 +67,17 @@ The CSV must contain exactly **6 columns** with the following headers:
 | `short_reads_2` | (Optional) Path to Reverse R2 FASTQ. |
 
 
+
 ### Validation Logic
 
-The pipeline performs several automated checks:
-
-* **Read consistency:** Short reads must be paired. If `short_reads_1` is provided, `short_reads_2` must also be present.
-* **Minimum requirements:** Each group must contain at least an `assembly_fasta` OR `long_reads` to be valid.
-* **Group integrity:** All samples within the same `group` must point to the **exact same** `assembly_fasta` if one is provided.
+* **Read consistency:** Short reads must be paired. If `short_reads_1` is provided, `short_reads_2` must also be provided.
+* **Minimum requirements:** Each group must contain at least an `assembly_fasta` OR `long_reads`.
+* **Group integrity:** All samples within the same `group` must point to the **exact same** `assembly_fasta` if a pre-existing assembly is provided.
 * **Read type matching:** Within a group, you cannot mix "long-read only" samples with "short-read only" samples. This ensures compatibility during binning and coverage calculation.
 
 ### Examples
 
-**Standard long-lead assembly:**
+**Standard long-read assembly:**
 
 ```csv
 sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
@@ -86,16 +85,15 @@ sample_1_ont,1,,./test_data/s1_ont.fastq.gz,,
 ```
 
 **Co-assembly:**
-> [!NOTE]
-> When both reads types are provided and no pre-existing assembly is given, assembly is made with the long reads and binning is made with short reads.
-> If this strategy is not optimal for your experimental design, I strongly suggest to assemble before running `mag-ont`.
-> Then use the `mag-ont` with your pre-existing assemblies (see "Using pre-existing assembly")  
-
 ```csv
 sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
 sample_1_co,3,,./data/s1_ont.fq.gz,./data/s1_R1.fq.gz,./data/s1_R2.fq.gz
 sample_2_co,3,,./data/s2_ont.fq.gz,./data/s2_R1.fq.gz,./data/s2_R2.fq.gz
 ```
+> [!NOTE]
+> When both reads types are provided and no pre-existing assembly is given, assembly is made with the long reads and binning is made with short reads.
+> If this strategy is not optimal for your experimental design, I strongly suggest to assemble before running `mag-ont`.
+> Then use the `mag-ont` with your pre-existing assemblies (see "Using pre-existing assembly")
 
 **Using pre-existing assembly:**
 ```csv
