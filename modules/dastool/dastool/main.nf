@@ -10,7 +10,7 @@ process DASTOOL {
     tuple val(meta), path(assembly), path(contig2bin)
 
     output:
-    tuple val(meta), path("*bin*.fa"), emit: dastool_bins, optional: true
+    tuple val(meta), path("*.fa"), emit: dastool_bins, optional: true
 
     script:
     def contig2binList = contig2bin.join(",")
