@@ -30,7 +30,7 @@ with support for Oxford Nanopore reads
 
 ## Usage
 
-Once the dependencies are installed, you can directly use the pipeline. You just have to choose a container engine and a workload capacity (`test`: 1 cpu, `local` : 8 cpus, `hpc` : 20 cpus). These profiles can be edited in [nextflow.config](https://www.google.com/search?q=./nextflow.config).
+Once the dependencies are installed, you can directly use the pipeline. You just have to choose a container engine and a workload capacity (`test`: 1 cpu, `local` : 8 cpus, `hpc` : 20 cpus). These profiles can be edited in [nextflow.config](./nextflow.config).
 
 ```bash
 nextflow run main.nf \
