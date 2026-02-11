@@ -1,5 +1,7 @@
 process NANOPLOT {
 
+    label "small"
+
     tag "${meta.sample_id}"
 
     container params.nanoplot_container

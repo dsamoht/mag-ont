@@ -1,5 +1,7 @@
 process FLYE {
 
+    label "large"
+
     tag "group_${meta.group}"
 
     container params.flye_container

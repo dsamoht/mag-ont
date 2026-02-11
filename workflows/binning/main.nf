@@ -2,7 +2,6 @@
 
 include { BWA_MEM            } from '../../modules/bwa'
 include { CHECKM             } from '../../modules/checkm'
-include { COMEBIN            } from '../../modules/comebin'
 include { CONCOCT            } from '../../modules/concoct'
 include { COVERM             } from '../../modules/coverm'
 include { DASTOOL            } from '../../modules/dastool/dastool'
@@ -148,6 +147,8 @@ workflow BINNING {
 
     // Run DAS_Tool
     ch_dastool_out = DASTOOL(ch_dastool_input)
+
+    if (!params.skip_bin_qa) {
     
     // Run CheckM
     ch_checkm_out = CHECKM(
@@ -183,5 +184,7 @@ workflow BINNING {
         ch_summarize.map{ it -> [ it[0], it[4] ] },
         ch_summarize.map{ it -> [ it[0], it[3] ] }
     )
+    
+    }
 
 }

@@ -1,5 +1,7 @@
 process METABAT {
 
+    label "medium"
+
     tag "group_${meta_assembly}"
 
     container params.metabat_container

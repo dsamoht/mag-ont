@@ -1,5 +1,7 @@
 process CONCOCT {
 
+    label "medium"
+
     tag "group_${meta_assembly}"
 
     container params.concoct_container
@@ -13,6 +15,7 @@ process CONCOCT {
     tuple val(meta_assembly), path("concoct_*.fa"), emit: concoct_bins
     tuple val(meta_assembly), path("contigs_10K.fa"), emit: concoct_contigs
     tuple val(meta_assembly), path("coverage_table.tsv"), emit: concoct_coverage
+    path("versions.yml"), emit: versions
 
     script:
     """

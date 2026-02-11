@@ -1,5 +1,7 @@
 process MAG_SUMMARY {
 
+    label "small"
+
     tag "group_${meta}"
 
     container params.pandas_container

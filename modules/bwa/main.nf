@@ -1,5 +1,7 @@
 process BWA_MEM {
     
+    label "medium"
+    
     tag "${meta_reads.sample_id}"
 
     container params.bwamem2_container

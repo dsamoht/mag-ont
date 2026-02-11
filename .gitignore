@@ -1,5 +1,5 @@
 .nextflow*
-*work/
+work
 .nextflow
-test/*
+test
 .DS_store

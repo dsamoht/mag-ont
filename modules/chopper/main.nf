@@ -1,4 +1,6 @@
 process CHOPPER {
+
+    label "medium"
    
     tag "${meta.sample_id}"
 

@@ -1,5 +1,7 @@
 process PORECHOP_ABI {
 
+    label "medium"
+
     tag "${meta.sample_id}"
 
     container params.porechop_abi_container

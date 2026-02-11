@@ -1,5 +1,7 @@
 process DASTOOL {
 
+    label "medium"
+
     tag "group_${meta}"
 
     container params.dastool_container
@@ -11,6 +13,7 @@ process DASTOOL {
 
     output:
     tuple val(meta), path("*.fa"), emit: dastool_bins, optional: true
+    path("versions.yml"), emit: versions
 
     script:
     def contig2binList = contig2bin.join(",")

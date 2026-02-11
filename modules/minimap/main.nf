@@ -1,6 +1,9 @@
 process MINIMAP {
 
+    label "medium"
+
     tag "${meta_reads.sample_id}"
+
     container params.minimap_container
 
     input:

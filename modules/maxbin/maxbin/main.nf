@@ -1,5 +1,7 @@
 process MAXBIN {
 
+    label "large"
+
     tag "group_${meta_assembly}"
 
     container params.maxbin_container

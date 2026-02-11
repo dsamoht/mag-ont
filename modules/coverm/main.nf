@@ -1,5 +1,7 @@
 process COVERM {
 
+    label "medium"
+
     tag "group_${meta}"
 
     container params.coverm_container
@@ -12,6 +14,7 @@ process COVERM {
 
     output:
     tuple val(meta), path("coverm_stats.tsv"), emit: coverm_stats
+    path("versions.yml"), emit: versions
 
     script:
     """

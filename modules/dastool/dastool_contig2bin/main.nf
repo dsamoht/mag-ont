@@ -1,5 +1,7 @@
 process DASTOOL_CONTIG2BIN {
 
+    label "small"
+
     tag "group_${meta}_${software}"
 
     container params.pandas_container

@@ -1,5 +1,7 @@
 process CHECKM {
 
+    label "large"
+
     tag "group_${meta}"
 
     container params.checkm_container
@@ -11,6 +13,7 @@ process CHECKM {
 
     output:
     tuple val(meta), path("checkm_qa.tsv"), emit: checkm_stats, optional: true
+    path("versions.yml"), emit: versions
 
     script:
     """

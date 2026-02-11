@@ -1,5 +1,7 @@
 process GTDBTK {
 
+    label "large"
+
     tag "group_${meta}"
 
     container params.gtdbtk_container
@@ -12,6 +14,7 @@ process GTDBTK {
 
     output:
     tuple val(meta), path("gtdbtk.*.summary.tsv"), emit: gtdbtk_summary, optional: true
+    path("versions.yml"), emit: versions
 
     script:
     """
