@@ -1,5 +1,7 @@
 process MAXBIN_ABUND {
 
+    label "small"
+
     tag "group_${meta}"
 
     container params.pandas_container

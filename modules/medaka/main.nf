@@ -1,5 +1,7 @@
 process MEDAKA {
 
+    label "large_gpu"
+
     tag "group_${meta.group}"
 
     container params.medaka_container

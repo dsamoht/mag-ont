@@ -99,7 +99,8 @@ workflow MAG_ONT {
           .groupTuple(by: 0)
           .map { group, metas, reads_list ->
                def has_assembly = metas.any { it.has_assembly }
-               [ [ group: group, sample_ids: metas.sample_id, has_assembly: has_assembly ], reads_list ]
+               def sorted_reads = reads_list.sort { a, b -> a.toString() <=> b.toString() }
+               [ [ group: group, sample_ids: metas.sample_id, has_assembly: has_assembly ], sorted_reads ]
           }
 
      ch_reads_to_assemble = ch_grouped_reads
@@ -123,15 +124,17 @@ workflow MAG_ONT {
                def group_id    = it[0]
                def meta        = it[1]
                def assembly    = it[2]
-               def long_reads  = it[3] ?: []
-               def short_reads = it[4] ?: []
+               def raw_long    = it[3] ?: [] 
+               def raw_short   = it[4] ?: []
                
-               // Consolidate everything into the meta object
+               def sorted_long = raw_long.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
+               def sorted_short = raw_short.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
+
                def new_meta = meta + [
                     group: group_id,
-                    strategy: short_reads.size() > 0 ? 'short' : 'long',
-                    long_reads: long_reads,
-                    short_reads: short_reads
+                    strategy: sorted_short.size() > 0 ? 'short' : 'long',
+                    long_reads: sorted_long,
+                    short_reads: sorted_short
                ]
 
                return [ new_meta, assembly ]

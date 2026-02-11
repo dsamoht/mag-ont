@@ -1,5 +1,7 @@
 process SAMTOOLS {
 
+    label "small"
+
     tag "${meta.sample_id}"
 
     container params.samtools_container

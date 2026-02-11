@@ -1,5 +1,7 @@
 process CAT_FASTQ {
 
+    label "small"
+
     tag "group_${meta.group}"
 
     container params.coreutils_container
