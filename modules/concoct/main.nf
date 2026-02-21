@@ -6,6 +6,8 @@ process CONCOCT {
 
     container params.concoct_container
 
+    publishDir "${params.outdir}/group_${meta_assembly}/binning/concoct", mode: 'copy'
+
     input:
     tuple val(meta_assembly), path(assembly)
     tuple val(meta_bam), path(bam)

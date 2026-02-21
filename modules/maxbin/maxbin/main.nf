@@ -6,6 +6,8 @@ process MAXBIN {
 
     container params.maxbin_container
 
+    publishDir "${params.outdir}/group_${meta_assembly}/binning/maxbin", mode: 'copy'
+
     input:
     tuple val(meta_assembly), path(assembly)
     tuple val(meta), path(maxbin_abund)

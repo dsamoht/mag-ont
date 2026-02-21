@@ -18,7 +18,7 @@ include { SEMIBIN            } from '../../modules/semibin'
 
 workflow BINNING {
     take:
-    ch_binning_wf_input // [ meta, assembly ]
+    ch_binning_wf_input
 
     main:
     ch_versions = channel.empty()
@@ -50,18 +50,21 @@ workflow BINNING {
         ch_long_input.map { it[0] },
         ch_long_input.map { it[1] }
     ).sam
+    ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
     // Short read mapping
     ch_sam_short = BWA_MEM(
         ch_short_input.map { it[0] },
         ch_short_input.map { it[1] }
     ).sam
+    ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
     ch_sam_mixed = ch_sam_short.mix(ch_sam_long)
 
     // Convert SAMs to sorted BAMs
     ch_bam_pair_mixed = SAMTOOLS(ch_sam_mixed)
         .bam_pair
+    ch_versions = ch_versions.mix(SAMTOOLS.out.versions.first())
 
     // Group BAMs + index by Group ID
     ch_grouped_bam_index = ch_bam_pair_mixed
@@ -78,6 +81,7 @@ workflow BINNING {
         ch_binning_bam.map {it -> [ it[0], it[1] ]}, // [ meta, assembly ]
         ch_binning_bam.map {it -> [ it[2], it[3] ]}  // [ meta, bam file(s) ]
     )
+    ch_versions = ch_versions.mix(METABAT.out.versions.first())
     if (!params.skip_maxbin) {
         // Convert depth.txt to maxbin "abund"
         ch_maxbin_abund = MAXBIN_ABUND(
@@ -93,6 +97,7 @@ workflow BINNING {
             ch_maxbin_input.map { it -> [ it[0], it[1] ] }, // [ meta, assembly ]
             ch_maxbin_input.map { it -> [ it[0], it[2] ] }  // [ meta, maxbin_abund ]
         )
+        ch_versions = ch_versions.mix(MAXBIN.out.versions.first())
     }
 
     if (!params.skip_concoct) {
@@ -102,6 +107,7 @@ workflow BINNING {
             ch_binning_bam.map { it -> [ it[2], it[3] ] }, // [ meta, bam file(s) ]
             ch_binning_bam.map { it -> [ it[2], it[4] ] }, // [ meta, bai file(s) ]
         )
+        ch_versions = ch_versions.mix(CONCOCT.out.versions.first())
     }
     
     if (!params.skip_semibin) {
@@ -116,6 +122,7 @@ workflow BINNING {
             ch_semibin_input.map { it -> [ it[3], it[4] ] }, // [ meta, bam file(s) ]
             ch_semibin_input.map { it -> it[1] }             // strategy_type
         )
+        ch_versions = ch_versions.mix(SEMIBIN.out.versions.first())
     }
 
     /// Combine binning results
@@ -147,6 +154,7 @@ workflow BINNING {
 
     // Run DAS_Tool
     ch_dastool_out = DASTOOL(ch_dastool_input)
+    ch_versions = ch_versions.mix(DASTOOL.out.versions.first())
 
     if (!params.skip_bin_qa) {
     
@@ -154,12 +162,14 @@ workflow BINNING {
     ch_checkm_out = CHECKM(
         ch_dastool_out.dastool_bins
     )
+    ch_versions = ch_versions.mix(CHECKM.out.versions.first())
     
     // Run GTDB-Tk
     ch_gtdbtk_out = GTDBTK(
     ch_dastool_out.dastool_bins,
         params.gtdbtk_db
     )
+    ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
     ch_coverm_input = ch_dastool_out.dastool_bins
         .join(
         ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
@@ -170,6 +180,7 @@ workflow BINNING {
         ch_coverm_input.map { it -> [ it[0], it[1] ] }, // [ meta, bin(s) ]
         ch_coverm_input.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
     )
+    ch_versions = ch_versions.mix(COVERM.out.versions.first())
 
         // Summary
     ch_summarize = ch_dastool_out.dastool_bins
@@ -186,5 +197,8 @@ workflow BINNING {
     )
     
     }
+
+    emit:
+    versions = ch_versions
 
 }
