@@ -30,7 +30,7 @@ with support for Oxford Nanopore reads
 
 ## Usage
 Select :
-  1) a container engine : docker or apptainer/singularity. Most HPC environment have apptainer already installed. Docker is mostly used for local computer.
+  1) a container engine : docker or apptainer/singularity. Most HPC environment have apptainer already installed. Docker is mostly used on local workstations.
   2) a workload capacity : test, base or drac. test is for testing your installation. base if for running the pipeline as a single task, like on a local computer. drac is for running with the slurm executor on the Digital Research Alliance of Canada clusters.
 
 These profiles can be edited in [nextflow.config](./nextflow.config).

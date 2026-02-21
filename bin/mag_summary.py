@@ -42,9 +42,6 @@ def iter_fasta_contigs(fasta_path: Path):
 def main():
     args = parse_args()
 
-    # ------------------------------
-    # Validate required inputs
-    # ------------------------------
     if not args.bins:
         sys.exit("ERROR: No bin FASTA files provided.")
 
@@ -53,10 +50,6 @@ def main():
             sys.exit(f"ERROR: Bin file not found: {f}")
 
     group = args.group
-
-    # ------------------------------
-    # Assign deterministic bin IDs
-    # ------------------------------
     bin_paths = sorted(Path(p) for p in args.bins)
 
     bin_id_map: Dict[str, str] = {}
@@ -74,10 +67,6 @@ def main():
         })
 
     df_bins = pd.DataFrame(bin_rows)
-
-    # ------------------------------
-    # Write contig2bin mapping
-    # ------------------------------
     contig2bin_path = f"{group}_contig2bin.csv"
 
     try:
@@ -91,9 +80,6 @@ def main():
     except Exception as e:
         sys.exit(f"ERROR writing contig2bin file: {e}")
 
-    # ------------------------------
-    # CheckM (optional)
-    # ------------------------------
     checkm_cols = [
         "Bin Id",
         "Completeness",
@@ -117,9 +103,6 @@ def main():
     else:
         df_checkm = pd.DataFrame(columns=checkm_cols)
 
-    # ------------------------------
-    # CoverM (optional)
-    # ------------------------------
     if args.coverm and os.path.isfile(args.coverm):
         try:
             df_coverm = pd.read_csv(args.coverm, sep="\t")
@@ -135,9 +118,6 @@ def main():
     else:
         df_coverm = pd.DataFrame(columns=["Genome"])
 
-    # ------------------------------
-    # GTDB-Tk (optional)
-    # ------------------------------
     gtdb_cols = [
         "user_genome",
         "classification",
@@ -167,9 +147,6 @@ def main():
     else:
         df_gtdb = pd.DataFrame(columns=gtdb_cols)
 
-    # ------------------------------
-    # Merge all tables
-    # ------------------------------
     final_df = (
         df_bins
         .merge(df_checkm, left_on="merge_id", right_on="Bin Id", how="left")
@@ -179,9 +156,6 @@ def main():
 
     final_df["group_id"] = group
 
-    # ------------------------------
-    # Taxonomy parsing (rank-aware)
-    # ------------------------------
     ranks = ["domain", "phylum", "class", "order", "family", "genus", "species"]
 
     def split_taxonomy(val):
@@ -209,9 +183,6 @@ def main():
 
     final_df[ranks] = final_df["classification"].apply(split_taxonomy)
 
-    # ------------------------------
-    # Final formatting and output
-    # ------------------------------
     coverm_cols = [c for c in df_coverm.columns if c != "Genome"]
 
     base_cols = [

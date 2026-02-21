@@ -16,12 +16,12 @@ workflow LONGREAD_QC {
             ch_nanoplot_raw_input = ch_raw_long_reads
                 .map { meta, read -> [ meta, "raw", read ] }
             NANOPLOT_RAW(ch_nanoplot_raw_input)
-            ch_versions = ch_versions.mix(NANOPLOT_RAW.out.versions)
+            ch_versions = ch_versions.mix(NANOPLOT_RAW.out.versions.first())
         }
         
         if (!params.skip_porechop) {
             PORECHOP_ABI(ch_raw_long_reads)
-            ch_versions = ch_versions.mix(PORECHOP_ABI.out.versions)
+            ch_versions = ch_versions.mix(PORECHOP_ABI.out.versions.first())
             ch_porechopped_reads = PORECHOP_ABI.out.reads
             ch_multiqc_files = ch_multiqc_files.mix(PORECHOP_ABI.out.log)
         } else {
@@ -29,14 +29,14 @@ workflow LONGREAD_QC {
         }
         
         CHOPPER(ch_porechopped_reads)
-        ch_versions = ch_versions.mix(CHOPPER.out.versions)
+        ch_versions = ch_versions.mix(CHOPPER.out.versions.first())
         ch_choppered_reads = CHOPPER.out.fastq
         
         if (!params.skip_nanoplot) {
             ch_nanoplot_qc_input = ch_choppered_reads
                 .map { meta, read -> [ meta, "qc", read ] }
             NANOPLOT_QC(ch_nanoplot_qc_input)
-            ch_versions = ch_versions.mix(NANOPLOT_QC.out.versions)
+            ch_versions = ch_versions.mix(NANOPLOT_QC.out.versions.first())
         }
         
         ch_long_reads_qc = ch_choppered_reads

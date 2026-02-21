@@ -25,7 +25,7 @@ with support for Oxford Nanopore reads
 Usage:
      nextflow run main.nf -profile local,docker --input FILE --outdir PATH
 Input:
-     -profile PROFILE(S): test/local/hpc (select according to available ressources), apptainer/docker/singularity (container engine), install (to pre-download containers)
+     -profile PROFILE(S): test/local/drac (select according to available ressources), apptainer/docker/singularity (container engine), install (to pre-download containers)
      --outdir PATH: path to output directory
      --input FILE: path to input sample sheet (CSV format)
 """
@@ -47,6 +47,7 @@ workflow MAG_ONT {
      if (!params.input) {
           exit 1, "Missing parameter 'input'. Please provide a sample sheet using --input FILE"
      }
+     ch_versions = channel.empty()
      
      // Validate sample sheet and dispatch sample(s)
      ch_dispatched = DISPATCH().samplesheet
@@ -92,6 +93,7 @@ workflow MAG_ONT {
      // Perform long read QC
      ch_qc_long_reads = LONGREAD_QC(ch_needs_qc).long_reads_qc
      ch_long_reads_final = ch_qc_long_reads.mix(ch_skip_qc)
+     ch_versions = ch_versions.mix(LONGREAD_QC.out.versions)
 
      // Group channels by group
      ch_grouped_reads = ch_long_reads_final
@@ -109,6 +111,7 @@ workflow MAG_ONT {
      ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble).reads
           
      ch_generated_assembly = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly).assembly
+     ch_versions = ch_versions.mix(LONGREAD_ASSEMBLY.out.versions)
           
      ch_assembly = ch_generated_assembly.mix(ch_input_assembly)
 
@@ -141,6 +144,10 @@ workflow MAG_ONT {
           }
 
      BINNING(ch_binning_input)
+     ch_versions = ch_versions.mix(BINNING.out.versions)
+     ch_versions
+          .unique()
+          .collectFile(name: 'software_versions.yml', storeDir: "${params.outdir}/pipeline_info")
 
 }
 
