@@ -23,11 +23,19 @@ with support for Oxford Nanopore reads
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
-     nextflow run main.nf -profile local,docker --input FILE --outdir PATH
+     nextflow run main.nf -profile base,docker --input FILE --outdir PATH
 Input:
-     -profile PROFILE(S): test/local/drac (select according to available ressources), apptainer/docker/singularity (container engine), install (to pre-download containers)
-     --outdir PATH: path to output directory
-     --input FILE: path to input sample sheet (CSV format)
+     -profile : comma-separated list of profile(s) to use
+          test : 1 cpu (test installation)
+          base : 8 cpus (run on a local machine (adjust conf/base.config for more cpus))
+          drac : varying number of cpus (run with the slurm executor on the Digital Research Alliance of Canada clusters)
+
+          docker      : use docker containers
+          singularity : use singularity containers
+          apptainer   : use apptainer containers
+
+     --outdir : path to output directory
+     --input  : path to input sample sheet (CSV format)
 """
 
 if( params.help ) {
