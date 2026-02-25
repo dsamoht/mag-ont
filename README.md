@@ -19,19 +19,19 @@ with support for Oxford Nanopore reads
 
 ![alt text](/assets/img/mag-ont_v1.2.0.png)
 
-## Software dependencies
+## software dependencies
 
 * [Nextflow](https://www.nextflow.io/)
 * [Docker](https://www.docker.com/) or [Apptainer (Singularity)](https://apptainer.org/)
 
-## Database
+## database
 
 * [GTDB-Tk database - release 226](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data) (uncompressed)
 
-## Usage
-Select :
+## usage
+select :
   1) a container engine : docker or apptainer/singularity. Most HPC environment have apptainer already installed. Docker is mostly used on local workstations.
-  2) a workload capacity : test, base or drac. test is for testing your installation. base if for running the pipeline as a single task, like on a local computer. drac is for running with the slurm executor on the Digital Research Alliance of Canada clusters.
+  2) a workload capacity : test, base or drac. test is for testing your installation. base if for running the pipeline as a single task, like on a local computer. drac is for running with the slurm executor on the Digital Research Alliance of Canada clusters or similar slurm-based HPC.
 
 These profiles can be edited in [nextflow.config](./nextflow.config).
 
@@ -51,22 +51,20 @@ nextflow run main.nf \
 ```
 
 
-## Sample sheet specification
+## sample sheet specification
 
-The pipeline uses a CSV sample sheet to manage input data and define how samples are grouped for co-assembly and binning.
-
-### Column Structure
+The pipeline uses a CSV sample sheet to manage input data and define how samples are grouped for co-assembly and binning.  
 
 The CSV must contain exactly **6 columns** with the following headers:
 
-| Column | Description |
+| column | description |
 | --- | --- |
-| sample_id | Unique name for the sample. |
-| group | Identifier to group samples together for co-processing. All samples that share this identifier are co-assembled.|
-| assembly_fasta | Path to a pre-existing assembly. If provided, assembly is skipped and the pipeline starts at the binning step. |
-| long_reads | Path to long-read FASTQ file. |
-| short_reads_1 | Path to post-qc forward R1 FASTQ file. |
-| short_reads_2 | Path to post-qc reverse R2 FASTQ file. |
+| sample_id | unique name for the sample. |
+| group | identifier to group samples together for co-processing. All samples that share this identifier are co-assembled.|
+| assembly_fasta | path to a pre-existing assembly. If provided, assembly is skipped and the pipeline starts at the binning step. |
+| long_reads | path to long-read FASTQ file. |
+| short_reads_1 | path to post-qc forward R1 FASTQ file. |
+| short_reads_2 | path to post-qc reverse R2 FASTQ file. |
 
 > [!NOTE]
 > When both types of reads are provided and no pre-existing assembly is provided, assembly is made with the long reads and binning is made with the short reads.
@@ -78,7 +76,7 @@ The CSV must contain exactly **6 columns** with the following headers:
 * **Read type matching:** Within a group, you cannot mix "long-read only" samples with "short-read only" samples. This ensures compatibility during binning and coverage calculation.
 
 
-### Input example
+### input example
 ```csv
 sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
 test4,ont_test4,,./test/data/TEST4_ONT.fastq.gz,,
@@ -87,12 +85,12 @@ test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fas
 test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
 ```
 This samplesheet will trigger the following 3 workflows:  
-group_ont_test4  : sample-wise assembly and single-sample binning of sample test4 using long reads ./test/data/TEST4_ONT.fastq.gz  
-group_ont_test3  : single-sample binning of assembly ./test/data/ont_test3.assembly.fasta and long reads ./test/data/TEST3_ONT.fastq.gz  
-group_coassembly : multi-samples binning of assembly ./test/data/coassembly.assembly.fasta using short reads ./test/data/TEST1_R{1,2}.fastq.gz and ./test/data/TEST2_R{1,2}.fastq.gz  
+- group_ont_test4  : sample-wise assembly and single-sample binning of sample test4 using long reads ./test/data/TEST4_ONT.fastq.gz  
+- group_ont_test3  : single-sample binning of assembly ./test/data/ont_test3.assembly.fasta and long reads ./test/data/TEST3_ONT.fastq.gz  
+- group_coassembly : multi-samples binning of assembly ./test/data/coassembly.assembly.fasta using short reads ./test/data/TEST1_R{1,2}.fastq.gz and ./test/data/TEST2_R{1,2}.fastq.gz  
 
 
-## Acknowledgement
+## acknowledgement
 This pipeline is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) :  
 >nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
 >Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
