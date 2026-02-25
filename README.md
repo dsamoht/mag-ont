@@ -77,9 +77,24 @@ The CSV must contain exactly **6 columns** with the following headers:
 * **Group integrity:** All samples within the same `group` must point to the **exact same** `assembly_fasta` if a pre-existing assembly is provided.
 * **Read type matching:** Within a group, you cannot mix "long-read only" samples with "short-read only" samples. This ensures compatibility during binning and coverage calculation.
 
+
+### Input example
+```csv
+sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
+test4,ont_test4,,./test/data/TEST4_ONT.fastq.gz,,
+test3,ont_test3,./test/data/ont_test3.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,,
+test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,./test/data/TEST1_R1.fastq.gz,./test/data/TEST1_R2.fastq.gz
+test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
+```
+This samplesheet will trigger the following 3 workflows:
+`group_ont_test4`  : sample-wise assembly and single-sample binning of sample `test4` using long reads `./test/data/TEST4_ONT.fastq.gz`  
+`group_ont_test3`  : single-sample binning of assembly `./test/data/ont_test3.assembly.fasta` and long reads `./test/data/TEST3_ONT.fastq.gz`
+`group_coassembly` : multi-samples binning of assembly `./test/data/coassembly.assembly.fasta` using short reads `./test/data/TEST1_R{1,2}.fastq.gz,./test/data/TEST2_R{1,2}.fastq.gz`
+
+
 ## Acknowledgement
 This pipeline is inspired by [__nf-core/mag__](https://github.com/nf-core/mag) :  
 >nf-core/mag: a best-practice pipeline for metagenome hybrid assembly and binning  
 >Sabrina Krakau, Daniel Straub, Hadrien Gourlé, Gisela Gabernet, Sven Nahnsen.  
->NAR Genom Bioinform. 2022 Feb 2;4(1)  
+>NAR Genom Bioinform. 2022 Feb 2;4(1)
 >doi: [10.1093/nargab/lqac007](https://academic.oup.com/nargab/article/4/1/lqac007/6520104)

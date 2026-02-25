@@ -1,19 +1,22 @@
 #!usr/bin/env nextflow
 
-include { BWA_MEM            } from '../../modules/bwa'
-include { CHECKM             } from '../../modules/checkm'
-include { CONCOCT            } from '../../modules/concoct'
-include { COVERM             } from '../../modules/coverm'
-include { DASTOOL            } from '../../modules/dastool/dastool'
-include { DASTOOL_CONTIG2BIN } from '../../modules/dastool/dastool_contig2bin'
-include { GTDBTK             } from '../../modules/gtdbtk'
-include { MAG_SUMMARY        } from '../../modules/mag_summary'
-include { MAXBIN             } from '../../modules/maxbin/maxbin'
-include { MAXBIN_ABUND       } from '../../modules/maxbin/maxbin_abundance'
-include { METABAT            } from '../../modules/metabat'
-include { MINIMAP            } from '../../modules/minimap'
-include { SAMTOOLS           } from '../../modules/samtools'
-include { SEMIBIN            } from '../../modules/semibin'
+include { BWA_MEM                 } from '../../modules/bwa'
+include { CHECKM                  } from '../../modules/checkm'
+include { CONCOCT                 } from '../../modules/concoct'
+include { COVERM_CONTIG           } from '../../modules/coverm/contig'
+include { COVERM_GENOME           } from '../../modules/coverm/genome'
+include { NORMALIZE_COVERM_CONTIG } from '../../modules/coverm/normalize/contig'
+include { NORMALIZE_COVERM_GENOME } from '../../modules/coverm/normalize/genome'
+include { DASTOOL                 } from '../../modules/dastool/dastool'
+include { DASTOOL_CONTIG2BIN      } from '../../modules/dastool/dastool_contig2bin'
+include { GTDBTK                  } from '../../modules/gtdbtk'
+include { MAG_SUMMARY             } from '../../modules/mag_summary'
+include { MAXBIN                  } from '../../modules/maxbin/maxbin'
+include { MAXBIN_ABUND            } from '../../modules/maxbin/maxbin_abundance'
+include { METABAT                 } from '../../modules/metabat'
+include { MINIMAP                 } from '../../modules/minimap'
+include { SAMTOOLS                } from '../../modules/samtools'
+include { SEMIBIN                 } from '../../modules/semibin'
 
 
 workflow BINNING {
@@ -74,6 +77,28 @@ workflow BINNING {
     // Prepare binning channels
     ch_binning_bam = ch_assembly_to_join
         .join(ch_grouped_bam_index)
+
+    // Run coverm contig
+    ch_coverm_contig_out = COVERM_CONTIG(
+        ch_binning_bam.map {it -> [ it[0], it[3] ]}, // [ meta, bam file(s) ]
+    )
+    ch_versions = ch_versions.mix(COVERM_CONTIG.out.versions.first())
+
+    
+    ch_norm_coverm_contig_in = ch_coverm_contig_out.coverm_stats
+        .join(
+            ch_binning_bam.map { it -> [ it[0], it[3] ] }
+        )
+        .join(
+            ch_binning_wf_input.map { meta, assembly -> [ meta.group, meta.gff ] }
+        )
+        .view()
+
+    ch_coverm_contig_norm_out = NORMALIZE_COVERM_CONTIG(
+        ch_norm_coverm_contig_in.map { it -> [ it[0], it[1] ] }, // [ meta, coverm_stats ]
+        ch_norm_coverm_contig_in.map { it -> [ it[0], it[3] ] }, // [ meta, gff file     ]
+        ch_norm_coverm_contig_in.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
+    )
 
     // Binning
     // Run metabat
@@ -156,6 +181,28 @@ workflow BINNING {
     ch_dastool_out = DASTOOL(ch_dastool_input)
     ch_versions = ch_versions.mix(DASTOOL.out.versions.first())
 
+    ch_coverm_genome_input = ch_dastool_out.dastool_bins
+        .join(
+        ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
+        )
+
+    // Run CoverM
+    ch_coverm_out = COVERM_GENOME(
+        ch_coverm_genome_input.map { it -> [ it[0], it[1] ] }, // [ meta, bin(s) ]
+        ch_coverm_genome_input.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
+    )
+    ch_versions = ch_versions.mix(COVERM_GENOME.out.versions.first())
+
+    ch_norm_coverm_genome_in = ch_coverm_out.coverm_stats
+        .join(
+            ch_binning_bam.map { it -> [ it[0], it[3] ] }
+        )
+
+    ch_coverm_genome_norm_out = NORMALIZE_COVERM_GENOME(
+        ch_norm_coverm_genome_in.map { it -> [ it[0], it[1] ] }, // [ meta, coverm_stats ]
+        ch_norm_coverm_genome_in.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
+    )
+
     if (!params.skip_bin_qa) {
     
     // Run CheckM
@@ -170,19 +217,8 @@ workflow BINNING {
         params.gtdbtk_db
     )
     ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
-    ch_coverm_input = ch_dastool_out.dastool_bins
-        .join(
-        ch_binning_bam.map { it -> [ it[0], it[3] ] } // [ meta, bam files(s)]
-        )
 
-    // Run CoverM
-    ch_coverm_out = COVERM(
-        ch_coverm_input.map { it -> [ it[0], it[1] ] }, // [ meta, bin(s) ]
-        ch_coverm_input.map { it -> [ it[0], it[2] ] }  // [ meta, bam files(s) ]
-    )
-    ch_versions = ch_versions.mix(COVERM.out.versions.first())
-
-        // Summary
+    // Summary
     ch_summarize = ch_dastool_out.dastool_bins
         .join(ch_checkm_out.checkm_stats)
         .join(ch_coverm_out.coverm_stats)

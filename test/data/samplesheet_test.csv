@@ -1,0 +1,5 @@
+sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
+test4,ont_test4,,./test/data/TEST4_ONT.fastq.gz,,
+test3,ont_test3,./test/data/ont_test3.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,,
+test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,./test/data/TEST1_R1.fastq.gz,./test/data/TEST1_R2.fastq.gz
+test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
