@@ -61,20 +61,20 @@ The CSV must contain exactly **6 columns** with the following headers:
 
 | Column | Description |
 | --- | --- |
-| `sample_id` | Unique name for the sample. |
-| `group` | Identifier to group samples together for co-processing. All samples that share this identifier are co-assembled.|
-| `assembly_fasta` | Path to a pre-existing assembly. If provided, assembly is skipped and the pipeline starts at the binning step. |
-| `long_reads` | Path to long-read FASTQ file. |
-| `short_reads_1` | Path to post-qc forward R1 FASTQ file. |
-| `short_reads_2` | Path to post-qc reverse R2 FASTQ file. |
+| sample_id | Unique name for the sample. |
+| group | Identifier to group samples together for co-processing. All samples that share this identifier are co-assembled.|
+| assembly_fasta | Path to a pre-existing assembly. If provided, assembly is skipped and the pipeline starts at the binning step. |
+| long_reads | Path to long-read FASTQ file. |
+| short_reads_1 | Path to post-qc forward R1 FASTQ file. |
+| short_reads_2 | Path to post-qc reverse R2 FASTQ file. |
 
 > [!NOTE]
 > When both types of reads are provided and no pre-existing assembly is provided, assembly is made with the long reads and binning is made with the short reads.
 > Short reads are only used for binning and they are chosen over long reads.
 
-* **Read consistency:** Short reads must be paired. If `short_reads_1` is provided, `short_reads_2` must also be provided.
-* **Minimum requirements:** Each group must contain at least an `assembly_fasta` OR `long_reads`.
-* **Group integrity:** All samples within the same `group` must point to the **exact same** `assembly_fasta` if a pre-existing assembly is provided.
+* **Read consistency:** Short reads must be paired. If short_reads_1 is provided, short_reads_2 must also be provided.
+* **Minimum requirements:** Each group must contain at least an assembly_fasta OR long_reads.
+* **Group integrity:** All samples within the same group must point to the **exact same** assembly_fasta if a pre-existing assembly is provided.
 * **Read type matching:** Within a group, you cannot mix "long-read only" samples with "short-read only" samples. This ensures compatibility during binning and coverage calculation.
 
 
@@ -87,9 +87,9 @@ test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fas
 test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
 ```
 This samplesheet will trigger the following 3 workflows:  
-`group_ont_test4`  : sample-wise assembly and single-sample binning of sample `test4` using long reads `./test/data/TEST4_ONT.fastq.gz`  
-`group_ont_test3`  : single-sample binning of assembly `./test/data/ont_test3.assembly.fasta` and long reads `./test/data/TEST3_ONT.fastq.gz`  
-`group_coassembly` : multi-samples binning of assembly `./test/data/coassembly.assembly.fasta` using short reads `./test/data/TEST1_R{1,2}.fastq.gz,./test/data/TEST2_R{1,2}.fastq.gz`  
+group_ont_test4  : sample-wise assembly and single-sample binning of sample test4 using long reads ./test/data/TEST4_ONT.fastq.gz  
+group_ont_test3  : single-sample binning of assembly ./test/data/ont_test3.assembly.fasta and long reads ./test/data/TEST3_ONT.fastq.gz  
+group_coassembly : multi-samples binning of assembly ./test/data/coassembly.assembly.fasta using short reads ./test/data/TEST1_R{1,2}.fastq.gz and ./test/data/TEST2_R{1,2}.fastq.gz  
 
 
 ## Acknowledgement
