@@ -86,10 +86,10 @@ test3,ont_test3,./test/data/ont_test3.assembly.fasta,./test/data/TEST3_ONT.fastq
 test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,./test/data/TEST1_R1.fastq.gz,./test/data/TEST1_R2.fastq.gz
 test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
 ```
-This samplesheet will trigger the following 3 workflows:
+This samplesheet will trigger the following 3 workflows:  
 `group_ont_test4`  : sample-wise assembly and single-sample binning of sample `test4` using long reads `./test/data/TEST4_ONT.fastq.gz`  
-`group_ont_test3`  : single-sample binning of assembly `./test/data/ont_test3.assembly.fasta` and long reads `./test/data/TEST3_ONT.fastq.gz`
-`group_coassembly` : multi-samples binning of assembly `./test/data/coassembly.assembly.fasta` using short reads `./test/data/TEST1_R{1,2}.fastq.gz,./test/data/TEST2_R{1,2}.fastq.gz`
+`group_ont_test3`  : single-sample binning of assembly `./test/data/ont_test3.assembly.fasta` and long reads `./test/data/TEST3_ONT.fastq.gz`  
+`group_coassembly` : multi-samples binning of assembly `./test/data/coassembly.assembly.fasta` using short reads `./test/data/TEST1_R{1,2}.fastq.gz,./test/data/TEST2_R{1,2}.fastq.gz`  
 
 
 ## Acknowledgement
