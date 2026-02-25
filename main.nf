@@ -5,6 +5,7 @@ include { CAT_FASTQ         } from './modules/cat'
 include { DISPATCH          } from './workflows/dispatch'
 include { LONGREAD_ASSEMBLY } from './workflows/longread_assembly'
 include { LONGREAD_QC       } from './workflows/longread_qc'
+include { PYRODIGAL         } from './modules/pyrodigal'
 
 
 info = """
@@ -63,8 +64,12 @@ workflow MAG_ONT {
      // Channel of pre-existing assemblies
      ch_input_assembly = ch_dispatched
         .filter { sample -> sample.assembly }
-        .map { sample -> [ [ group: sample.group, sample_ids: [sample.sample_id] ], sample.assembly ] }
-
+        .map { sample -> [ sample.group, sample.sample_id, sample.assembly ] }
+        .groupTuple(by: 0)
+        .map { group, sample_ids, assemblies -> 
+            def meta = [ group: group, sample_ids: sample_ids.unique() ]
+            [ meta, assemblies[0] ] 
+        }
      // Channel of input short reads
      ch_short_reads_grouped = ch_dispatched
         .filter { sample -> sample.sr1 && sample.sr2 }
@@ -123,20 +128,26 @@ workflow MAG_ONT {
           
      ch_assembly = ch_generated_assembly.mix(ch_input_assembly)
 
+     ch_genes = PYRODIGAL(
+          ch_assembly.map { meta, assembly -> [ meta.group, assembly ] }
+     )
+
      ch_long_reads_grouped = ch_long_reads_final
           .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
           .groupTuple()
 
-    ch_binning_input = ch_assembly
+     ch_binning_input = ch_assembly
           .map { meta, assembly -> [ meta.group, meta, assembly ] }
           .join(ch_long_reads_grouped, remainder: true)
           .join(ch_short_reads_grouped, remainder: true)
+          .join(ch_genes.gff, remainder: true)
           .map { it ->
                def group_id    = it[0]
                def meta        = it[1]
                def assembly    = it[2]
                def raw_long    = it[3] ?: [] 
                def raw_short   = it[4] ?: []
+               def gff         = it[5] ?: null
                
                def sorted_long = raw_long.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
                def sorted_short = raw_short.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
@@ -145,7 +156,8 @@ workflow MAG_ONT {
                     group: group_id,
                     strategy: sorted_short.size() > 0 ? 'short' : 'long',
                     long_reads: sorted_long,
-                    short_reads: sorted_short
+                    short_reads: sorted_short,
+                    gff: gff
                ]
 
                return [ new_meta, assembly ]

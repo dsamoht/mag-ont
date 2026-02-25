@@ -1,5 +1,5 @@
 .nextflow*
 work
 .nextflow
-test
+test/mag*
 .DS_store
