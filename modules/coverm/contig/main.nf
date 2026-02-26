@@ -20,7 +20,6 @@ process COVERM_CONTIG {
     coverm contig \
 	--methods mean trimmed_mean covered_fraction \
 	--bam-files ${bam_files} \
-	--min-read-percent-identity 95 \
 	--threads ${task.cpus} \
   	--output-file coverm_contig_stats.tsv
 

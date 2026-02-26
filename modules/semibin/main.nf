@@ -6,7 +6,7 @@ process SEMIBIN {
 
     container params.semibin_container
 
-    publishDir "${params.outdir}/group_${meta_assembly}/binning/semibin", mode: "copy"
+    publishDir "${params.outdir}/group_${meta}/binning/semibin", mode: "copy"
 
     input:
     tuple val(meta), path(assembly)

@@ -23,7 +23,6 @@ process COVERM_GENOME {
 	--genome-fasta-directory bins \
 	--genome-fasta-extension fa \
 	--bam-files ${bam_files} \
-	--min-read-percent-identity 95 \
 	--threads ${task.cpus} \
   	--output-file coverm_genome_stats.tsv
 
