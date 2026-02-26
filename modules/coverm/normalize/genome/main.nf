@@ -4,7 +4,7 @@ process NORMALIZE_COVERM_GENOME {
 
     tag "group_${meta}"
 
-    container params.pandas_container
+    container params.python_container
 
     publishDir "${params.outdir}/group_${meta}/binning/coverm", mode: 'copy'
 

@@ -4,7 +4,7 @@ process MAXBIN_ABUND {
 
     tag "group_${meta}"
 
-    container params.pandas_container
+    container params.python_container
 
     input:
     tuple val(meta), path(metabat_depth)

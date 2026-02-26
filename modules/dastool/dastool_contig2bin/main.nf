@@ -4,7 +4,7 @@ process DASTOOL_CONTIG2BIN {
 
     tag "group_${meta}_${software}"
 
-    container params.pandas_container
+    container params.python_container
 
     publishDir "${params.outdir}/group_${meta}/binning/dastool", mode: "copy"
 
