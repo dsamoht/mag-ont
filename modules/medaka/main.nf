@@ -21,7 +21,7 @@ process MEDAKA {
         -t ${task.cpus} \
         -i ${reads} \
         -d ${assembly} \
-        -m ${params.medaka_model}
+        -m ${params.medaka_model} \
         -o ./
 
     mv consensus.fasta ${meta.group}.consensus.fasta
