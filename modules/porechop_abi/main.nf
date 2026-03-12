@@ -6,6 +6,8 @@ process PORECHOP_ABI {
 
     container params.porechop_abi_container
 
+    publishDir "${params.outdir}/group_${meta.group}/reads_qc/porechop_abi/", mode: "copy", pattern: "*.log"
+
     input:
     tuple val(meta), path(reads)
 
@@ -21,6 +23,7 @@ process PORECHOP_ABI {
         --discard_middle \
         -i ${reads} \
         -o ${meta.sample_id}.porechopped.fastq.gz > ${meta.sample_id}.porechop.log
+    
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         porechop_abi: \$( porechop_abi --version )
