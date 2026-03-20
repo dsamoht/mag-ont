@@ -6,7 +6,7 @@ process NANOPLOT {
 
     container params.nanoplot_container
 
-    publishDir "${params.outdir}/group_${meta.group}/reads_qc/nanoplot_${step}", mode: "copy"
+    publishDir "${params.outdir}/group_${meta.group}/reads_qc/nanoplot_${step}/${meta.sample_id}", mode: "copy"
 
     input:
     tuple val(meta), val(step), path(fastq)
