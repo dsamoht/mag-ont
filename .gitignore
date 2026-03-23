@@ -3,3 +3,8 @@ work
 .nextflow
 test/mag*
 .DS_store
+singularity_cache
+*.log
+*.out
+*.err
+*.tmp

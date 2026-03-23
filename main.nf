@@ -17,10 +17,10 @@ info = """
                  |___/                       
 
 Automation of metagenome assembly and binning
-with support for Oxford Nanopore reads
+with support for nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.2.0
+     Version: v1.2.2
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
