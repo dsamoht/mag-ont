@@ -6,7 +6,7 @@ process MEDAKA {
 
     container params.medaka_container
 
-    publishDir "${params.outdir}/group_${meta.group}/assembly/medaka", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta.group}/assembly/medaka", mode: "copy"
 
     input:
     tuple val(meta), path(reads), path(assembly)

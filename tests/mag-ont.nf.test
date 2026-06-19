@@ -1,0 +1,14 @@
+nextflow_workflow {
+    name "test MAG_ONT workflow"
+    script "main.nf"
+    workflow "MAG_ONT"
+    options "-profile test,docker"
+
+    test("assemble group `ont_test4` AND use provided assemblies `ont_test3` and `coassembly`") {
+
+        expect {
+            assert workflow.success
+            assert workflow.trace.succeeded().size() == 48
+        }
+    }
+}

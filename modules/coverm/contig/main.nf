@@ -6,7 +6,7 @@ process COVERM_CONTIG {
 
     container params.coverm_container
 
-    publishDir "${params.outdir}/group_${meta}/mapping/coverm", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta}/mapping/coverm", mode: "copy"
 
     input:
     tuple val(meta), path(bam_files)

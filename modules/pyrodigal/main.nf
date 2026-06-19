@@ -6,7 +6,7 @@ process PYRODIGAL {
 
     container params.pyrodigal_container
 
-    publishDir "${params.outdir}/group_${meta}/assembly/pyrodigal", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta}/assembly/pyrodigal", mode: "copy"
 
     input:
     tuple val(meta), path(fasta)
