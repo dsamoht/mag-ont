@@ -1,4 +1,4 @@
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A525.10.2-23aa62.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A526.04-23aa62.svg)](https://www.nextflow.io/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
@@ -14,10 +14,20 @@ Automation of metagenome assembly and binning
 with support for nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.2.2
+     Version: v1.3.0
 ```
 
-![alt text](/assets/img/mag-ont_v1.2.0.png)
+![alt text](/assets/img/mag-ont_v1.3.0.png)
+
+
+## TL;DR
+```bash
+nextflow run main.nf \
+  -profile singularity,drac \
+  --gtdbtk_db /path/to/uncompressed/db \
+  --input ./test/samplesheet_test.csv \
+  --outdir ./test/mag-ont_outdir
+```
 
 ## software dependencies
 
@@ -31,7 +41,7 @@ with support for nanopore reads
 ## usage
 select :
   1) a container engine : docker or apptainer/singularity. Most HPC environment have apptainer already installed. Docker is mostly used on local workstations.
-  2) a workload capacity : test, base or drac. test is for testing your installation. base if for running the pipeline as a single task, like on a local computer. drac is for running with the slurm executor on the Digital Research Alliance of Canada clusters or similar slurm-based HPC.
+  2) a workload capacity : test, base or drac. test is for testing your installation. base is for running the pipeline as a single task, like on a local computer. drac is for running with the slurm executor on the Digital Research Alliance of Canada clusters or similar slurm-based HPC.
 
 These profiles can be edited in [nextflow.config](./nextflow.config).
 
@@ -42,14 +52,6 @@ nextflow run main.nf \
   --input ./test/samplesheet_test.csv \
   --outdir ./test/mag-ont_outdir
 ```
-
-You can also download the container images for further use by using the install profile. Images are pulled according to the chosen container engine.
-
-```bash
-nextflow run main.nf \
-  -profile {docker/singularity/apptainer},install
-```
-
 
 ## sample sheet specification
 

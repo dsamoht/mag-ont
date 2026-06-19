@@ -6,7 +6,7 @@ process METABAT {
 
     container params.metabat_container
 
-    publishDir "${params.outdir}/group_${meta_assembly}/binning/metabat", mode: 'copy'
+    //publishDir "${params.outdir}/group_${meta_assembly}/binning/metabat", mode: 'copy'
 
     input:
     tuple val(meta_assembly), path(assembly)

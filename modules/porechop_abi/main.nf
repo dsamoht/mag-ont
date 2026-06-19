@@ -6,15 +6,13 @@ process PORECHOP_ABI {
 
     container params.porechop_abi_container
 
-    publishDir "${params.outdir}/group_${meta.group}/reads_qc/porechop_abi/", mode: "copy", pattern: "*.log"
-
     input:
     tuple val(meta), path(reads)
 
     output:
     tuple val(meta), path("*.fastq.gz"), emit: reads
-    tuple val(meta), path("*.log"), emit: log
-    path "versions.yml", emit: versions
+    tuple val(meta), path("*.log")     , emit: log
+    path "versions.yml"                , emit: versions
 
     script:
     """

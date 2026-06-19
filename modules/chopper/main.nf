@@ -6,7 +6,7 @@ process CHOPPER {
 
     container params.chopper_container
 
-    publishDir "${params.outdir}/group_${meta.group}/reads_qc/chopper/", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta.group}/reads_qc/chopper/", mode: "copy"
 
     input:
     tuple val(meta), path(reads)

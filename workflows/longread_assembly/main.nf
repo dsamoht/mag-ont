@@ -18,14 +18,14 @@ workflow LONGREAD_ASSEMBLY {
         MEDAKA(ch_medaka_input)
         ch_versions = ch_versions.mix(MEDAKA.out.versions.first())
         ch_medaka_assembly = MEDAKA.out.fasta
-        ch_assembly = ch_medaka_assembly
          
     } else {
-        ch_assembly = ch_flye_assembly
+        ch_medaka_assembly = channel.empty()
     }
 
     emit:
-    assembly = ch_assembly
-    versions = ch_versions
+    assembly  = ch_flye_assembly
+    consensus = ch_medaka_assembly
+    versions  = ch_versions
 
 }

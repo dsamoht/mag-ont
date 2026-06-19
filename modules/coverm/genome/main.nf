@@ -6,11 +6,10 @@ process COVERM_GENOME {
 
     container params.coverm_container
 
-    publishDir "${params.outdir}/group_${meta}/binning/coverm", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta}/binning/coverm", mode: "copy"
 
     input:
-    tuple val(meta), path(dastool_bins, stageAs: "bins/*")
-    tuple val(meta), path(bam_files)
+    tuple val(meta), path(dastool_bins, stageAs: "bins/*"), path(bam_files)
 
     output:
     tuple val(meta), path("coverm_genome_stats.tsv"), emit: coverm_stats

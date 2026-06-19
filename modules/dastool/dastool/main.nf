@@ -6,7 +6,7 @@ process DASTOOL {
 
     container params.dastool_container
 
-    publishDir "${params.outdir}/group_${meta}/binning/dastool", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta}/binning/dastool", mode: "copy"
 
     input:
     tuple val(meta), path(assembly), path(contig2bin)

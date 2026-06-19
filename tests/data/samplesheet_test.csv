@@ -1,0 +1,5 @@
+sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
+test4,ont_test4,,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST4_ONT.fastq.gz,,
+test3,ont_test3,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/ont_test3.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST3_ONT.fastq.gz,,
+test1,coassembly,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/coassembly.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST3_ONT.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST1_R1.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST1_R2.fastq.gz
+test2,coassembly,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/coassembly.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST4_ONT.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST2_R1.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/test/data/TEST2_R2.fastq.gz

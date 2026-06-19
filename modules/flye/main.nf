@@ -6,7 +6,7 @@ process FLYE {
 
     container params.flye_container
 
-    publishDir "${params.outdir}/group_${meta.group}/assembly/flye", mode: "copy"
+    //publishDir "${params.outdir}/group_${meta.group}/assembly/flye", mode: "copy"
 
     errorStrategy "finish"
 

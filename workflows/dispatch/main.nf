@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 
 workflow DISPATCH {
 
+    main:
     def samplesheet_file = file(params.input, checkIfExists: true)
     def lines = samplesheet_file.text.readLines()
     lines.eachWithIndex { line, idx ->
