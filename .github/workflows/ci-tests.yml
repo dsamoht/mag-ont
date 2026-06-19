@@ -1,0 +1,30 @@
+name: CI Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: "latest-edge"
+
+      - name: Install nf-test
+        run: |
+          wget -qO- https://get.nf-test.com | bash
+          sudo mv nf-test /usr/local/bin/
+
+      - name: Run Tests
+        run: nf-test test --ci
