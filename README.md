@@ -25,8 +25,8 @@ with support for nanopore reads
 nextflow run main.nf \
   -profile singularity,drac \
   --gtdbtk_db /path/to/uncompressed/db \
-  --input ./test/samplesheet_test.csv \
-  --outdir ./test/mag-ont_outdir
+  --input ./tests/data/samplesheet_test.csv \
+  --outdir ./tests/outdir
 ```
 
 ## software dependencies
@@ -49,8 +49,8 @@ These profiles can be edited in [nextflow.config](./nextflow.config).
 nextflow run main.nf \
   -profile {docker/singularity/apptainer},{test,base,drac} \
   --gtdbtk_db /path/to/uncompressed/db \
-  --input ./test/samplesheet_test.csv \
-  --outdir ./test/mag-ont_outdir
+  --input ./tests/data/samplesheet_test.csv \
+  --outdir ./tests/outdir
 ```
 
 ## sample sheet specification
@@ -81,15 +81,11 @@ The CSV must contain exactly **6 columns** with the following headers:
 ### input example
 ```csv
 sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
-test4,ont_test4,,./test/data/TEST4_ONT.fastq.gz,,
-test3,ont_test3,./test/data/ont_test3.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,,
-test1,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST3_ONT.fastq.gz,./test/data/TEST1_R1.fastq.gz,./test/data/TEST1_R2.fastq.gz
-test2,coassembly,./test/data/coassembly.assembly.fasta,./test/data/TEST4_ONT.fastq.gz,./test/data/TEST2_R1.fastq.gz,./test/data/TEST2_R2.fastq.gz
+test4,ont_test4,,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST4_ONT.fastq.gz,,
+test3,ont_test3,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/ont_test3.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST3_ONT.fastq.gz,,
+test1,coassembly,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/coassembly.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST3_ONT.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST1_R1.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST1_R2.fastq.gz
+test2,coassembly,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/coassembly.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST4_ONT.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST2_R1.fastq.gz,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST2_R2.fastq.gz
 ```
-This samplesheet will trigger the following 3 workflows:  
-- group_ont_test4  : sample-wise assembly and single-sample binning of sample test4 using long reads ./test/data/TEST4_ONT.fastq.gz  
-- group_ont_test3  : single-sample binning of assembly ./test/data/ont_test3.assembly.fasta using long reads ./test/data/TEST3_ONT.fastq.gz  
-- group_coassembly : multi-samples binning of assembly ./test/data/coassembly.assembly.fasta using short reads ./test/data/TEST1_R{1,2}.fastq.gz and ./test/data/TEST2_R{1,2}.fastq.gz  
 
 
 ## acknowledgement
