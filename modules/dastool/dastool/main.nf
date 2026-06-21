@@ -19,13 +19,14 @@ process DASTOOL {
     def contig2binList = contig2bin.join(",")
     def labels = contig2bin.collect { it.name.replaceAll(/_contigs?2bin\.tsv$/, "") }.join(",")
     """
-    DAS_Tool \
-        -i ${contig2binList} \
-        -l ${labels} \
-        -c ${assembly} \
-        -o das-bin \
-        --write_bins \
-        --score_threshold=-9999
+    DAS_Tool \\
+        -i ${contig2binList} \\
+        -l ${labels} \\
+        -c ${assembly} \\
+        -o das-bin \\
+        --write_bins \\
+        --score_threshold=-9999 \\
+        -t ${task.cpus}
     
     if [ -d das-bin*_DASTool_bins ]; then
     mv das-bin*_DASTool_bins/*.fa . 2>/dev/null || true
