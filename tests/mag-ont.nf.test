@@ -1,10 +1,9 @@
-nextflow_workflow {
-    name "test MAG_ONT workflow"
+nextflow_pipeline {
+    name "test `mag-ont` pipeline"
     script "main.nf"
-    workflow "MAG_ONT"
     options "-profile test,docker"
 
-    test("assemble group `ont_test4` AND use provided assemblies `ont_test3` and `coassembly`") {
+    test("assemble group `ont_test4` AND use provided assemblies `ont_test3` and `coassembly` AND skip bin quality assessment") {
 
         expect {
             assert workflow.success
