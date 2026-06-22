@@ -5,7 +5,8 @@ include { CAT_FASTQ         } from './modules/cat'
 include { DISPATCH          } from './workflows/dispatch'
 include { LONGREAD_ASSEMBLY } from './workflows/longread_assembly'
 include { LONGREAD_QC       } from './workflows/longread_qc'
-include { PYRODIGAL         } from './modules/pyrodigal'
+include { MERGE_PYRODIGAL   } from './modules/pyrodigal/merge'
+include { PYRODIGAL         } from './modules/pyrodigal/pyrodigal'
 
 
 def helpMessage() {
@@ -142,10 +143,26 @@ workflow MAG_ONT {
           .map { meta, flye, medaka -> [ meta, medaka ?: flye ] }
           .mix(ch_input_assembly)
 
-     ch_genes = PYRODIGAL(
-          ch_assembly_for_binning.map { meta, assembly -> [ meta.group, assembly ] }
-     )
+     ch_fasta_chunks = ch_assembly_for_binning
+          .map { meta, assembly -> [ meta.group, assembly ] }
+          .splitFasta(size: 100.MB, file: true)
+          .map { meta, chunk -> [ meta, chunk.baseName.tokenize('.').last(), chunk ] }
 
+     ch_gene_chunks = PYRODIGAL(ch_fasta_chunks)
+
+     ch_genes_to_merge = ch_gene_chunks.gff
+          .join(ch_gene_chunks.fna, by: 0)
+          .join(ch_gene_chunks.faa, by: 0)
+          .groupTuple()
+          .map { meta, gffs, fnas, faas ->
+          [ meta,
+               gffs.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
+               fnas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
+               faas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer } ]
+          }
+
+     ch_genes = MERGE_PYRODIGAL(ch_genes_to_merge)
+     
      ch_long_reads_grouped = ch_long_reads_final
           .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
           .groupTuple()
