@@ -7,7 +7,7 @@ nextflow_pipeline {
 
         expect {
             assert workflow.success
-            assert workflow.trace.succeeded().size() == 48
+            assert workflow.trace.succeeded().size() == 51
         }
     }
 }

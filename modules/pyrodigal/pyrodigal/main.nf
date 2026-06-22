@@ -6,10 +6,8 @@ process PYRODIGAL {
 
     container params.pyrodigal_container
 
-    //publishDir "${params.outdir}/group_${meta}/assembly/pyrodigal", mode: "copy"
-
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), val(chunk_idx), path(fasta)
 
     output:
     tuple val(meta), path("*.gff") , emit: gff
@@ -23,9 +21,9 @@ process PYRODIGAL {
         -j ${task.cpus} \\
         -i ${fasta} \\
         -f gff \\
-        -o group_${meta}.gff \\
-        -d group_${meta}.fna \\
-        -a group_${meta}.faa \\
+        -o group_${meta}.chunk${chunk_idx}.gff \\
+        -d group_${meta}.chunk${chunk_idx}.fna \\
+        -a group_${meta}.chunk${chunk_idx}.faa \\
         -p meta
 
     cat <<-END_VERSIONS > versions.yml
