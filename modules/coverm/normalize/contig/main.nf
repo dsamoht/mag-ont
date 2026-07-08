@@ -6,8 +6,6 @@ process NORMALIZE_COVERM_CONTIG {
 
     container params.python_container
 
-    //publishDir "${params.outdir}/group_${meta}/mapping/genes", mode: 'copy'
-
     input:
     tuple val(meta), path(coverm_contig_stats), path(gff_file), path(bam_files)
 

@@ -6,19 +6,17 @@ process FLYE {
 
     container params.flye_container
 
-    //publishDir "${params.outdir}/group_${meta.group}/assembly/flye", mode: "copy"
-
-    errorStrategy "finish"
+    errorStrategy "ignore"
 
     input:
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.fasta") , emit: fasta
-    tuple val(meta), path("*.gfa")   , emit: gfa
-    tuple val(meta), path("*.txt")   , emit: txt
+    tuple val(meta), path("*.fasta") , emit: fasta, optional: true
+    tuple val(meta), path("*.gfa")   , emit: gfa, optional: true
+    tuple val(meta), path("*.txt")   , emit: txt, optional: true
     tuple val(meta), path("*.log")   , emit: log
-    tuple val(meta), path("*.json")  , emit: json
+    tuple val(meta), path("*.json")  , emit: json, optional: true
     path "versions.yml"              , emit: versions
 
     script:

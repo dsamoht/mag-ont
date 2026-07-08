@@ -14,10 +14,10 @@ Automation of metagenome assembly and binning
 with support for nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.3.0
+     Version: v1.3.1
 ```
 
-![alt text](/assets/img/mag-ont_v1.3.0.png)
+![alt text](/assets/img/mag-ont_v1.3.1.png)
 
 
 ## TL;DR

@@ -6,8 +6,6 @@ process MAG_SUMMARY {
 
     container params.python_container
 
-    //publishDir "${params.outdir}/group_${meta}/binning/summary", mode: 'copy'
-
     input:
     tuple val(meta), path(dastool_bins), path(checkm_stats), path(gtdbtk_res), path(coverm_stats)
 

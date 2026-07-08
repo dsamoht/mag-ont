@@ -6,8 +6,6 @@ process SAMTOOLS {
 
     container params.samtools_container
 
-    //publishDir "${params.outdir}/group_${meta.group}/mapping/samtools", mode: "copy"
-
     input:
     tuple val(meta), path(sam)
 

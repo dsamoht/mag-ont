@@ -6,8 +6,6 @@ process COVERM_GENOME {
 
     container params.coverm_container
 
-    //publishDir "${params.outdir}/group_${meta}/binning/coverm", mode: "copy"
-
     input:
     tuple val(meta), path(dastool_bins, stageAs: "bins/*"), path(bam_files)
 
