@@ -6,8 +6,6 @@ process MEDAKA {
 
     container params.medaka_container
 
-    //publishDir "${params.outdir}/group_${meta.group}/assembly/medaka", mode: "copy"
-
     input:
     tuple val(meta), path(reads), path(assembly)
 
@@ -21,7 +19,6 @@ process MEDAKA {
         -t ${task.cpus} \
         -i ${reads} \
         -d ${assembly} \
-        -m ${params.medaka_model} \
         -o ./
 
     mv consensus.fasta ${meta.group}.consensus.fasta

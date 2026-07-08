@@ -6,8 +6,6 @@ process SEMIBIN {
 
     container params.semibin_container
 
-    //publishDir "${params.outdir}/group_${meta}/binning/semibin", mode: "copy"
-
     input:
     tuple val(meta), path(assembly)
     tuple val(bam_meta), path(bams)

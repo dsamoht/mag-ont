@@ -6,8 +6,6 @@ process NORMALIZE_COVERM_GENOME {
 
     container params.python_container
 
-    //publishDir "${params.outdir}/group_${meta}/binning/coverm", mode: 'copy'
-
     input:
     tuple val(meta), path(coverm_genome_stats), path(bam_files)
 
