@@ -11,10 +11,10 @@ process CONCOCT {
     tuple val(meta_bam), path(bam), path(bai)
 
     output:
-    tuple val(meta_assembly), path("concoct_*.fa"), emit: concoct_bins
-    tuple val(meta_assembly), path("contigs_10K.fa"), emit: concoct_contigs
+    tuple val(meta_assembly), path("concoct_*.fa")      , emit: concoct_bins, optional: true
+    tuple val(meta_assembly), path("contigs_10K.fa")    , emit: concoct_contigs
     tuple val(meta_assembly), path("coverage_table.tsv"), emit: concoct_coverage
-    path("versions.yml"), emit: versions
+    path("versions.yml")                                , emit: versions
 
     script:
     """

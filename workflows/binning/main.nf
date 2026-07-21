@@ -215,9 +215,11 @@ workflow BINNING {
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
         
         // Run GTDB-Tk
-        ch_gtdbtk_out = GTDBTK(ch_dastool_out.dastool_bins, params.gtdbtk_db)
-        ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
-        ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
+        if (!params.skip_gtdbtk) {
+            ch_gtdbtk_out = GTDBTK(ch_dastool_out.dastool_bins, params.gtdbtk_db)
+            ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
+            ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
+        }
 
         // Summary
         ch_summarize = ch_dastool_out.dastool_bins

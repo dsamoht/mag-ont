@@ -1,31 +1,37 @@
-include { FLYE   } from '../../modules/flye'
-include { MEDAKA } from '../../modules/medaka'
-
+include { FLYE     } from '../../modules/flye'
+include { MEDAKA   } from '../../modules/medaka'
+include { METAMDBG } from '../../modules/metamdbg'
 
 workflow LONGREAD_ASSEMBLY {
     take:
     ch_long_reads // [val(meta), path(fastq)] (mandatory)
 
     main:
-    ch_versions = channel.empty()
+    ch_versions  = channel.empty()
+    ch_assembly  = channel.empty()
+    ch_consensus = channel.empty()
 
-    FLYE(ch_long_reads)
-    ch_versions = ch_versions.mix(FLYE.out.versions.first())
-    ch_flye_assembly = FLYE.out.fasta
+    if (params.assembler == 'flye') {
+        FLYE(ch_long_reads)
+        ch_versions = ch_versions.mix(FLYE.out.versions.first())
+        ch_assembly = FLYE.out.fasta
 
-    if (!params.skip_medaka) {
-        ch_medaka_input = ch_long_reads.join(ch_flye_assembly)
-        MEDAKA(ch_medaka_input)
-        ch_versions = ch_versions.mix(MEDAKA.out.versions.first())
-        ch_medaka_assembly = MEDAKA.out.fasta
-         
-    } else {
-        ch_medaka_assembly = channel.empty()
+        if (!params.skip_medaka) {
+            ch_medaka_input = ch_long_reads.join(ch_assembly)
+            MEDAKA(ch_medaka_input)
+            ch_versions  = ch_versions.mix(MEDAKA.out.versions.first())
+            ch_consensus = MEDAKA.out.fasta
+        }
+
+    } else if (params.assembler == 'metamdbg') {
+        METAMDBG(ch_long_reads)
+        ch_versions = ch_versions.mix(METAMDBG.out.versions.first())
+        ch_assembly = METAMDBG.out.fasta
+  
     }
 
     emit:
-    assembly  = ch_flye_assembly
-    consensus = ch_medaka_assembly
+    assembly  = ch_assembly
+    consensus = ch_consensus
     versions  = ch_versions
-
 }

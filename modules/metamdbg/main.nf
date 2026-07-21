@@ -10,9 +10,9 @@ process METAMDBG {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.contigs.fasta.gz"), emit: contigs
-    tuple val(meta), path("*.metaMDBG.log")    , emit: log
-    path "versions.yml"                        , emit: versions
+    tuple val(meta), path("*.contigs.fasta"), emit: fasta, optional: true
+    tuple val(meta), path("*.metaMDBG.log") , emit: log
+    path "versions.yml"                     , emit: versions
 
     script:
     """
@@ -23,7 +23,8 @@ process METAMDBG {
 
     rm -r tmp/
 
-    mv contigs.fasta.gz ${meta.group}.contigs.fasta.gz
+    gunzip contigs.fasta.gz
+    mv contigs.fasta ${meta.group}.contigs.fasta
     mv metaMDBG.log ${meta.group}.metaMDBG.log
 
     cat <<-END_VERSIONS > versions.yml

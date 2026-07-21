@@ -1,12 +1,14 @@
 #!/usr/bin/env nextflow
 
-include { BINNING           } from './workflows/binning'
-include { CAT_FASTQ         } from './modules/cat'
-include { DISPATCH          } from './workflows/dispatch'
-include { LONGREAD_ASSEMBLY } from './workflows/longread_assembly'
-include { LONGREAD_QC       } from './workflows/longread_qc'
-include { MERGE_PYRODIGAL   } from './modules/pyrodigal/merge'
-include { PYRODIGAL         } from './modules/pyrodigal/pyrodigal'
+include { BINNING              } from './workflows/binning'
+include { CAT_FASTQ            } from './modules/cat'
+include { CHECKM               } from './modules/checkm'
+include { DISPATCH             } from './workflows/dispatch'
+include { LONGREAD_ASSEMBLY    } from './workflows/longread_assembly'
+include { LONGREAD_QC          } from './workflows/longread_qc'
+include { MERGE_PYRODIGAL      } from './modules/pyrodigal/merge'
+include { PYRODIGAL            } from './modules/pyrodigal/pyrodigal'
+include { SEQKIT_SPLITBYLENGTH } from './modules/seqkit/main'
 
 
 def helpMessage() {
@@ -22,7 +24,7 @@ Automation of metagenome assembly and binning
 with support for nanopore reads
      
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.2.3
+     Version: v1.4.0
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Usage:
@@ -30,7 +32,7 @@ Usage:
 Input:
      -profile : comma-separated list of profile(s) to use
           test : 1 cpu (test installation)
-          base : 8 cpus (run on a local machine (adjust conf/base.config for more cpus))
+          base : 4 cpus (run on a local machine (adjust conf/base.config for more/less cpus))
           drac : varying number of cpus (run with the slurm executor on the Digital Research Alliance of Canada clusters)
 
           docker      : use docker containers
@@ -124,24 +126,39 @@ workflow MAG_ONT {
      ch_generated_assembly_out = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly)
      ch_versions = ch_versions.mix(ch_generated_assembly_out.versions)
           
-     ch_flye_assembly   = ch_generated_assembly_out.assembly
-     ch_medaka_assembly = ch_generated_assembly_out.consensus
+     ch_assembly   = ch_generated_assembly_out.assembly
+     ch_consensus  = ch_generated_assembly_out.consensus
 
-     ch_flye_medaka_join = ch_flye_assembly
-          .join(ch_medaka_assembly, remainder: true)
+     ch_assembly_consensus_join = ch_assembly
+          .join(ch_consensus, remainder: true)
 
      // For publishing: both flye and medaka when available, tagged with assembler
-     ch_assembly_to_publish = ch_flye_medaka_join
-          .flatMap { meta, flye, medaka ->
-               def results = [ [ meta + [assembler: 'flye'], flye ] ]
-               if (medaka) results << [ meta + [assembler: 'medaka'], medaka ]
+     ch_assembly_to_publish = ch_assembly_consensus_join
+          .flatMap { meta, assembly, consensus ->
+               def results = [ [ meta + [assembler: params.assembler], assembly ] ]
+               if (consensus) results << [ meta + [assembler: 'medaka'], consensus ]
                results
-          }
+     }
 
-     // For binning: medaka if available, otherwise flye
-     ch_assembly_for_binning = ch_flye_medaka_join
-          .map { meta, flye, medaka -> [ meta, medaka ?: flye ] }
+     // For binning: medaka if available, otherwise flye or metamdbg
+     ch_assembly_for_binning = ch_assembly_consensus_join
+          .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
           .mix(ch_input_assembly)
+
+     ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum) // split assembly in 2 parts - large/small - based on 500k bp threshold
+
+     ch_potential_sc_hq_mag =  ch_split_by_contig_lengths.large
+          .filter { file -> file.size() > 0 }
+          .splitFasta( by: 1, record: [id: true] )
+          .map { meta, record -> 
+          def new_meta = meta + [contig: record.id]
+               [ new_meta, record.text ] 
+          }
+     
+     ch_potential_sc_hq_mag_checkm = CHECKM(ch_potential_sc_hq_mag)
+     
+     ch_small_contigs = ch_split_by_contig_lengths.small
+          .filter { file -> file.size() > 0 }
 
      ch_fasta_chunks = ch_assembly_for_binning
           .map { meta, assembly -> [ meta.group, assembly ] }

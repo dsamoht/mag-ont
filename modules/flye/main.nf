@@ -6,8 +6,6 @@ process FLYE {
 
     container params.flye_container
 
-    errorStrategy "ignore"
-
     input:
     tuple val(meta), path(reads)
 
