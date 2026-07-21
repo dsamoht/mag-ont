@@ -18,7 +18,6 @@ process PYRODIGAL {
     script:
     """
     pyrodigal \\
-        -j ${task.cpus} \\
         -i ${fasta} \\
         -f gff \\
         -o group_${meta}.chunk${chunk_idx}.gff \\

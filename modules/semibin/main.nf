@@ -13,7 +13,7 @@ process SEMIBIN {
 
     output:
     tuple val(meta), path("semibin_output/output_bins/*.fa"), emit: semibin_bins, optional: true
-    path("versions.yml"), emit: versions
+    path("versions.yml")                                    , emit: versions
 
     script:
     def type_flag = strategy_type == 'long' ? '--sequencing-type long_read' : ''

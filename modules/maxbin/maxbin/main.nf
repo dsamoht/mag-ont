@@ -12,7 +12,7 @@ process MAXBIN {
 
     output:
     tuple val(meta_assembly), path("maxbin_bin.*.fasta"), emit: maxbin_bins, optional: true
-    path("versions.yml"), emit: versions
+    path("versions.yml")                                , emit: versions
 
     script:
     """
