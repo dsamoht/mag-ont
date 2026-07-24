@@ -1,9 +1,11 @@
 #!/usr/bin/env nextflow
 
 include { BINNING              } from './workflows/binning'
-include { CAT_FASTQ            } from './modules/cat'
-include { CHECKM               } from './modules/checkm'
+include { CAT_CONTIGS          } from './modules/cat/contig'
+include { CAT_FASTQ            } from './modules/cat/fastq'
+include { CHECKM               } from './modules/checkm/checkm'
 include { DISPATCH             } from './workflows/dispatch'
+include { FILTER_HQ_SC         } from './modules/checkm/filter_hq_sc'
 include { LONGREAD_ASSEMBLY    } from './workflows/longread_assembly'
 include { LONGREAD_QC          } from './workflows/longread_qc'
 include { MERGE_PYRODIGAL      } from './modules/pyrodigal/merge'
@@ -46,21 +48,21 @@ Input:
 
 workflow MAG_ONT {
 
-     main:
-     if (!params.outdir) {
-          exit 1, "Missing parameter 'outdir'. Please provide an output directory using --outdir PATH"
-     }
+    main:
+    if (!params.outdir) {
+        exit 1, "Missing parameter 'outdir'. Please provide an output directory using --outdir PATH"
+    }
 
-     if (!params.input) {
-          exit 1, "Missing parameter 'input'. Please provide a sample sheet using --input FILE"
-     }
-     ch_versions = channel.empty()
-     
-     // Validate sample sheet and dispatch sample(s)
-     ch_dispatched = DISPATCH().samplesheet
+    if (!params.input) {
+        exit 1, "Missing parameter 'input'. Please provide a sample sheet using --input FILE"
+    }
+    ch_versions = channel.empty()
+    
+    // Validate sample sheet and dispatch sample(s)
+    ch_dispatched = DISPATCH().samplesheet
 
-     // Channel of pre-existing assemblies
-     ch_input_assembly = ch_dispatched
+    // Channel of pre-existing assemblies
+    ch_input_assembly = ch_dispatched
         .filter { sample -> sample.assembly }
         .map { sample -> [ sample.group, sample.sample_id, sample.assembly ] }
         .groupTuple(by: 0)
@@ -69,8 +71,8 @@ workflow MAG_ONT {
             [ meta, assemblies[0] ] 
         }
 
-     // Channel of input short reads
-     ch_short_reads_grouped = ch_dispatched
+    // Channel of input short reads
+    ch_short_reads_grouped = ch_dispatched
         .filter { sample -> sample.sr1 && sample.sr2 }
         .map { sample -> 
             def meta = [ sample_id:sample.sample_id, group:sample.group ]
@@ -78,219 +80,236 @@ workflow MAG_ONT {
         }
         .groupTuple()
 
-     // Channel of input long reads
-     ch_long_reads = ch_dispatched
+    // Channel of input long reads
+    ch_long_reads = ch_dispatched
         .filter { sample -> sample.long_reads }
         .map { sample ->
-               [
-                    [
-                         sample_id    : sample.sample_id,
-                         group        : sample.group,
-                         has_assembly : sample.assembly ? true : false
-                    ],
-                    sample.long_reads
-               ]
-          }
-     
-     ch_needs_qc = ch_long_reads
+            [
+                [
+                    sample_id    : sample.sample_id,
+                    group        : sample.group,
+                    has_assembly : sample.assembly ? true : false
+                ],
+                sample.long_reads
+            ]
+        }
+    
+    ch_needs_qc = ch_long_reads
         .filter { meta, _reads ->
             !params.skip_qc && !meta.has_assembly
         }
 
-     ch_skip_qc = ch_long_reads
+    ch_skip_qc = ch_long_reads
         .filter { meta, _reads ->
             params.skip_qc || meta.has_assembly
         }
 
-     // Perform long read QC
-     ch_qc_long_reads_out = LONGREAD_QC(ch_needs_qc)
-     ch_qc_long_reads = ch_qc_long_reads_out.long_reads_qc
-     ch_long_reads_final = ch_qc_long_reads.mix(ch_skip_qc)
-     ch_versions = ch_versions.mix(ch_qc_long_reads_out.versions)
+    // Perform long read QC
+    ch_qc_long_reads_out = LONGREAD_QC(ch_needs_qc)
+    ch_qc_long_reads = ch_qc_long_reads_out.long_reads_qc
+    ch_long_reads_final = ch_qc_long_reads.mix(ch_skip_qc)
+    ch_versions = ch_versions.mix(ch_qc_long_reads_out.versions)
 
-     // Group channels by group
-     ch_grouped_reads = ch_long_reads_final
-          .map { meta, reads -> [ meta.group, meta, reads ] }
-          .groupTuple(by: 0)
-          .map { group, metas, reads_list ->
-               def has_assembly = metas.any { it.has_assembly }
-               def sorted_reads = reads_list.sort { a, b -> a.toString() <=> b.toString() }
-               [ [ group: group, sample_ids: metas.sample_id, has_assembly: has_assembly ], sorted_reads ]
-          }
+    // Group channels by group
+    ch_grouped_reads = ch_long_reads_final
+        .map { meta, reads -> [ meta.group, meta, reads ] }
+        .groupTuple(by: 0)
+        .map { group, metas, reads_list ->
+            def has_assembly = metas.any { meta -> meta.has_assembly }
+            def sorted_reads = reads_list.sort { a, b -> a.toString() <=> b.toString() }
+            [ [ group: group, sample_ids: metas.sample_id, has_assembly: has_assembly ], sorted_reads ]
+        }
 
-     ch_reads_to_assemble = ch_grouped_reads
-          .filter { meta, _reads -> !meta.has_assembly }
+    ch_reads_to_assemble = ch_grouped_reads
+        .filter { meta, _reads -> !meta.has_assembly }
 
-     ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble)
-          
-     ch_generated_assembly_out = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly)
-     ch_versions = ch_versions.mix(ch_generated_assembly_out.versions)
-          
-     ch_assembly   = ch_generated_assembly_out.assembly
-     ch_consensus  = ch_generated_assembly_out.consensus
+    ch_qc_reads_to_assemble = CAT_FASTQ(ch_reads_to_assemble)
+        
+    ch_generated_assembly_out = LONGREAD_ASSEMBLY(ch_qc_reads_to_assemble)
+    ch_versions = ch_versions.mix(ch_generated_assembly_out.versions)
+        
+    ch_assembly   = ch_generated_assembly_out.assembly
+    ch_consensus  = ch_generated_assembly_out.consensus
 
-     ch_assembly_consensus_join = ch_assembly
-          .join(ch_consensus, remainder: true)
+    ch_assembly_consensus_join = ch_assembly
+        .join(ch_consensus, remainder: true)
 
-     // For publishing: both flye and medaka when available, tagged with assembler
-     ch_assembly_to_publish = ch_assembly_consensus_join
-          .flatMap { meta, assembly, consensus ->
-               def results = [ [ meta + [assembler: params.assembler], assembly ] ]
-               if (consensus) results << [ meta + [assembler: 'medaka'], consensus ]
-               results
-     }
+    ch_assembly_to_publish = ch_assembly_consensus_join
+        .flatMap { meta, assembly, consensus ->
+            def results = [ [ meta + [assembler: params.assembler], assembly ] ]
+            if (consensus) results << [ meta + [assembler: 'medaka'], consensus ]
+            results
+        }
 
-     // For binning: medaka if available, otherwise flye or metamdbg
-     ch_assembly_for_binning = ch_assembly_consensus_join
-          .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
-          .mix(ch_input_assembly)
+    // For binning: medaka if available, otherwise flye or metamdbg
+    ch_assembly_before_split = ch_assembly_consensus_join
+        .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
+        .mix(ch_input_assembly)
 
-     ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum) // split assembly in 2 parts - large/small - based on 500k bp threshold
+    // Large contigs as potential single-contig HQ MAGs
+    ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_before_split, params.sc_mag_minimum)
+    ch_potential_sc_hq_mags = ch_split_by_contig_lengths.large.filter { _meta, bins -> bins != null }
+    ch_potential_sc_hq_mags_checkm = CHECKM(ch_potential_sc_hq_mags)
 
-     ch_potential_sc_hq_mag =  ch_split_by_contig_lengths.large
-          .filter { file -> file.size() > 0 }
-          .splitFasta( by: 1, record: [id: true] )
-          .map { meta, record -> 
-          def new_meta = meta + [contig: record.id]
-               [ new_meta, record.text ] 
-          }
-     
-     ch_potential_sc_hq_mag_checkm = CHECKM(ch_potential_sc_hq_mag)
-     
-     ch_small_contigs = ch_split_by_contig_lengths.small
-          .filter { file -> file.size() > 0 }
+    ch_filter_input = ch_potential_sc_hq_mags
+        .join(ch_potential_sc_hq_mags_checkm.checkm_stats, by: 0)
 
-     ch_fasta_chunks = ch_assembly_for_binning
-          .map { meta, assembly -> [ meta.group, assembly ] }
-          .splitFasta(size: 100.MB, file: true)
-          .map { meta, chunk -> [ meta, chunk.baseName.tokenize('.').last(), chunk ] }
+    ch_sc_mags_qa = FILTER_HQ_SC(ch_filter_input)
 
-     ch_gene_chunks = PYRODIGAL(ch_fasta_chunks)
+    ch_lq_sc = ch_sc_mags_qa.lq_sc
+    ch_hq_sc = ch_sc_mags_qa.hq_sc
+        .map { meta, hq_sc -> [ meta.group, hq_sc ] }
+    
+    ch_concat_input = ch_split_by_contig_lengths.small
+        .join(ch_split_by_contig_lengths.contig_mapping)
+        .join(ch_lq_sc, remainder: true)
+        .map { meta, small_fa, mapping, lq_fa ->
+            def nonhq = lq_fa ?: [] 
+            [ meta, small_fa, nonhq, mapping ]
+        }
+    
+    ch_assembly_for_binning = CAT_CONTIGS(ch_concat_input)
 
-     ch_genes_to_merge = ch_gene_chunks.gff
-          .join(ch_gene_chunks.fna, by: 0)
-          .join(ch_gene_chunks.faa, by: 0)
-          .groupTuple()
-          .map { meta, gffs, fnas, faas ->
-          [ meta,
-               gffs.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
-               fnas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
-               faas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer } ]
-          }
+    ch_fasta_chunks = ch_assembly_before_split
+        .map { meta, assembly -> [ meta.group, assembly ] }
+        .splitFasta(size: 100.MB, file: true)
+        .map { meta, chunk -> [ meta, chunk.baseName.tokenize('.').last(), chunk ] }
 
-     ch_genes = MERGE_PYRODIGAL(ch_genes_to_merge)
-     
-     ch_long_reads_grouped = ch_long_reads_final
-          .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
-          .groupTuple()
+    ch_gene_chunks = PYRODIGAL(ch_fasta_chunks)
 
-     ch_binning_input = ch_assembly_for_binning
-          .map { meta, assembly -> [ meta.group, meta, assembly ] }
-          .join(ch_long_reads_grouped, remainder: true)
-          .join(ch_short_reads_grouped, remainder: true)
-          .join(ch_genes.gff, remainder: true)
-          .map { it ->
-               def grp         = it[0]
-               def meta        = it[1]
-               def assembly    = it[2]
-               def raw_long    = it[3] ?: [] 
-               def raw_short   = it[4] ?: []
-               def gff         = it[5] ?: null
-               
-               def sorted_long  = raw_long.sort  { a, b -> a[0].sample_id <=> b[0].sample_id }
-               def sorted_short = raw_short.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
+    ch_genes_to_merge = ch_gene_chunks.gff
+        .join(ch_gene_chunks.fna, by: 0)
+        .join(ch_gene_chunks.faa, by: 0)
+        .groupTuple()
+        .map { meta, gffs, fnas, faas ->
+            [ meta,
+              gffs.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
+              fnas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer },
+              faas.sort { f -> f.baseName.find(/(?<=chunk)\d+/) as Integer } ]
+        }
 
-               def new_meta = meta + [
-                    group       : grp,
-                    strategy    : sorted_short.size() > 0 ? 'short' : 'long',
-                    long_reads  : sorted_long,
-                    short_reads : sorted_short,
-                    gff         : gff
-               ]
+    ch_genes = MERGE_PYRODIGAL(ch_genes_to_merge)
+    
+    ch_long_reads_grouped = ch_long_reads_final
+        .map { meta, reads -> [ meta.group, [ meta, reads ] ] }
+        .groupTuple()
 
-               return [ new_meta, assembly ]
-          }
+    ch_assembly_before_split_ref = ch_assembly_before_split
+        .map { meta, assembly -> [ meta.group, assembly ] }
 
-     BINNING(ch_binning_input)
-     ch_versions = ch_versions.mix(BINNING.out.versions)
-     ch_versions = ch_versions
-          .unique()
-          .collectFile(
-               name: 'software_versions.yml',
-               storeDir: "${params.outdir}/pipeline_info"
-          )
+    ch_binning_input = ch_assembly_for_binning
+        .map { meta, assembly -> [ meta.group, meta, assembly ] }
+        .join(ch_long_reads_grouped, remainder: true)
+        .join(ch_short_reads_grouped, remainder: true)
+        .join(ch_genes.gff, remainder: true)
+        .join(ch_hq_sc, remainder: true)
+        .join(ch_assembly_before_split_ref, remainder: true)
+        .map { it ->
+            def grp             = it[0]
+            def meta            = it[1]
+            def assembly_to_bin = it[2]
+            def raw_long        = it[3] ?: [] 
+            def raw_short       = it[4] ?: []
+            def gff             = it[5] ?: null
+            def hq_sc           = it[6] ?: null
+            def ref_assembly    = it[7] ?: null
+            
+            def sorted_long  = raw_long.sort  { a, b -> a[0].sample_id <=> b[0].sample_id }
+            def sorted_short = raw_short.sort { a, b -> a[0].sample_id <=> b[0].sample_id }
 
-     emit:
-     versions               = ch_versions
-     nanoplot_raw_html      = ch_qc_long_reads_out.nanoplot_raw_html
-     nanoplot_qc_html       = ch_qc_long_reads_out.nanoplot_qc_html
-     porechop_log           = ch_qc_long_reads_out.porechop_log
-     qc_long_reads          = ch_qc_long_reads
-     input_assembly         = ch_input_assembly
-     assembly               = ch_assembly_to_publish
-     pyrodigal_gff          = ch_genes.gff
-     pyrodigal_fna          = ch_genes.fna
-     pyrodigal_faa          = ch_genes.faa
-     bam                    = BINNING.out.bam
-     coverm_contig_stats    = BINNING.out.coverm_contig_stats
-     coverm_contig_norm     = BINNING.out.coverm_contig_norm
-     metabat_bins           = BINNING.out.metabat_bins
-     metabat_depth          = BINNING.out.metabat_depth
-     maxbin_bins            = BINNING.out.maxbin_bins
-     maxbin_abund           = BINNING.out.maxbin_abund
-     concoct_bins           = BINNING.out.concoct_bins
-     semibin_bins           = BINNING.out.semibin_bins
-     dastool_bins           = BINNING.out.dastool_bins
-     contig2bin             = BINNING.out.contig2bin
-     coverm_genome_stats    = BINNING.out.coverm_genome_stats
-     coverm_genome_norm     = BINNING.out.coverm_genome_norm
-     checkm_out             = BINNING.out.checkm_out
-     gtdbtk_out             = BINNING.out.gtdbtk_out
-     mag_summary            = BINNING.out.mag_summary
-     final_contig2bin       = BINNING.out.final_contig2bin
+            def new_meta = meta + [
+                group        : grp,
+                strategy     : sorted_short.size() > 0 ? 'short' : 'long',
+                long_reads   : sorted_long,
+                short_reads  : sorted_short,
+                gff          : gff,
+                hq_sc        : hq_sc,
+                ref_assembly : ref_assembly
+            ]
 
+            return [ new_meta, assembly_to_bin ]
+        }
+
+    BINNING(ch_binning_input)
+    ch_versions = ch_versions.mix(BINNING.out.versions)
+    ch_versions = ch_versions
+        .unique()
+        .collectFile(
+            name: 'software_versions.yml',
+            storeDir: "${params.outdir}/pipeline_info"
+        )
+
+    emit:
+    versions               = ch_versions
+    nanoplot_raw_html      = ch_qc_long_reads_out.nanoplot_raw_html
+    nanoplot_qc_html       = ch_qc_long_reads_out.nanoplot_qc_html
+    porechop_log           = ch_qc_long_reads_out.porechop_log
+    qc_long_reads          = ch_qc_long_reads
+    input_assembly         = ch_input_assembly
+    assembly               = ch_assembly_to_publish
+    pyrodigal_gff          = ch_genes.gff
+    pyrodigal_fna          = ch_genes.fna
+    pyrodigal_faa          = ch_genes.faa
+    bam                    = BINNING.out.bam
+    coverm_contig_stats    = BINNING.out.coverm_contig_stats
+    coverm_contig_norm     = BINNING.out.coverm_contig_norm
+    metabat_bins           = BINNING.out.metabat_bins
+    metabat_depth          = BINNING.out.metabat_depth
+    maxbin_bins            = BINNING.out.maxbin_bins
+    maxbin_abund           = BINNING.out.maxbin_abund
+    concoct_bins           = BINNING.out.concoct_bins
+    semibin_bins           = BINNING.out.semibin_bins
+    dastool_bins           = BINNING.out.dastool_bins
+    final_bins             = BINNING.out.final_bins
+    contig2bin             = BINNING.out.contig2bin
+    coverm_genome_stats    = BINNING.out.coverm_genome_stats
+    coverm_genome_norm     = BINNING.out.coverm_genome_norm
+    checkm_out             = BINNING.out.checkm_out
+    gtdbtk_out             = BINNING.out.gtdbtk_out
+    mag_summary            = BINNING.out.mag_summary
+    final_contig2bin       = BINNING.out.final_contig2bin
 }
 
 
 workflow {
 
-     main:
-     if (params.help) {
-          helpMessage()
-          exit(0, "")
-     } else {
-          MAG_ONT()
-     }
+    main:
+    if (params.help) {
+        helpMessage()
+        exit(0, "")
+    } else {
+        MAG_ONT()
+    }
 
-     publish:
-     versions               = MAG_ONT.out.versions
-     nanoplot_raw_html      = MAG_ONT.out.nanoplot_raw_html
-     nanoplot_qc_html       = MAG_ONT.out.nanoplot_qc_html
-     porechop_log           = MAG_ONT.out.porechop_log
-     qc_long_reads          = MAG_ONT.out.qc_long_reads
-     input_assembly         = MAG_ONT.out.input_assembly
-     assembly               = MAG_ONT.out.assembly
-     pyrodigal_gff          = MAG_ONT.out.pyrodigal_gff
-     pyrodigal_fna          = MAG_ONT.out.pyrodigal_fna
-     pyrodigal_faa          = MAG_ONT.out.pyrodigal_faa
-     bam                    = MAG_ONT.out.bam
-     coverm_contig_stats    = MAG_ONT.out.coverm_contig_stats
-     coverm_contig_norm     = MAG_ONT.out.coverm_contig_norm
-     metabat_bins           = MAG_ONT.out.metabat_bins
-     metabat_depth          = MAG_ONT.out.metabat_depth
-     maxbin_bins            = MAG_ONT.out.maxbin_bins
-     maxbin_abund           = MAG_ONT.out.maxbin_abund
-     concoct_bins           = MAG_ONT.out.concoct_bins
-     semibin_bins           = MAG_ONT.out.semibin_bins
-     dastool_bins           = MAG_ONT.out.dastool_bins
-     contig2bin             = MAG_ONT.out.contig2bin
-     coverm_genome_stats    = MAG_ONT.out.coverm_genome_stats
-     coverm_genome_norm     = MAG_ONT.out.coverm_genome_norm
-     checkm_out             = MAG_ONT.out.checkm_out
-     gtdbtk_out             = MAG_ONT.out.gtdbtk_out
-     mag_summary            = MAG_ONT.out.mag_summary
-     final_contig2bin       = MAG_ONT.out.final_contig2bin
-
+    publish:
+    versions               = MAG_ONT.out.versions
+    nanoplot_raw_html      = MAG_ONT.out.nanoplot_raw_html
+    nanoplot_qc_html       = MAG_ONT.out.nanoplot_qc_html
+    porechop_log           = MAG_ONT.out.porechop_log
+    qc_long_reads          = MAG_ONT.out.qc_long_reads
+    input_assembly         = MAG_ONT.out.input_assembly
+    assembly               = MAG_ONT.out.assembly
+    pyrodigal_gff          = MAG_ONT.out.pyrodigal_gff
+    pyrodigal_fna          = MAG_ONT.out.pyrodigal_fna
+    pyrodigal_faa          = MAG_ONT.out.pyrodigal_faa
+    bam                    = MAG_ONT.out.bam
+    coverm_contig_stats    = MAG_ONT.out.coverm_contig_stats
+    coverm_contig_norm     = MAG_ONT.out.coverm_contig_norm
+    metabat_bins           = MAG_ONT.out.metabat_bins
+    metabat_depth          = MAG_ONT.out.metabat_depth
+    maxbin_bins            = MAG_ONT.out.maxbin_bins
+    maxbin_abund           = MAG_ONT.out.maxbin_abund
+    concoct_bins           = MAG_ONT.out.concoct_bins
+    semibin_bins           = MAG_ONT.out.semibin_bins
+    dastool_bins           = MAG_ONT.out.dastool_bins
+    final_bins             = MAG_ONT.out.final_bins
+    contig2bin             = MAG_ONT.out.contig2bin
+    coverm_genome_stats    = MAG_ONT.out.coverm_genome_stats
+    coverm_genome_norm     = MAG_ONT.out.coverm_genome_norm
+    checkm_out             = MAG_ONT.out.checkm_out
+    gtdbtk_out             = MAG_ONT.out.gtdbtk_out
+    mag_summary            = MAG_ONT.out.mag_summary
+    final_contig2bin       = MAG_ONT.out.final_contig2bin
 }
 
 output {
@@ -319,17 +338,17 @@ output {
         mode "copy"
     }
     pyrodigal_gff {
-     path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
-     mode "copy"
-     }
-     pyrodigal_fna {
-     path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
-     mode "copy"
-     }
-     pyrodigal_faa {
-     path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
-     mode "copy"
-     }
+        path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
+        mode "copy"
+    }
+    pyrodigal_fna {
+        path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
+        mode "copy"
+    }
+    pyrodigal_faa {
+        path { meta, _file -> "group_${meta}/assembly/pyrodigal" }
+        mode "copy"
+    }
     bam {
         path { meta, _bam, _bai -> "group_${meta.group}/mapping/samtools" }
         mode "copy"
@@ -370,6 +389,10 @@ output {
         path { meta, _file -> "group_${meta}/binning/dastool" }
         mode "copy"
     }
+    final_bins {
+        path { meta, _file -> "group_${meta}/binning/final_bins" }
+        mode "copy"
+    }
     contig2bin {
         path { meta, _file -> "group_${meta}/binning/contig2bin" }
         mode "copy"
@@ -377,29 +400,27 @@ output {
     coverm_genome_stats {
         path { meta, _file -> "group_${meta}/binning/coverm" }
         mode "copy"
-     }
-     coverm_genome_norm {
-          path { meta, _file -> "group_${meta}/binning/coverm" }
-          mode "copy"
-     }
-     checkm_out {
+    }
+    coverm_genome_norm {
+        path { meta, _file -> "group_${meta}/binning/coverm" }
+        mode "copy"
+    }
+    checkm_out {
         path { meta, _file -> "group_${meta}/binning/checkm" }
         mode "copy"
-     }
-     gtdbtk_out {
+    }
+    gtdbtk_out {
         path { meta, _file -> "group_${meta}/binning/gtdbtk" }
         mode "copy"
-     }
-     mag_summary {
+    }
+    mag_summary {
         path { meta, _file -> "group_${meta}/binning/summary" }
         mode "copy"
-     }
-     final_contig2bin {
+    }
+    final_contig2bin {
         path { meta, _file -> "group_${meta}/binning/summary" }
         mode "copy"
-     }
-
-
+    }
     versions {
         path "software_versions"
         mode "copy"

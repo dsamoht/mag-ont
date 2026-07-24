@@ -15,7 +15,7 @@ workflow DISPATCH {
         }
     }
 
-    ch_samplesheet = Channel
+    ch_samplesheet = channel
         .fromPath(samplesheet_file)
         .ifEmpty { exit 1, "sample sheet not found: `${params.input}`" }
         .splitCsv(header: true)
@@ -70,11 +70,10 @@ workflow DISPATCH {
         .map { row -> [ row.group, row ] }
         .groupTuple(by: 0)
         .map { group, rows ->
-            def sample_ids  = rows.collect { it.sample_id }.findAll()
-            def long_reads  = rows.collect { it.long_reads }.findAll()
-            def assemblies  = rows.collect { it.assembly }.findAll()
-            def assembly_paths = rows.collect { it.assembly_path }.findAll()
-            def short_reads = rows.collect { [ it.sr1, it.sr2 ] }.flatten().findAll()
+            def long_reads  = rows.collect { row -> row.long_reads }.findAll()
+            def assemblies  = rows.collect { row -> row.assembly }.findAll()
+            def assembly_paths = rows.collect { row -> row.assembly_path }.findAll()
+            def short_reads = rows.collect { row -> [ row.sr1, row.sr2 ] }.flatten().findAll()
 
             if (assemblies.isEmpty() && long_reads.isEmpty()) {
                 exit 1, "group '${group}' has no assembly and no long reads to assemble"
@@ -103,12 +102,11 @@ workflow DISPATCH {
                 if (unique_assembly_path.size() > 1) {
                     exit 1, "group '${group}' contains multiple different assemblies: ${unique_assembly_path.join(', ')} — only one unique assembly is allowed per group"
                 }
-            
-                def samples_with_assembly = rows.findAll { it.assembly_path }
-                def samples_without_assembly = rows.findAll { !it.assembly_path }
+
+                def samples_without_assembly = rows.findAll { row -> !row.assembly_path }
                 
                 if (!samples_without_assembly.isEmpty()) {
-                    def missing_samples = samples_without_assembly.collect { it.sample_id }.join(', ')
+                    def missing_samples = samples_without_assembly.collect { row -> row.sample_id }.join(', ')
                     exit 1, "group '${group}' has inconsistent assembly assignment — some samples have assembly '${unique_assembly_path[0]}' but these samples are missing it: ${missing_samples}. All samples in a group must share the same assembly."
                 }
                 
@@ -118,15 +116,15 @@ workflow DISPATCH {
             }
 
             if (rows.size() > 1) {
-                def samples_with_only_long = rows.findAll { it.long_reads && !it.sr1 }
-                def samples_with_only_short = rows.findAll { !it.long_reads && it.sr1 && it.sr2 }
+                def samples_with_only_long = rows.findAll { row -> row.long_reads && !row.sr1 }
+                def samples_with_only_short = rows.findAll { row -> !row.long_reads && row.sr1 && row.sr2 }
                 
                 def has_only_long = !samples_with_only_long.isEmpty()
                 def has_only_short = !samples_with_only_short.isEmpty()
                 
                 if (has_only_long && has_only_short) {
-                    def long_samples = samples_with_only_long.collect { it.sample_id }.join(', ')
-                    def short_samples = samples_with_only_short.collect { it.sample_id }.join(', ')
+                    def long_samples = samples_with_only_long.collect { row -> row.sample_id }.join(', ')
+                    def short_samples = samples_with_only_short.collect { row -> row.sample_id }.join(', ')
                     exit 1, "group '${group}' mixes read types across samples. Samples with long reads: [${long_samples}]. Samples with paired-end reads: [${short_samples}]."
                 }
             }
