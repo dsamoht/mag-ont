@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument("--group", required=True, help="Group ID")
     parser.add_argument(
         "--output", default="mag_summary.csv",
-        help="Output MAG summary CSV"
+        help="output MAG summary csv"
     )
     return parser.parse_args()
 
@@ -37,7 +37,6 @@ def iter_fasta_contigs(fasta_path: Path):
                 if not header:
                     continue
                 yield header.split()[0]
-
 
 def main():
     args = parse_args()

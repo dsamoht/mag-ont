@@ -1,7 +1,7 @@
-#!usr/bin/env nextflow
+#!/usr/bin/env nextflow
 
 include { BWA_MEM                 } from '../../modules/bwa'
-include { CHECKM                  } from '../../modules/checkm'
+include { CHECKM                  } from '../../modules/checkm/checkm'
 include { CONCOCT                 } from '../../modules/concoct'
 include { COVERM_CONTIG           } from '../../modules/coverm/contig'
 include { COVERM_GENOME           } from '../../modules/coverm/genome'
@@ -20,11 +20,16 @@ include { SEMIBIN                 } from '../../modules/semibin'
 
 
 workflow BINNING {
+
     take:
     ch_binning_wf_input
 
     main:
     ch_versions = channel.empty()
+
+    ch_sc_hq = ch_binning_wf_input
+        .map { meta, _assembly -> [ meta.group, meta.hq_sc ] }
+        .filter { _meta, hq_sc -> hq_sc != null }
 
     ch_assembly_to_join = ch_binning_wf_input
         .map { meta, assembly -> [ meta.group, assembly ] }
@@ -38,27 +43,27 @@ workflow BINNING {
 
     // Logic for short read mapping
     ch_short_input = ch_branched_inputs.short_mapping
-        .map{ meta, assembly -> [ meta.short_reads, assembly ] }
+        .map{ meta, _assembly -> [ meta.short_reads, meta.ref_assembly ] }
         .transpose()
         .map { reads, assembly -> [ reads, [ reads[0].group, assembly ] ] }
 
     // Logic for long read mapping
     ch_long_input = ch_branched_inputs.long_mapping
-        .map{ meta, assembly -> [ meta.long_reads, assembly ] }
+        .map{ meta, _assembly -> [ meta.long_reads, meta.ref_assembly ] }
         .transpose()
         .map { reads, assembly -> [ reads, [ reads[0].group, assembly ] ] }
 
     // Long read mapping
     ch_sam_long = MINIMAP(
-        ch_long_input.map { it[0] },
-        ch_long_input.map { it[1] }
+        ch_long_input.map { obj -> obj[0] },
+        ch_long_input.map { obj -> obj[1] }
     ).sam
     ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
     // Short read mapping
     ch_sam_short = BWA_MEM(
-        ch_short_input.map { it[0] },
-        ch_short_input.map { it[1] }
+        ch_short_input.map { obj -> obj[0] },
+        ch_short_input.map { obj -> obj[1] }
     ).sam
     ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
@@ -80,32 +85,30 @@ workflow BINNING {
 
     // Run coverm contig
     ch_coverm_contig_out = COVERM_CONTIG(
-        ch_binning_bam.map {it -> [ it[0], it[3] ]}, // [ meta, bam file(s) ]
+        ch_binning_bam.map {obj -> [ obj[0], obj[3] ]}, // [ meta, bam file(s) ]
     )
     ch_versions = ch_versions.mix(COVERM_CONTIG.out.versions.first())
-
     
     ch_norm_coverm_contig_in = ch_coverm_contig_out.coverm_stats
         .join(
-            ch_binning_bam.map { it -> [ it[0], it[3] ] }
+            ch_binning_bam.map { obj -> [ obj[0], obj[3] ] }
         )
         .join(
             ch_binning_wf_input.map { meta, _assembly -> [ meta.group, meta.gff ] }
         )
 
     ch_coverm_contig_norm_out = NORMALIZE_COVERM_CONTIG(
-        ch_norm_coverm_contig_in.map { it -> [ it[0], it[1], it[3], it[2] ] } // [ meta, coverm_stats, gff file, bam files(s) ]
+        ch_norm_coverm_contig_in.map { obj -> [ obj[0], obj[1], obj[3], obj[2] ] } // [ meta, coverm_stats, gff file, bam files(s) ]
     )
 
     // Binning
     // Run metabat
     ch_metabat_out = METABAT(
-        ch_binning_bam.map {it -> [ it[0], it[1] ]}, // [ meta, assembly ]
-        ch_binning_bam.map {it -> [ it[2], it[3] ]}  // [ meta, bam file(s) ]
+        ch_binning_bam.map {obj -> [ obj[0], obj[1] ]}, // [ meta, assembly ]
+        ch_binning_bam.map {obj -> [ obj[2], obj[3] ]}  // [ meta, bam file(s) ]
     )
     ch_versions = ch_versions.mix(METABAT.out.versions.first())
-    
-    // Initialize the EXACT channels you plan to emit as empty
+
     ch_maxbin_abund_out = channel.empty()
     ch_maxbin_bins      = channel.empty()
     ch_concoct_bins     = channel.empty()
@@ -122,20 +125,20 @@ workflow BINNING {
 
         // Run maxbin
         ch_maxbin_out = MAXBIN(
-            ch_maxbin_input.map { it -> [ it[0], it[1] ] }, 
-            ch_maxbin_input.map { it -> [ it[0], it[2] ] }  
+            ch_maxbin_input.map { obj -> [ obj[0], obj[1] ] }, 
+            ch_maxbin_input.map { obj -> [ obj[0], obj[2] ] }  
         )
-        ch_maxbin_bins = ch_maxbin_out.maxbin_bins // Assign for emit
+        ch_maxbin_bins = ch_maxbin_out.maxbin_bins
         ch_versions = ch_versions.mix(MAXBIN.out.versions.first())
     }
 
     if (!params.skip_concoct) {
         // Run concoct
         ch_concoct_out = CONCOCT(
-            ch_binning_bam.map { it -> [ it[0], it[1] ] },        
-            ch_binning_bam.map { it -> [ it[2], it[3], it[4] ] }, 
+            ch_binning_bam.map { obj -> [ obj[0], obj[1] ] },        
+            ch_binning_bam.map { obj -> [ obj[2], obj[3], obj[4] ] }, 
         )
-        ch_concoct_bins = ch_concoct_out.concoct_bins // Assign for emit
+        ch_concoct_bins = ch_concoct_out.concoct_bins
         ch_versions = ch_versions.mix(CONCOCT.out.versions.first())
     }
     
@@ -146,11 +149,11 @@ workflow BINNING {
     
         // Run semibin
         ch_semibin_out = SEMIBIN(
-            ch_semibin_input.map { it -> [ it[0], it[2] ] }, 
-            ch_semibin_input.map { it -> [ it[3], it[4] ] }, 
-            ch_semibin_input.map { it -> it[1] }             
+            ch_semibin_input.map { obj -> [ obj[0], obj[2] ] }, 
+            ch_semibin_input.map { obj -> [ obj[3], obj[4] ] }, 
+            ch_semibin_input.map { obj -> obj[1] }             
         )
-        ch_semibin_bins = ch_semibin_out.semibin_bins // Assign for emit
+        ch_semibin_bins = ch_semibin_out.semibin_bins
         ch_versions = ch_versions.mix(SEMIBIN.out.versions.first())
     }
 
@@ -173,7 +176,7 @@ workflow BINNING {
             .mix( ch_semibin_bins.map { group, bins -> [ group, 'semibin', bins ] } )
     }
     
-    // DAS Tool
+    // DAS_Tool
     ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_combined_bins)
         .contig2bin
         .groupTuple()
@@ -185,20 +188,27 @@ workflow BINNING {
     ch_dastool_out = DASTOOL(ch_dastool_input)
     ch_versions = ch_versions.mix(DASTOOL.out.versions.first())
 
-    ch_coverm_genome_input = ch_dastool_out.dastool_bins
-        .join(ch_binning_bam.map { it -> [ it[0], it[3] ] }) 
+    // Final bin set
+    ch_final_bins = ch_dastool_out.dastool_bins
+        .join(ch_sc_hq, by: 0, remainder: true)
+        .map { group, bins, hq_sc -> 
+            [ group, [bins, hq_sc].flatten().findAll { obj -> obj != null } ]
+        }
+
+    ch_coverm_genome_input = ch_final_bins
+        .join(ch_binning_bam.map { obj -> [ obj[0], obj[3] ] }) 
 
     // Run CoverM
     ch_coverm_out = COVERM_GENOME(
-        ch_coverm_genome_input.map { it -> [ it[0], it[1], it[2] ] }
+        ch_coverm_genome_input.map { obj -> [ obj[0], obj[1], obj[2] ] }
     )
     ch_versions = ch_versions.mix(COVERM_GENOME.out.versions.first())
 
     ch_norm_coverm_genome_in = ch_coverm_out.coverm_stats
-        .join(ch_binning_bam.map { it -> [ it[0], it[3] ] })
+        .join(ch_binning_bam.map { obj -> [ obj[0], obj[3] ] })
 
     ch_coverm_genome_norm_out = NORMALIZE_COVERM_GENOME(
-        ch_norm_coverm_genome_in.map { it -> [ it[0], it[1], it[2] ] }
+        ch_norm_coverm_genome_in.map { obj -> [ obj[0], obj[1], obj[2] ] }
     )
 
     // Initialize downstream variables for emit block
@@ -210,29 +220,29 @@ workflow BINNING {
     if (!params.skip_bin_qa) {
     
         // Run CheckM
-        ch_checkm_out = CHECKM(ch_dastool_out.dastool_bins)
+        ch_checkm_out = CHECKM(ch_final_bins)
         ch_checkm_stats = ch_checkm_out.checkm_stats // Assign for emit
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
         
         // Run GTDB-Tk
         if (!params.skip_gtdbtk) {
-            ch_gtdbtk_out = GTDBTK(ch_dastool_out.dastool_bins, params.gtdbtk_db)
+            ch_gtdbtk_out = GTDBTK(ch_final_bins, params.gtdbtk_db)
             ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
             ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
         }
 
         // Summary
-        ch_summarize = ch_dastool_out.dastool_bins
+        ch_summarize = ch_final_bins
             .join(ch_checkm_stats)
             .join(ch_coverm_out.coverm_stats)
             .join(ch_gtdbtk_summary)
 
         // Run Summary
         ch_summary_run = MAG_SUMMARY(
-            ch_summarize.map{ it -> [ it[0], it[1], it[2], it[4], it[3] ] }
+            ch_summarize.map{ obj -> [ obj[0], obj[1], obj[2], obj[4], obj[3] ] }
         )
-        ch_mag_summary_out = ch_summary_run.mag_summary // Assign for emit
-        ch_final_contig2bin = ch_summary_run.contig2bin // Assign for emit
+        ch_mag_summary_out = ch_summary_run.mag_summary
+        ch_final_contig2bin = ch_summary_run.contig2bin
 
     }
 
@@ -248,6 +258,7 @@ workflow BINNING {
     concoct_bins           = ch_concoct_bins
     semibin_bins           = ch_semibin_bins
     dastool_bins           = ch_dastool_out.dastool_bins
+    final_bins             = ch_final_bins
     contig2bin             = ch_dastoolc2b_out
     coverm_genome_stats    = ch_coverm_out.coverm_stats
     coverm_genome_norm     = ch_coverm_genome_norm_out.coverm_genome_norm
@@ -255,4 +266,5 @@ workflow BINNING {
     gtdbtk_out             = ch_gtdbtk_summary
     mag_summary            = ch_mag_summary_out
     final_contig2bin       = ch_final_contig2bin
+
 }
