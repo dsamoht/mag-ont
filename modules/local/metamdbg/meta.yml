@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "metamdbg"
+description: Assemble long reads into a metagenome with metaMDBG
+keywords:
+  - assembly
+  - nanopore
+  - long reads
+  - metagenome
+tools:
+  - "metamdbg":
+      description: Minimizer based de Bruijn graph assembler for long metagenomic reads
+      homepage: https://github.com/GaetanBenoitDev/metaMDBG
+      documentation: https://github.com/GaetanBenoitDev/metaMDBG#usage
+      licence: ["MIT"]
+      identifier: biotools:metamdbg
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+output:
+  fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.contigs.fasta":
+          type: file
+          description: Contigs.fasta
+          pattern: "*.contigs.fasta"
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.metaMDBG.log":
+          type: file
+          description: Metamdbg.log
+          pattern: "*.metaMDBG.log"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

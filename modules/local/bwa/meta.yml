@@ -1,0 +1,47 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "bwa_mem"
+description: Map paired-end short reads to an assembly with bwa-mem2
+keywords:
+  - align
+  - map
+  - short reads
+  - sam
+tools:
+  - "bwa-mem2":
+      description: Fast suffix-array based read aligner, a rewrite of bwa mem
+      homepage: https://github.com/bwa-mem2/bwa-mem2
+      documentation: https://github.com/bwa-mem2/bwa-mem2#usage
+      licence: ["MIT"]
+      identifier: biotools:bwa-mem2
+input:
+  - - meta_reads:
+        type: map
+        description: Meta reads
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+  - - meta_ref:
+        type: map
+        description: Meta ref
+    - reference:
+        type: file
+        description: Reference assembly in FASTA format
+output:
+  sam:
+    - - meta_reads:
+          type: map
+          description: Meta reads
+      - "*.sam":
+          type: file
+          description: Alignments in SAM format
+          pattern: "*.sam"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

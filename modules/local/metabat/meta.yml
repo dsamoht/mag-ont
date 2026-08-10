@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "metabat"
+description: Bin contigs with MetaBAT2 and produce a depth table
+keywords:
+  - binning
+  - metagenomics
+  - mag
+  - depth
+tools:
+  - "metabat2":
+      description: Adaptive binning algorithm for robust metagenome reconstruction
+      homepage: https://bitbucket.org/berkeleylab/metabat
+      documentation: https://bitbucket.org/berkeleylab/metabat/src/master/README.md
+      licence: ["BSD-3-Clause-LBNL"]
+      identifier: biotools:metabat
+input:
+  - - meta_assembly:
+        type: map
+        description: Meta assembly
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+  - - meta_bam:
+        type: map
+        description: Meta bam
+    - bam:
+        type: file
+        description: Alignments in sorted BAM format
+output:
+  metabat_bins:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "metabat_bin.*.fa":
+          type: map
+          description: Metabat bin.*.fa
+          pattern: "metabat_bin.*.fa"
+  metabat_depth:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "*_depth.txt":
+          type: file
+          description: depth.txt
+          pattern: "*_depth.txt"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

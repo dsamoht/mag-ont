@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "normalize_coverm_genome"
+description: Normalize per-genome coverage by library size
+keywords:
+  - normalization
+  - abundance
+  - genome
+tools:
+  - "python":
+      description: Custom normalization script shipped in bin/
+      homepage: https://www.python.org
+      documentation: https://docs.python.org
+      licence: ["MIT"]
+      identifier: biotools:python
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - coverm_genome_stats:
+        type: file
+        description: Coverm genome stats
+    - bam_files:
+        type: file
+        description: One or more sorted BAM files
+output:
+  coverm_genome_norm:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "coverm_genome_stats_norm.tsv":
+          type: file
+          description: Coverm genome stats norm.tsv
+          pattern: "coverm_genome_stats_norm.tsv"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

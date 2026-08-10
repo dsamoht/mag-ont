@@ -1,0 +1,50 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "pyrodigal"
+description: Predict genes on an assembly chunk with Pyrodigal
+keywords:
+  - annotation
+  - gene prediction
+  - prodigal
+tools:
+  - "pyrodigal":
+      description: Cython bindings and Python interface to Prodigal
+      homepage: https://github.com/althonos/pyrodigal
+      documentation: https://pyrodigal.readthedocs.io
+      licence: ["GPL-3.0"]
+      identifier: biotools:pyrodigal
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - chunk_idx:
+        type: string
+        description: Index of the assembly chunk
+    - fasta:
+        type: file
+        description: Sequences in FASTA format
+output:
+  genes:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - chunk_idx:
+          type: string
+          description: Index of the assembly chunk
+      - "*.gff":
+          type: file
+          description: Gff
+          pattern: "*.gff"
+      - "*.fna":
+          type: file
+          description: Fna
+          pattern: "*.fna"
+      - "*.faa":
+          type: file
+          description: Faa
+          pattern: "*.faa"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

@@ -1,6 +1,6 @@
-include { FLYE     } from '../../modules/flye'
-include { MEDAKA   } from '../../modules/medaka'
-include { METAMDBG } from '../../modules/metamdbg'
+include { FLYE     } from '../../modules/local/flye'
+include { MEDAKA   } from '../../modules/local/medaka'
+include { METAMDBG } from '../../modules/local/metamdbg'
 
 workflow LONGREAD_ASSEMBLY {
     take:

@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "concoct"
+description: Bin contigs by coverage and composition with CONCOCT
+keywords:
+  - binning
+  - metagenomics
+  - mag
+tools:
+  - "concoct":
+      description: Clustering cONtigs with COverage and ComposiTion
+      homepage: https://github.com/BinPro/CONCOCT
+      documentation: https://concoct.readthedocs.io
+      licence: ["FreeBSD"]
+      identifier: biotools:concoct
+input:
+  - - meta_assembly:
+        type: map
+        description: Meta assembly
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+  - - meta_bam:
+        type: map
+        description: Meta bam
+    - bam:
+        type: file
+        description: Alignments in sorted BAM format
+    - bai:
+        type: file
+        description: Bai
+output:
+  concoct_bins:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "concoct_*.fa":
+          type: file
+          description: Concoct *.fa
+          pattern: "concoct_*.fa"
+  concoct_contigs:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "contigs_10K.fa":
+          type: file
+          description: Contigs 10k.fa
+          pattern: "contigs_10K.fa"
+  concoct_coverage:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "coverage_table.tsv":
+          type: file
+          description: Coverage table.tsv
+          pattern: "coverage_table.tsv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

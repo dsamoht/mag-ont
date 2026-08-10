@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "normalize_coverm_contig"
+description: Normalize contig coverage to gene-level abundance using the Pyrodigal annotation
+keywords:
+  - normalization
+  - abundance
+  - gene
+  - tpm
+tools:
+  - "python":
+      description: Custom normalization script shipped in bin/
+      homepage: https://www.python.org
+      documentation: https://docs.python.org
+      licence: ["MIT"]
+      identifier: biotools:python
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - coverm_contig_stats:
+        type: file
+        description: Coverm contig stats
+    - gff_file:
+        type: file
+        description: Gene annotations in GFF format
+    - bam_files:
+        type: file
+        description: One or more sorted BAM files
+output:
+  gene_abund_norm:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "gene_abund_norm.tsv":
+          type: file
+          description: Gene abund norm.tsv
+          pattern: "gene_abund_norm.tsv"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"
