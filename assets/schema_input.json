@@ -1,0 +1,62 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/dsamoht/mag-ont/main/assets/schema_input.json",
+    "title": "dsamoht/mag-ont pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample_id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "group": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Group name must be provided and cannot contain spaces. Samples sharing a group are co-assembled or binned together",
+                "meta": ["group"]
+            },
+            "assembly_fasta": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.(fa|fasta|fna)(\\.gz)?$",
+                "errorMessage": "A pre-existing assembly must be a FASTA file ('.fa', '.fasta' or '.fna', optionally gzipped) and cannot contain spaces"
+            },
+            "long_reads": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "Long reads must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+            },
+            "short_reads_1": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "Short reads 1 must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+            },
+            "short_reads_2": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "Short reads 2 must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+            }
+        },
+        "required": ["sample_id", "group"],
+        "anyOf": [{ "required": ["assembly_fasta"] }, { "required": ["long_reads"] }],
+        "dependentRequired": {
+            "short_reads_1": ["short_reads_2"],
+            "short_reads_2": ["short_reads_1"]
+        },
+        "errorMessage": {
+            "anyOf": "Each row needs either 'long_reads' to assemble or a pre-existing 'assembly_fasta'",
+            "dependentRequired": "Short reads must be paired: provide both 'short_reads_1' and 'short_reads_2', or neither"
+        }
+    }
+}

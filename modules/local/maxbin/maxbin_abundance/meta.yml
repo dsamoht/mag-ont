@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "maxbin_abund"
+description: Convert a MetaBAT2 depth table into MaxBin2 abundance files
+keywords:
+  - binning
+  - abundance
+  - conversion
+tools:
+  - "python":
+      description: Custom conversion script shipped in bin/
+      homepage: https://www.python.org
+      documentation: https://docs.python.org
+      licence: ["MIT"]
+      identifier: biotools:python
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - metabat_depth:
+        type: map
+        description: Metabat depth
+output:
+  maxbin_abund:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "maxbin_abund.txt":
+          type: file
+          description: Maxbin abund.txt
+          pattern: "maxbin_abund.txt"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

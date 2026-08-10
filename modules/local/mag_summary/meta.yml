@@ -1,0 +1,53 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "mag_summary"
+description: Combine bin quality, coverage and taxonomy into one MAG summary table
+keywords:
+  - summary
+  - mag
+  - report
+tools:
+  - "python":
+      description: Custom summary script shipped in bin/
+      homepage: https://www.python.org
+      documentation: https://docs.python.org
+      licence: ["MIT"]
+      identifier: biotools:python
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - dastool_bins:
+        type: file
+        description: Dastool bins
+    - checkm_stats:
+        type: file
+        description: Checkm stats
+    - gtdbtk_res:
+        type: file
+        description: Gtdbtk res
+    - coverm_stats:
+        type: file
+        description: Coverm stats
+output:
+  mag_summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*_mag_summary.csv":
+          type: file
+          description: mag summary.csv
+          pattern: "*_mag_summary.csv"
+  contig2bin:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*_contig2bin.csv":
+          type: file
+          description: contig2bin.csv
+          pattern: "*_contig2bin.csv"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

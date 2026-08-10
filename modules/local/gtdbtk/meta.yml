@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "gtdbtk"
+description: Assign taxonomy to bins with the GTDB toolkit
+keywords:
+  - taxonomy
+  - classification
+  - gtdb
+  - mag
+tools:
+  - "gtdbtk":
+      description: Toolkit for assigning objective taxonomic classifications to genomes
+      homepage: https://github.com/Ecogenomics/GTDBTk
+      documentation: https://ecogenomics.github.io/GTDBTk/
+      licence: ["GPL-3.0"]
+      identifier: biotools:gtdbtk
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - bins:
+        type: file
+        description: Genome bins in FASTA format
+  - - gtdbtk_db:
+        type: file
+        description: Path to the GTDB-Tk reference database
+output:
+  gtdbtk_summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "gtdbtk.*.summary.tsv":
+          type: file
+          description: Gtdbtk.*.summary.tsv
+          pattern: "gtdbtk.*.summary.tsv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

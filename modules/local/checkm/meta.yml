@@ -1,0 +1,42 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "checkm"
+description: Estimate completeness and contamination of bins with CheckM2
+keywords:
+  - checkm2
+  - completeness
+  - contamination
+  - mag
+  - qc
+tools:
+  - "checkm2":
+      description: Rapid assessment of genome bin quality using machine learning
+      homepage: https://github.com/chklovski/CheckM2
+      documentation: https://github.com/chklovski/CheckM2#usage
+      licence: ["GPL-3.0"]
+      identifier: biotools:checkm2
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - bins:
+        type: file
+        description: Genome bins in FASTA format
+output:
+  checkm_stats:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "checkm2_out/quality_report.tsv":
+          type: file
+          description: Checkm2 out/quality report.tsv
+          pattern: "checkm2_out/quality_report.tsv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

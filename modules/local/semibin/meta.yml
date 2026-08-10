@@ -1,0 +1,50 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "semibin"
+description: Bin contigs with SemiBin2
+keywords:
+  - binning
+  - metagenomics
+  - mag
+  - deep learning
+tools:
+  - "semibin":
+      description: Metagenomic binning with semi-supervised siamese neural networks
+      homepage: https://github.com/BigDataBiology/SemiBin
+      documentation: https://semibin.readthedocs.io
+      licence: ["MIT"]
+      identifier: biotools:semibin
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+  - - bam_meta:
+        type: string
+        description: Bam meta
+    - bams:
+        type: file
+        description: Bams
+  - - strategy_type:
+        type: string
+        description: Read type used for binning, either `short` or `long`
+output:
+  semibin_bins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "semibin_output/output_bins/*.fa":
+          type: file
+          description: Semibin output/output bins/*.fa
+          pattern: "semibin_output/output_bins/*.fa"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

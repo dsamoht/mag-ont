@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "dastool"
+description: Select a non-redundant set of bins from multiple binners
+keywords:
+  - binning
+  - refinement
+  - mag
+  - dereplication
+tools:
+  - "das_tool":
+      description: Dereplication, aggregation and scoring of genome bins
+      homepage: https://github.com/cmks/DAS_Tool
+      documentation: https://github.com/cmks/DAS_Tool#usage
+      licence: ["BSD-3-Clause"]
+      identifier: biotools:das_tool
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+    - contig2bin:
+        type: file
+        description: Contig2bin
+output:
+  dastool_bins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.fa":
+          type: file
+          description: Fa
+          pattern: "*.fa"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"
