@@ -14,21 +14,47 @@ process SEQKIT_SPLITBYLENGTH {
     val threshold
 
     output:
-    tuple val(meta), path("*.large.fa"), emit: large
-    tuple val(meta), path("*.small.fa"), emit: small
-    path  "versions.yml"               , emit: versions
+    tuple val(meta), path("large_contigs/*.fa")  , emit: large, optional: true
+    tuple val(meta), path("*_contig_mapping.tsv"), emit: contig_mapping
+    tuple val(meta), path("*.small.fa")          , emit: small
+    path  "versions.yml"                         , emit: versions
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def min_len = threshold as Long
     def max_len = (threshold as Long) - 1
     """
+    mkdir -p large_contigs
+
+    # Each long contig goes to its own file, named after the contig ID alone, so that it
+    # can be assessed as a genome in its own right. The full header is recorded here so it
+    # can be restored on the contigs that are put back together for binning.
+    awk '
+    /^>/ {
+        safe_id = \$1
+        sub(/^>/, "", safe_id)
+
+        full_name = \$0
+        sub(/^>/, "", full_name)
+
+        print safe_id "\\t" full_name
+    }' $fasta > ${prefix}_contig_mapping.tsv
+
     seqkit \\
         seq \\
         -m $min_len \\
         --threads $task.cpus \\
-        $fasta \\
-        > ${prefix}.large.fa
+        $fasta | \\
+    awk '
+    /^>/ {
+        if (out) close(out)
+        safe_id = \$1
+        sub(/^>/, "", safe_id)
+        out = "large_contigs/" safe_id ".fa"
+        print \$0 > out
+        next
+    }
+    { if (out) print \$0 >> out }'
 
     seqkit \\
         seq \\

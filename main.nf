@@ -14,15 +14,16 @@
 */
 
 include { BINNING                 } from './workflows/binning'
+include { CAT_CONTIGS             } from './modules/local/cat/contig'
 include { CAT_FASTQ               } from './modules/local/cat'
 include { CHECKM                  } from './modules/local/checkm'
+include { FILTER_HQ_SC            } from './modules/local/checkm/filter_hq_sc'
 include { LONGREAD_ASSEMBLY       } from './workflows/longread_assembly'
 include { LONGREAD_QC             } from './workflows/longread_qc'
 include { MERGE_PYRODIGAL         } from './modules/local/pyrodigal/merge'
 include { MULTIQC                 } from './modules/local/multiqc'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/pipeline_initialisation'
 include { PYRODIGAL               } from './modules/local/pyrodigal/pyrodigal'
-include { SEQKIT_EXCLUDE          } from './modules/local/seqkit/exclude'
 include { SEQKIT_SPLITBYLENGTH    } from './modules/local/seqkit'
 
 /*
@@ -145,93 +146,70 @@ workflow MAG_ONT {
         .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
         .mix(ch_input_assembly)
 
-    //
-    // MODULE: split each assembly into long and short contigs
-    //
-    ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum)
-    ch_versions = ch_versions.mix(SEQKIT_SPLITBYLENGTH.out.versions.first())
-
-    // Contigs long enough to be a MAG on their own are assessed one by one. Those that
-    // reach `sc_mag_min_completeness` are held out of binning and added straight to the
-    // final bin set, so a contig that is already a genome cannot be split across bins or
-    // buried inside a larger one.
+    // A contig long enough to be a MAG on its own is assessed as a genome of its own, and
+    // kept out of binning when it is complete enough: a contig that is already a genome
+    // cannot then be split across bins or buried inside a larger one. The candidates that
+    // do not make the cut are put back with the short contigs and binned as usual.
     ch_sc_mag_checkm = channel.empty()
 
     if (!params.skip_bin_qa) {
-        // The number of candidates per group is read from the fasta here, before any
-        // CheckM job runs, so that groupKey() below can release a group as soon as its
-        // own candidates are assessed instead of waiting on every other group.
-        ch_sc_mag_candidates = ch_split_by_contig_lengths.large
-            .map { meta, fasta -> [ meta, fasta, fasta.countFasta() ] }
+        //
+        // MODULE: split each assembly into long and short contigs
+        //
+        ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum)
+        ch_versions = ch_versions.mix(SEQKIT_SPLITBYLENGTH.out.versions.first())
 
-        ch_potential_sc_hq_mag = ch_sc_mag_candidates
-            .filter { _meta, _fasta, n_candidates -> n_candidates > 0 }
-            .splitFasta( by: 1, file: true, elem: 1 )
-            .map { meta, contig, n_candidates ->
-                [ meta + [ id: contig.baseName, group: meta.id, n_candidates: n_candidates ], contig ]
-            }
+        // One CheckM job per group, with every candidate of that group as a genome of the
+        // run, rather than one job per contig.
+        ch_potential_sc_hq_mag = ch_split_by_contig_lengths.large
 
         ch_sc_mag_checkm = CHECKM(ch_potential_sc_hq_mag).checkm_stats
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
 
-        // CheckM's report is optional: a candidate it could not assess must still reach
-        // the grouping below, as a failed one, or its group would never be released.
-        ch_sc_mag_assessed = ch_potential_sc_hq_mag
-            .join(ch_sc_mag_checkm, remainder: true)
-            .filter { _meta, contig, _report -> contig }
-            .branch { _meta, _contig, report ->
-                assessed: report
-                unassessed: true
-            }
+        //
+        // MODULE: sort the candidates on completeness
+        //
+        ch_sc_mag_qa = FILTER_HQ_SC(
+            ch_potential_sc_hq_mag.join(ch_sc_mag_checkm),
+            params.sc_mag_min_completeness
+        )
+        ch_versions = ch_versions.mix(FILTER_HQ_SC.out.versions.first())
 
-        ch_sc_mag_verdict = ch_sc_mag_assessed.assessed
-            .splitCsv( elem: 2, sep: '\t', header: true )
-            .map { meta, contig, stats ->
-                [ meta, contig, (stats.Completeness as Double) >= params.sc_mag_min_completeness ]
-            }
-            .mix(ch_sc_mag_assessed.unassessed.map { meta, contig, _report -> [ meta, contig, false ] })
+        //
+        // MODULE: put the short contigs and the rejected candidates back together
+        //
+        // `remainder` covers the groups FILTER_HQ_SC did not run for, or that it rejected
+        // nothing in: their assembly is rebuilt from the short contigs alone.
+        ch_concat_input = ch_split_by_contig_lengths.small
+            .join(ch_split_by_contig_lengths.contig_mapping)
+            .join(ch_sc_mag_qa.lq_sc, remainder: true)
+            .map { meta, small_fa, mapping, lq_fa -> [ meta, small_fa, lq_fa ?: [], mapping ] }
 
-        // Grouping has to happen before filtering: groupKey() releases a group once it
-        // has seen exactly `n_candidates` items, so rejected candidates travel with the
-        // verdict and are dropped once the group is complete.
-        ch_sc_mag_bins = ch_sc_mag_verdict
-            .map { meta, contig, kept -> [ groupKey(meta.group, meta.n_candidates), contig, kept ] }
-            .groupTuple()
-            .map { group, contigs, verdicts ->
-                def kept = [ contigs, verdicts ].transpose().findAll { candidate -> candidate[1] }
-                [ group.toString(), kept.collect { candidate -> candidate[0] } ]
-            }
-            .mix(
-                ch_sc_mag_candidates
-                    .filter { _meta, _fasta, n_candidates -> n_candidates == 0 }
-                    .map { meta, _fasta, _n_candidates -> [ meta.id, [] ] }
+        ch_rebuilt_assembly = CAT_CONTIGS(ch_concat_input).fasta
+        ch_versions = ch_versions.mix(CAT_CONTIGS.out.versions.first())
+
+        // A group whose every contig was held out has nothing left to bin: it skips the
+        // binners, and BINNING picks its MAGs up again through `ch_sc_mag_bins`.
+        ch_assembly_to_bin = ch_rebuilt_assembly
+            .filter { _meta, assembly -> assembly.size() > 0 }
+
+        // BINNING joins on this, so every group needs an entry, empty or not.
+        ch_sc_mag_bins = ch_rebuilt_assembly
+            .map { meta, _assembly -> [ meta.id, [] ] }
+            .join(
+                ch_sc_mag_qa.hq_sc.map { meta, hq_sc ->
+                    [ meta.id, hq_sc instanceof List ? hq_sc : [ hq_sc ] ]
+                },
+                remainder: true
             )
+            .map { group, _none, hq_sc -> [ group, hq_sc ?: [] ] }
     }
     else {
-        ch_sc_mag_bins = ch_assembly_for_binning.map { meta, _assembly -> [ meta.id, [] ] }
+        // Without bin QA there is no completeness to sort candidates on, so nothing is
+        // held out and the binners see the assembly whole.
+        ch_assembly_to_bin = ch_assembly_for_binning
+        ch_sc_mag_bins     = ch_assembly_for_binning.map { meta, _assembly -> [ meta.id, [] ] }
     }
-
-    //
-    // MODULE: remove the single-contig MAGs from the assembly handed to the binners
-    //
-    ch_assembly_sc_split = ch_assembly_for_binning
-        .map { meta, assembly -> [ meta.id, meta, assembly ] }
-        .join(ch_sc_mag_bins)
-        .branch { _group, _meta, _assembly, sc_mags ->
-            reduced: sc_mags.size() > 0
-            unchanged: true
-        }
-
-    ch_reduced_assembly = SEQKIT_EXCLUDE(
-        ch_assembly_sc_split.reduced.map { _group, meta, assembly, sc_mags -> [ meta, assembly, sc_mags ] }
-    ).fasta
-    ch_versions = ch_versions.mix(SEQKIT_EXCLUDE.out.versions.first())
-
-    // A group whose every contig became a single-contig MAG has nothing left to bin: it
-    // skips the binners and its MAGs are picked up again by BINNING's final bin set.
-    ch_assembly_to_bin = ch_reduced_assembly
-        .filter { _meta, assembly -> assembly.size() > 0 }
-        .mix(ch_assembly_sc_split.unchanged.map { _group, meta, assembly, _sc_mags -> [ meta, assembly ] })
 
     //
     // MODULE: predict genes on 100 MB chunks of each assembly
@@ -464,7 +442,7 @@ output {
         path { meta, _file -> "group_${meta.id}/assembly/provided" }
     }
     sc_mag_checkm {
-        path { meta, _file -> "group_${meta.group}/binning/single_contig_mags/${meta.id}" }
+        path { meta, _file -> "group_${meta.id}/binning/single_contig_mags" }
     }
     pyrodigal_gff {
         path { meta, _file -> "group_${meta.id}/assembly/pyrodigal" }
