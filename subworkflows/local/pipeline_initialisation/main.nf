@@ -2,6 +2,7 @@
 // Subworkflow with functionality specific to the dsamoht/mag-ont pipeline
 //
 
+include { paramsHelp         } from 'plugin/nf-schema'
 include { paramsSummaryLog   } from 'plugin/nf-schema'
 include { samplesheetToList  } from 'plugin/nf-schema'
 include { validateParameters } from 'plugin/nf-schema'
@@ -17,8 +18,33 @@ workflow PIPELINE_INITIALISATION {
     take:
     validate_params // boolean: validate parameters against nextflow_schema.json
     input           // string : path to the sample sheet
+    help            // boolean or string: display the help message
+    help_full       // boolean: display the full help message
+    show_hidden     // boolean: display hidden parameters in the help message
 
     main:
+
+    //
+    // Print the help message built from nextflow_schema.json and exit
+    //
+    if (help || help_full) {
+        log.info(paramsHelp(
+            [
+                command   : "nextflow run dsamoht/mag-ont -profile <docker/singularity/apptainer> --input samplesheet.csv --outdir <OUTDIR>",
+                showHidden: show_hidden,
+                fullHelp  : help_full,
+            ],
+            help instanceof String && help != "true" ? help : "",
+        ))
+        // Nextflow creates the work directory when the session starts, before this script
+        // runs, so printing the help message leaves an empty `work/` behind in whatever
+        // directory it was called from. Remove it again, but only if this run is the one
+        // that created it.
+        if (workflow.workDir.exists() && workflow.workDir.list().size() == 0) {
+            workflow.workDir.deleteDir()
+        }
+        exit(0)
+    }
 
     //
     // Validate parameters and print a summary of the ones that differ from the defaults
