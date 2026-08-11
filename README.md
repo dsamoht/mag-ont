@@ -49,15 +49,15 @@ flowchart TD
     end
 
     subgraph SC ["single-contig MAGs"]
-        SEQKIT["SeqKit<br/><i>contigs ≥ --sc_mag_minimum</i>"]
-        CKM1["CheckM<br/><i>one contig at a time</i>"]:::opt
+        SEQKIT["SeqKit<br/><i>contigs ≥ --sc_mag_minimum,<br/>one file each</i>"]
+        CKM1["CheckM<br/><i>all candidates of a group in one run</i>"]:::opt
         GATE{"completeness ≥<br/>--sc_mag_min_completeness"}
         SCMAG[["single-contig MAGs"]]
         SEQKIT --> CKM1 --> GATE
         GATE -->|yes| SCMAG
     end
 
-    EXCL["SeqKit grep -v<br/><i>hold the single-contig MAGs<br/>out of binning</i>"]
+    CATC["cat contigs<br/><i>short contigs + rejected candidates,<br/>original headers restored</i>"]
     TOBIN[["contigs to bin"]]
 
     subgraph MAP ["read mapping — per sample"]
@@ -106,10 +106,9 @@ flowchart TD
     CONTIGS --> BWA
     CHOP --> MM2
 
-    CONTIGS --> EXCL
-    SCMAG --> EXCL
-    EXCL --> TOBIN
-    GATE -.->|"no — stays in the assembly"| TOBIN
+    SEQKIT -->|"short contigs"| CATC
+    GATE -.->|"no"| CATC
+    CATC --> TOBIN
 
     TOBIN --> MB
     TOBIN --> MX
