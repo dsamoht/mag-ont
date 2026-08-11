@@ -52,6 +52,15 @@ workflow PIPELINE_INITIALISATION {
     if (validate_params) {
         validateParameters()
     }
+
+    // `outputDir` follows `params.outdir` (nextflow.config), and Nextflow falls back to
+    // publishing in `./results` when it is null. Parameter validation already requires
+    // `--outdir`, but it can be turned off, so the run is stopped here as well: the results
+    // are always written to the directory asked for on the command line, never anywhere else.
+    if (!params.outdir) {
+        error("No output directory: pass --outdir. Without it the results would be published to './results' instead.")
+    }
+
     log.info(paramsSummaryLog(workflow))
 
     //
