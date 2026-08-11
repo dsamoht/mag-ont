@@ -74,7 +74,9 @@ Use one of the container profiles rather than installing the tools yourself. Pro
 comma-separated and order matters, the last one wins.
 
 - `docker`, `singularity`, `apptainer`, `podman`, `shifter`, `charliecloud`, `wave`
-- `conda` / `mamba` — only if none of the container engines are available
+- `conda` / `mamba` — only if none of the container engines are available, and only together with
+  `--skip_bin_qa`: CheckM2 needs a DIAMOND reference database that the pipeline supplies through
+  its container image, and the Bioconda package ships none, so `CHECKM` fails without it
 - `gpu` — passes the GPU through to Medaka and SemiBin2
 - `drac` — slurm executor and resources for Digital Research Alliance of Canada clusters
 - `test` — a minimal dataset that exercises the whole pipeline

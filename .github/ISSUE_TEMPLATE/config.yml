@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/dsamoht/mag-ont/tree/main/docs
+    about: Usage and output documentation for the pipeline.
+  - name: Nextflow documentation
+    url: https://www.nextflow.io/docs/latest/
+    about: Questions about Nextflow itself rather than this pipeline.
