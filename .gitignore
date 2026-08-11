@@ -8,4 +8,5 @@ testing*
 *.pyc
 null/
 .lineage/
-tests/mag-ont_outdir/
+tests/mag-ont_out/
+CLAUDE.md
