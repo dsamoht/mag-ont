@@ -5,7 +5,7 @@ process NORMALIZE_COVERM_GENOME {
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
-    container "docker.io/dsamoht/bio-utils:latest"
+    container "docker.io/dsamoht/bio-utils@sha256:f0cad0d32d8d8fac7bb971736f158200cf19b4817dd796bd9d76240a054bacf2"
 
     input:
     tuple val(meta), path(coverm_genome_stats), path(bam_files)
