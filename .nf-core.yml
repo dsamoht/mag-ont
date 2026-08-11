@@ -31,6 +31,15 @@ lint:
   # The templated report_comment points at nf-co.re, which does not host this pipeline.
   # assets/multiqc_config.yml links to docs/output.md in this repository instead.
   multiqc_config: false
+  nextflow_config:
+    # The execution reports are enabled only when `params.outdir` is set, so that runs which
+    # exit before executing anything (`--help`, `--version`) do not create a `null/` directory
+    # in the launch directory. The lint check evaluates the config without any parameters and
+    # therefore always sees them disabled.
+    - timeline.enabled
+    - report.enabled
+    - trace.enabled
+    - dag.enabled
   files_exist:
     # nf-core organisation files that do not apply to a community pipeline
     - CODE_OF_CONDUCT.md

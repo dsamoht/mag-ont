@@ -375,7 +375,10 @@ workflow {
     //
     PIPELINE_INITIALISATION(
         params.validate_params,
-        params.input
+        params.input,
+        params.help,
+        params.help_full,
+        params.show_hidden
     )
 
     //
