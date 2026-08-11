@@ -8,3 +8,4 @@ testing*
 *.pyc
 null/
 .lineage/
+tests/mag-ont_outdir/
