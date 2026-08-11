@@ -16,7 +16,7 @@ Long reads-first metagenome assembly and binning
 with support for short reads
 
      Github: https://github.com/dsamoht/mag-ont
-     Version: v1.5.0dev
+     Version: v1.4.0
 ```
 
 ## pipeline overview
