@@ -25,6 +25,12 @@ workflow PIPELINE_INITIALISATION {
     main:
 
     //
+    // Banner: same ASCII logo and description as the README, printed on top of the help
+    // message and of every run
+    //
+    log.info(logo())
+
+    //
     // Print the help message built from nextflow_schema.json and exit
     //
     if (help || help_full) {
@@ -100,6 +106,28 @@ workflow PIPELINE_INITIALISATION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// ASCII logo, pipeline description and repository details, taken from the manifest so
+// that the banner cannot drift from the version being run.
+//
+def logo() {
+    return """
+
+                                         _
+ _ __ ___   __ _  __ _        ___  _ __ | |_
+| '_ ` _ \\ / _` |/ _` |_____ / _ \\| '_ \\| __|
+| | | | | | (_| | (_| |_____| (_) | | | | |_
+|_| |_| |_|\\__,_|\\__, |      \\___/|_| |_|\\__|
+                 |___/
+
+${workflow.manifest.description}
+
+     Github: ${workflow.manifest.homePage}
+     Version: v${workflow.manifest.version}
+
+"""
+}
 
 //
 // Validate one group of samples: every group is assembled and binned as a unit, so the
