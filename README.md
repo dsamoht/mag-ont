@@ -24,7 +24,9 @@ with support for short reads
 ```bash
 nextflow run main.nf --help # if working in the repo
 ```
-or 
+
+or
+
 ```bash
 nextflow run dsamoht/mag-ont --help # nextflow pulls the repo automatically
 ```
@@ -38,9 +40,10 @@ nextflow run dsamoht/mag-ont --help # nextflow pulls the repo automatically
 
 - [GTDB-Tk database - release 226](https://ecogenomics.github.io/GTDBTk/installing/index.html#gtdb-tk-reference-data)
 
-## documentation  
+## documentation
+
 Full documentation: [usage](./docs/usage.md).  
-Pipeline outputs: [output](./docs/output.md).  
+Pipeline outputs: [output](./docs/output.md).
 
 ## acknowledgement
 
