@@ -8,7 +8,7 @@ def parse_fasta(file_path):
     """generator to yield (header, sequence) from a fasta file."""
     if not os.path.exists(file_path):
         return
-        
+
     header = None
     seq = []
     with open(file_path, 'r') as f:
@@ -44,22 +44,22 @@ def main():
     parser.add_argument('-m', '--mapping', required=True, help="Contig mapping TSV file")
     parser.add_argument('-o', '--output', required=True, help="Output concatenated FASTA file")
     parser.add_argument('-w', '--wrap', type=int, default=60, help="Line wrap length for sequences (default: 60)")
-    
+
     args = parser.parse_args()
 
     mapping = load_mapping(args.mapping)
 
     input_files = [args.small] + args.nonhq
-    
+
     with open(args.output, 'w') as out_f:
         for fasta_file in input_files:
             for header, seq in parse_fasta(fasta_file):
                 safe_id = header.split()[0]
-                
+
                 original_header = mapping.get(safe_id, header)
-                
+
                 out_f.write(f">{original_header}\n")
-                
+
                 wrapped_seq = textwrap.fill(seq, width=args.wrap)
                 out_f.write(f"{wrapped_seq}\n")
 

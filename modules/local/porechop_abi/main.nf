@@ -25,7 +25,7 @@ process PORECHOP_ABI {
         ${args} \
         -i ${reads} \
         -o ${prefix}.porechopped.fastq.gz > ${prefix}.porechop.log
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         porechop_abi: \$( porechop_abi --version )

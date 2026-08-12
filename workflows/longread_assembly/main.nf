@@ -27,7 +27,7 @@ workflow LONGREAD_ASSEMBLY {
         METAMDBG(ch_long_reads)
         ch_versions = ch_versions.mix(METAMDBG.out.versions.first())
         ch_assembly = METAMDBG.out.fasta
-  
+
     }
 
     emit:

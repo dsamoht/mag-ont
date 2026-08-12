@@ -29,7 +29,7 @@ process FLYE {
         --nano-hq ${reads} \
         --threads ${task.cpus} \
         --out-dir .
-    
+
     mv assembly.fasta ${prefix}.assembly.fasta
     mv assembly_graph.gfa ${prefix}.assembly_graph.gfa
     mv assembly_info.txt ${prefix}.assembly_info.txt

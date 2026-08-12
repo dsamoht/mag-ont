@@ -33,13 +33,13 @@ def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
                     gff_mapping.append({'Gene': gene_id, 'Contig': contig})
                 except IndexError:
                     continue
-    
+
     df_genes = pd.DataFrame(gff_mapping)
 
     # 3. Load and merge CoverM data
     df_coverm = pd.read_table(coverm_tsv)
     df_merged = pd.merge(df_genes, df_coverm, on='Contig', how='left')
-    
+
     # 4. Apply normalization for each sample and metric (Mean and Trimmed Mean)
     metrics = ["Mean", "Trimmed Mean"]
     output_columns = ['Gene', 'Contig']
@@ -50,7 +50,7 @@ def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
             source_col = f"{sample} {metric}"
             # Construct new normalized column name (e.g., "test1_Mean_norm")
             norm_col_name = f"{sample}_{metric.replace(' ', '_')}_norm"
-            
+
             if source_col in df_merged.columns:
                 if total_depth > 0:
                     # Formula: Coverage * (1,000,000 / Total Aligned Bases)

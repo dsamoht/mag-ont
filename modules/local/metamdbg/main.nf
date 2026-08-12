@@ -8,7 +8,7 @@ process METAMDBG {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/metamdbg:1.4--h3be2455_0' :
         'biocontainers/metamdbg:1.4--h3be2455_0' }"
-    
+
     input:
     tuple val(meta), path(reads)
 

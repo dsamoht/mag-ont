@@ -120,13 +120,13 @@ workflow BINNING {
         ch_binning_bam.map {it -> [ it[2], it[3] ]}  // [ meta, bam file(s) ]
     )
     ch_versions = ch_versions.mix(METABAT.out.versions.first())
-    
+
     // Initialize the EXACT channels you plan to emit as empty
     ch_maxbin_abund_out = channel.empty()
     ch_maxbin_bins      = channel.empty()
     ch_concoct_bins     = channel.empty()
     ch_semibin_bins     = channel.empty()
-    
+
     if (!params.skip_maxbin) {
         // Convert depth.txt to maxbin "abund"
         ch_maxbin_abund_run = MAXBIN_ABUND(ch_metabat_out.metabat_depth)
@@ -140,8 +140,8 @@ workflow BINNING {
 
         // Run maxbin
         ch_maxbin_out = MAXBIN(
-            ch_maxbin_input.map { it -> [ it[0], it[1] ] }, 
-            ch_maxbin_input.map { it -> [ it[0], it[2] ] }  
+            ch_maxbin_input.map { it -> [ it[0], it[1] ] },
+            ch_maxbin_input.map { it -> [ it[0], it[2] ] }
         )
         ch_maxbin_bins = ch_maxbin_out.maxbin_bins // Assign for emit
         ch_versions = ch_versions.mix(MAXBIN.out.versions.first())
@@ -150,23 +150,23 @@ workflow BINNING {
     if (!params.skip_concoct) {
         // Run concoct
         ch_concoct_out = CONCOCT(
-            ch_binning_bam.map { it -> [ it[0], it[1] ] },        
-            ch_binning_bam.map { it -> [ it[2], it[3], it[4] ] }, 
+            ch_binning_bam.map { it -> [ it[0], it[1] ] },
+            ch_binning_bam.map { it -> [ it[2], it[3], it[4] ] },
         )
         ch_concoct_bins = ch_concoct_out.concoct_bins // Assign for emit
         ch_versions = ch_versions.mix(CONCOCT.out.versions.first())
     }
-    
+
     if (!params.skip_semibin) {
         ch_semibin_input = ch_binning_wf_input
             .map { meta, _assembly -> [ [ id: meta.id ], meta.strategy ] }
             .join(ch_binning_bam)
-    
+
         // Run semibin
         ch_semibin_out = SEMIBIN(
-            ch_semibin_input.map { it -> [ it[0], it[2] ] }, 
-            ch_semibin_input.map { it -> [ it[3], it[4] ] }, 
-            ch_semibin_input.map { it -> it[1] }             
+            ch_semibin_input.map { it -> [ it[0], it[2] ] },
+            ch_semibin_input.map { it -> [ it[3], it[4] ] },
+            ch_semibin_input.map { it -> it[1] }
         )
         ch_semibin_bins = ch_semibin_out.semibin_bins // Assign for emit
         ch_versions = ch_versions.mix(SEMIBIN.out.versions.first())
@@ -190,7 +190,7 @@ workflow BINNING {
         ch_combined_bins = ch_combined_bins
             .mix( ch_semibin_bins.map { group, bins -> [ group, 'semibin', bins ] } )
     }
-    
+
     // DAS Tool. The number of binners is known from the parameters, so each group can be
     // released as soon as its own binners are done; `remainder` covers the binners that
     // produced no bins at all (their contig2bin output is optional).
@@ -248,7 +248,7 @@ workflow BINNING {
     ch_final_contig2bin = channel.empty()
 
     if (!params.skip_bin_qa) {
-    
+
         // Run CheckM
         ch_checkm_out = CHECKM(ch_final_bins)
         ch_checkm_stats = ch_checkm_out.checkm_stats // Assign for emit
