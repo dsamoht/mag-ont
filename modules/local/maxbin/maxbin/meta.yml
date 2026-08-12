@@ -1,0 +1,46 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "maxbin"
+description: Bin contigs with MaxBin2
+keywords:
+  - binning
+  - metagenomics
+  - mag
+tools:
+  - "maxbin2":
+      description: Binning metagenomic contigs by an Expectation-Maximization algorithm
+      homepage: https://sourceforge.net/projects/maxbin2/
+      documentation: https://sourceforge.net/projects/maxbin2/
+      licence: ["BSD-3-Clause"]
+      identifier: biotools:maxbin
+input:
+  - - meta_assembly:
+        type: map
+        description: Meta assembly
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - maxbin_abund:
+        type: file
+        description: Maxbin abund
+output:
+  maxbin_bins:
+    - - meta_assembly:
+          type: map
+          description: Meta assembly
+      - "maxbin_bin.*.fasta":
+          type: file
+          description: Maxbin bin.*.fasta
+          pattern: "maxbin_bin.*.fasta"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

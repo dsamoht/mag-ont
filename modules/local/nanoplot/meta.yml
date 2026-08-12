@@ -1,0 +1,56 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "nanoplot"
+description: Plot quality metrics for long read data
+keywords:
+  - qc
+  - nanopore
+  - plot
+  - report
+tools:
+  - "nanoplot":
+      description: Plotting suite for long read sequencing data
+      homepage: https://github.com/wdecoster/NanoPlot
+      documentation: https://github.com/wdecoster/NanoPlot#usage
+      licence: ["GPL-3.0"]
+      identifier: biotools:nanoplot
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - step:
+        type: string
+        description: Label for the QC step the plots belong to
+    - fastq:
+        type: file
+        description: Fastq
+output:
+  html:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.html":
+          type: file
+          description: Html
+          pattern: "*.html"
+  png:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.png":
+          type: file
+          description: Png
+          pattern: "*.png"
+  txt:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.txt":
+          type: file
+          description: Txt
+          pattern: "*.txt"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

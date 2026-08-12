@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "pipeline_initialisation"
+description: Validate the pipeline parameters and read the sample sheet
+keywords:
+  - initialisation
+  - validation
+  - samplesheet
+components: []
+input:
+  - validate_params:
+      type: boolean
+      description: |
+        Validate the parameters against nextflow_schema.json before starting.
+  - input:
+      type: file
+      description: |
+        Path to the comma-separated sample sheet.
+      pattern: "*.csv"
+output:
+  - samplesheet:
+      type: map
+      description: |
+        Channel of validated sample rows, one map per sample with the keys
+        `sample_id`, `group`, `assembly`, `assembly_path`, `long_reads`, `sr1` and `sr2`.
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

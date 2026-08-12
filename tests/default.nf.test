@@ -1,0 +1,24 @@
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            // No snapshot. `ont_test4` is the only group without a pre-made assembly, so it is
+            // the only one that runs Flye, and Flye is not reproducible: five runs of this test
+            // on one commit, with the same containers, produced five different assemblies.
+            // Everything derived from it differs in turn, down to the number of bins and so the
+            // file names, and CoverM's genome statistics are unstable in the other groups too.
+            assert workflow.success
+        }
+    }
+}

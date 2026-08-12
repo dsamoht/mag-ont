@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "chopper"
+description: Filter nanopore reads by length and quality
+keywords:
+  - nanopore
+  - filter
+  - trim
+  - quality
+tools:
+  - "chopper":
+      description: Rust implementation of NanoFilt+NanoLyse for long read filtering
+      homepage: https://github.com/wdecoster/chopper
+      documentation: https://github.com/wdecoster/chopper#usage
+      licence: ["MIT"]
+      identifier: biotools:chopper
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+output:
+  fastq:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.choppered.fastq.gz":
+          type: file
+          description: Choppered.fastq.gz
+          pattern: "*.choppered.fastq.gz"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

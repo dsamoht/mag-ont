@@ -1,0 +1,83 @@
+repository_type: pipeline
+nf_core_version: "4.1.0"
+template:
+  org: dsamoht
+  name: mag-ont
+  description: Long reads-first metagenome assembly and binning with support for short reads
+  author: Thomas Deschênes
+  version: 1.4.0
+  force: true
+  is_nfcore: false
+  skip_features:
+    # This is a community pipeline, not an nf-core one: no nf-core branding,
+    # code of conduct, AWS megatests or Dockstore registration.
+    - is_nfcore
+    # Metagenomics: no iGenomes reference handling
+    - igenomes
+    # Long reads only, read QC is done with NanoPlot rather than FastQC
+    - fastqc
+    # Not used by this pipeline
+    - email
+    - rocrate
+    - seqera_platform
+    - codespaces
+    # Releases are described by their GitHub release notes, not a CHANGELOG.md
+    - changelog
+    # Tool references live in README.md and docs/, not in a CITATIONS.md
+    - citations
+lint:
+  # `mag-ont` predates the nf-core naming rule and is already published under this
+  # name, so the hyphen stays.
+  pipeline_name_conventions: false
+  # Publishing is declared in the `output` block of main.nf (Nextflow workflow outputs)
+  # rather than with publishDir directives in conf/modules.config.
+  modules_config: false
+  # The templated report_comment points at nf-co.re, which does not host this pipeline.
+  # assets/multiqc_config.yml links to docs/output.md in this repository instead.
+  multiqc_config: false
+  nextflow_config:
+    # The execution reports are enabled only when `params.outdir` is set, so that runs which
+    # exit before executing anything (`--help`, `--version`) do not create a `null/` directory
+    # in the launch directory. The lint check evaluates the config without any parameters and
+    # therefore always sees them disabled.
+    - timeline.enabled
+    - report.enabled
+    - trace.enabled
+    - dag.enabled
+  files_exist:
+    # nf-core organisation files that do not apply to a community pipeline
+    - CODE_OF_CONDUCT.md
+    - .github/.dockstore.yml
+    - assets/nf-core-mag-ont_logo_light.png
+    - docs/images/nf-core-mag-ont_logo_light.png
+    - docs/images/nf-core-mag-ont_logo_dark.png
+    # No email notifications
+    - assets/email_template.html
+    - assets/email_template.txt
+    - assets/sendmail_template.txt
+    # No iGenomes references in a metagenomics pipeline
+    - conf/igenomes.config
+    - conf/igenomes_ignored.config
+    # Removed from the repository: releases are described by their GitHub release notes,
+    # tool references live in README.md and docs/, and there is no contribution guide.
+    # `changelog` and `citations` are in skip_features above; `docs/CONTRIBUTING.md` has no
+    # feature of its own (it belongs to `github` and `documentation`, both of which are used).
+    - CHANGELOG.md
+    - CITATIONS.md
+    - docs/CONTRIBUTING.md
+  # The pipeline test does not snapshot anything, so it cannot snapshot a versions.yml
+  # either: the only group that runs Flye gets a different assembly on every run, which
+  # changes the bins, their number and so the published file names. Listing the file here
+  # waives only its own checks; the nf-test.config ones still run.
+  nf_test_content:
+    - tests/default.nf.test
+  files_unchanged:
+    # Branch protection is written for the nf-core organisation's fork model
+    - .github/workflows/branch.yml
+    - LICENSE
+    # The template's issue config sends people to the nf-core Slack and join page,
+    # neither of which covers this pipeline; it links to its own docs instead.
+    - .github/ISSUE_TEMPLATE/config.yml
+    # The template checklist links to docs/CONTRIBUTING.md and asks for a CHANGELOG.md
+    # entry; neither file exists in this repository.
+    - .github/PULL_REQUEST_TEMPLATE.md

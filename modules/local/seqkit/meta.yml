@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "seqkit_splitbylength"
+description: Split an assembly into long and short contigs at a length threshold
+keywords:
+  - fasta
+  - filter
+  - length
+  - split
+tools:
+  - "seqkit":
+      description: Cross-platform toolkit for FASTA/Q file manipulation
+      homepage: https://bioinf.shenwei.me/seqkit/
+      documentation: https://bioinf.shenwei.me/seqkit/usage/
+      licence: ["MIT"]
+      identifier: biotools:seqkit
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - fasta:
+        type: file
+        description: Sequences in FASTA format
+  - - threshold:
+        type: string
+        description: Contig length threshold in base pairs
+output:
+  large:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.large.fa":
+          type: file
+          description: Large.fa
+          pattern: "*.large.fa"
+  small:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.small.fa":
+          type: file
+          description: Small.fa
+          pattern: "*.small.fa"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

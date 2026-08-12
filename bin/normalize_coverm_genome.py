@@ -24,7 +24,7 @@ def normalize_coverm_genome(coverm_tsv, bam_files, output_file):
 
     # 2. Load CoverM results
     df = pd.read_table(coverm_tsv)
-    
+
     # 3. Apply normalization
     for col in df.columns:
         for sample, total_depth in sample_depths.items():
