@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "dastool_contig2bin"
+description: Convert a directory of bin FASTA files to a DAS_Tool contig2bin table
+keywords:
+  - binning
+  - contig2bin
+  - tsv
+tools:
+  - "python":
+      description: Custom contig2bin script shipped in bin/
+      homepage: https://www.python.org
+      documentation: https://docs.python.org
+      licence: ["MIT"]
+      identifier: biotools:python
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - software:
+        type: string
+        description: Software
+    - bins:
+        type: file
+        description: Genome bins in FASTA format
+output:
+  contig2bin:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*_contig2bin.tsv":
+          type: file
+          description: contig2bin.tsv
+          pattern: "*_contig2bin.tsv"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "medaka"
+description: Polish a long read assembly with Medaka
+keywords:
+  - polishing
+  - consensus
+  - nanopore
+tools:
+  - "medaka":
+      description: Neural network based consensus and variant calling for nanopore data
+      homepage: https://github.com/nanoporetech/medaka
+      documentation: https://github.com/nanoporetech/medaka#usage
+      licence: ["MPL-2.0"]
+      identifier: biotools:medaka
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+output:
+  fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.consensus.fasta":
+          type: file
+          description: Consensus.fasta
+          pattern: "*.consensus.fasta"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

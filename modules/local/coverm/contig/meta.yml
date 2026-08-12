@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "coverm_contig"
+description: Compute per-contig coverage statistics from BAM files
+keywords:
+  - coverage
+  - contig
+  - depth
+tools:
+  - "coverm":
+      description: Read coverage calculator for metagenomics
+      homepage: https://github.com/wwood/CoverM
+      documentation: https://wwood.github.io/CoverM/
+      licence: ["GPL-3.0"]
+      identifier: biotools:coverm
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - bam_files:
+        type: file
+        description: One or more sorted BAM files
+output:
+  coverm_stats:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "coverm_contig_stats.tsv":
+          type: file
+          description: Coverm contig stats.tsv
+          pattern: "coverm_contig_stats.tsv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

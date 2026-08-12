@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "porechop_abi"
+description: Detect and remove sequencing adapters from nanopore reads
+keywords:
+  - adapter
+  - trimming
+  - nanopore
+tools:
+  - "porechop_abi":
+      description: Adapter trimming for nanopore reads with ab initio adapter inference
+      homepage: https://github.com/bonsai-team/Porechop_ABI
+      documentation: https://github.com/bonsai-team/Porechop_ABI#usage
+      licence: ["GPL-3.0"]
+      identifier: biotools:porechop_abi
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+output:
+  reads:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.fastq.gz":
+          type: file
+          description: Fastq.gz
+          pattern: "*.fastq.gz"
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.log":
+          type: file
+          description: Log
+          pattern: "*.log"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

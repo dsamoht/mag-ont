@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "cat_fastq"
+description: Concatenate the FastQ files of every sample in a group into one file
+keywords:
+  - cat
+  - concatenate
+  - fastq
+tools:
+  - "coreutils":
+      description: GNU core utilities
+      homepage: https://www.gnu.org/software/coreutils/
+      documentation: https://www.gnu.org/software/coreutils/manual/
+      licence: ["GPL-3.0-or-later"]
+      identifier: biotools:coreutils
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - reads:
+        type: file
+        description: Sequencing reads in FastQ format
+output:
+  reads:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.merged.fastq.gz":
+          type: file
+          description: Merged.fastq.gz
+          pattern: "*.merged.fastq.gz"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

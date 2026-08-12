@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "merge_pyrodigal"
+description: Merge the per-chunk Pyrodigal annotations of a group
+keywords:
+  - annotation
+  - merge
+  - gff
+tools:
+  - "coreutils":
+      description: GNU core utilities
+      homepage: https://www.gnu.org/software/coreutils/
+      documentation: https://www.gnu.org/software/coreutils/manual/
+      licence: ["GPL-3.0-or-later"]
+      identifier: biotools:coreutils
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - gffs:
+        type: file
+        description: Gffs
+    - fnas:
+        type: file
+        description: Fnas
+    - faas:
+        type: file
+        description: Faas
+output:
+  gff:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.gff":
+          type: file
+          description: Gff
+          pattern: "*.gff"
+  fna:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.fna":
+          type: file
+          description: Fna
+          pattern: "*.fna"
+  faa:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*.faa":
+          type: file
+          description: Faa
+          pattern: "*.faa"
+  versions:
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"
