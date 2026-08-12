@@ -54,6 +54,12 @@ lint:
     # No iGenomes references in a metagenomics pipeline
     - conf/igenomes.config
     - conf/igenomes_ignored.config
+  # The pipeline test does not snapshot anything, so it cannot snapshot a versions.yml
+  # either: the only group that runs Flye gets a different assembly on every run, which
+  # changes the bins, their number and so the published file names. Listing the file here
+  # waives only its own checks; the nf-test.config ones still run.
+  nf_test_content:
+    - tests/default.nf.test
   files_unchanged:
     # Branch protection is written for the nf-core organisation's fork model
     - .github/workflows/branch.yml
