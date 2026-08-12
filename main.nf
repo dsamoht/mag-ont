@@ -301,7 +301,12 @@ workflow MAG_ONT {
     //
     // Collate software versions
     //
+    // Collect the contents rather than the paths: `sort: true` orders the entries by their
+    // value, and a channel of paths sorts by work directory, which is a fresh random hash on
+    // every run. Reading each file first makes both the deduplication and the order depend on
+    // the versions themselves, so the published file is the same from one run to the next.
     ch_collated_versions = ch_versions
+        .map { versions -> versions.text }
         .unique()
         .collectFile(name: 'mag-ont_software_mqc_versions.yml', sort: true)
 
