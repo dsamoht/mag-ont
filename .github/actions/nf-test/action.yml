@@ -51,6 +51,11 @@ runs:
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
       run: |
+        # NFT_WORKDIR is "~", and nf-test.config reads it with System.getenv, which does
+        # no tilde expansion: the tests would run in a directory literally named "~"
+        # inside the workspace. Expand it here, where the shell can.
+        export NFT_WORKDIR="${NFT_WORKDIR/#\~/$HOME}"
+
         nf-test test \
           --profile=+${{ inputs.profile }} \
           $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \

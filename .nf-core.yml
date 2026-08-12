@@ -58,3 +58,6 @@ lint:
     # Branch protection is written for the nf-core organisation's fork model
     - .github/workflows/branch.yml
     - LICENSE
+    # The template's issue config sends people to the nf-core Slack and join page,
+    # neither of which covers this pipeline; it links to its own docs instead.
+    - .github/ISSUE_TEMPLATE/config.yml

@@ -1,6 +1,4 @@
 .nextflow*
-.nf-test/
-.nf-test.log
 work/
 data/
 results/
@@ -10,5 +8,7 @@ testing*
 *.pyc
 null/
 .lineage/
+.nf-test/
+.nf-test.log
 tests/mag-ont_out/
 CLAUDE.md
