@@ -21,6 +21,10 @@ template:
     - rocrate
     - seqera_platform
     - codespaces
+    # Releases are described by their GitHub release notes, not a CHANGELOG.md
+    - changelog
+    # Tool references live in README.md and docs/, not in a CITATIONS.md
+    - citations
 lint:
   # `mag-ont` predates the nf-core naming rule and is already published under this
   # name, so the hyphen stays.
@@ -54,6 +58,13 @@ lint:
     # No iGenomes references in a metagenomics pipeline
     - conf/igenomes.config
     - conf/igenomes_ignored.config
+    # Removed from the repository: releases are described by their GitHub release notes,
+    # tool references live in README.md and docs/, and there is no contribution guide.
+    # `changelog` and `citations` are in skip_features above; `docs/CONTRIBUTING.md` has no
+    # feature of its own (it belongs to `github` and `documentation`, both of which are used).
+    - CHANGELOG.md
+    - CITATIONS.md
+    - docs/CONTRIBUTING.md
   # The pipeline test does not snapshot anything, so it cannot snapshot a versions.yml
   # either: the only group that runs Flye gets a different assembly on every run, which
   # changes the bins, their number and so the published file names. Listing the file here
@@ -67,3 +78,6 @@ lint:
     # The template's issue config sends people to the nf-core Slack and join page,
     # neither of which covers this pipeline; it links to its own docs instead.
     - .github/ISSUE_TEMPLATE/config.yml
+    # The template checklist links to docs/CONTRIBUTING.md and asks for a CHANGELOG.md
+    # entry; neither file exists in this repository.
+    - .github/PULL_REQUEST_TEMPLATE.md
