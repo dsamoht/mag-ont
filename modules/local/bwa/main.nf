@@ -1,7 +1,7 @@
 process BWA_MEM {
-    
+
     label 'process_medium'
-    
+
     tag "$meta_reads.id"
 
     conda "${moduleDir}/environment.yml"
@@ -34,7 +34,7 @@ process BWA_MEM {
         ${reads[0]} \
         ${reads[1]} \
         > ${output_sam}
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bwa-mem2: \$(echo \$(bwa-mem2 version 2>&1 | tail -1))

@@ -29,7 +29,7 @@ process DASTOOL {
         --write_bins \\
         ${args} \\
         -t ${task.cpus}
-    
+
     if [ -d das-bin*_DASTool_bins ]; then
     mv das-bin*_DASTool_bins/*.fa . 2>/dev/null || true
     fi

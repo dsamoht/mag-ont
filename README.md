@@ -149,7 +149,7 @@ flowchart TD
     classDef opt stroke-dasharray: 5 3;
 ```
 
-*Dashed boxes are optional steps that can be turned off with the matching `--skip_*` parameter.*
+_Dashed boxes are optional steps that can be turned off with the matching `--skip_*` parameter._
 
 ## TL;DR
 
