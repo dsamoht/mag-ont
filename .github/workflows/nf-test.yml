@@ -69,7 +69,7 @@ jobs:
         # Conda is not tested: CheckM2 needs a DIAMOND reference database, which the
         # pipeline supplies through the docker.io/dsamoht/checkm2 image. The Bioconda
         # package ships no database, so CHECKM fails with "DIAMOND database not found"
-        # and there is nowhere in CI to provision one. See docs/CONTRIBUTING.md.
+        # and there is nowhere in CI to provision one.
         profile: [docker, singularity]
         isMain:
           - ${{ github.base_ref == 'master' || github.base_ref == 'main' }}
