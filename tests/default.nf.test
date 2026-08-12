@@ -13,22 +13,12 @@ nextflow_pipeline {
         }
 
         then {
-            // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
-            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            // stable_content: All files in ${params.outdir}/ with stable content
-            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            // No snapshot. `ont_test4` is the only group without a pre-made assembly, so it is
+            // the only one that runs Flye, and Flye is not reproducible: five runs of this test
+            // on one commit, with the same containers, produced five different assemblies.
+            // Everything derived from it differs in turn, down to the number of bins and so the
+            // file names, and CoverM's genome statistics are unstable in the other groups too.
             assert workflow.success
-            assertAll(
-                { assert snapshot(
-                    // pipeline versions.yml file, with the Nextflow version removed because
-                    // the pipeline is tested against several Nextflow versions
-                    removeNextflowVersion("$outputDir/pipeline_info/mag-ont_software_mqc_versions.yml"),
-                    // All stable path names, with a relative path
-                    stable_path,
-                    // All files with stable contents
-                    stable_content
-                ).match() }
-            )
         }
     }
 }
