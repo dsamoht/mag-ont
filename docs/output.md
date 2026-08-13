@@ -128,7 +128,19 @@ best, non-redundant set of bins. Individual binners can be turned off with
 - `group_<group>/binning/gtdbtk/`
   - `gtdbtk.*.summary.tsv`: GTDB taxonomy of each bin.
 - `group_<group>/binning/summary/`
-  - `*_mag_summary.csv`: quality, coverage and taxonomy of every MAG in one table.
+  - `*_mag_summary.csv`: quality, coverage and taxonomy of every MAG in one table, one row per
+    bin, columns in this order:
+    - `bin_id`, `group_id`, `bin_filename`: the id given to the MAG by the pipeline, its group,
+      and the bin file it was built from.
+    - `completeness`, `contamination`, `genome_size`, `contig_n50`, `gc_content`,
+      `total_contigs`, `max_contig_length`: CheckM2.
+    - `domain`, `phylum`, `class`, `order`, `family`, `genus`, `species`: the GTDB-Tk
+      classification split by rank, `Unclassified` for the ranks GTDB-Tk left unassigned.
+    - `closest_placement_reference`, `closest_placement_ani`, `warnings`: GTDB-Tk. Empty under
+      `--skip_gtdbtk`, as are the seven ranks above.
+    - one `<sample>_mean`, `<sample>_trimmed_mean` and `<sample>_covered_fraction` per sample
+      mapped to the group: CoverM, un-normalized.
+    - `checkm_notes`: CheckM2 caveats on the prediction, empty when there are none.
   - `*_contig2bin.csv`: final contig-to-bin assignment.
 
 </details>
