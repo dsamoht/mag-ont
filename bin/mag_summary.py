@@ -85,6 +85,12 @@ def main():
         "Name",
         "Completeness",
         "Contamination",
+        "Genome_Size",
+        "Contig_N50",
+        "GC_Content",
+        "Total_Contigs",
+        "Max_Contig_Length",
+        "Additional_Notes",
     ]
 
     if args.checkm and os.path.isfile(args.checkm):
@@ -97,6 +103,10 @@ def main():
                 raise ValueError(f"Missing CheckM columns: {missing}")
 
             df_checkm = df_checkm[checkm_cols]
+            # CheckM2 writes the literal "None" when it has nothing to report
+            df_checkm["Additional_Notes"] = df_checkm["Additional_Notes"].replace(
+                "None", pd.NA
+            )
         except Exception as e:
             print(f"WARNING: CheckM unreadable ({e}); filling NA", file=sys.stderr)
             df_checkm = pd.DataFrame(columns=checkm_cols)
@@ -191,14 +201,20 @@ def main():
         "bin_filename",
         "Completeness",
         "Contamination",
+        "Genome_Size",
+        "Contig_N50",
+        "GC_Content",
+        "Total_Contigs",
+        "Max_Contig_Length",
         *ranks,
         "closest_placement_reference",
         "closest_placement_ani",
         "warnings",
     ]
 
-    final_df = final_df[base_cols + coverm_cols]
+    final_df = final_df[base_cols + coverm_cols + ["Additional_Notes"]]
     final_df.columns = final_df.columns.str.lower().str.replace(" ", "_")
+    final_df = final_df.rename(columns={"additional_notes": "checkm_notes"})
 
     final_df.to_csv(args.output, index=False)
 
