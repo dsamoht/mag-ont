@@ -79,11 +79,12 @@ def main():
     except Exception as e:
         sys.exit(f"ERROR writing contig2bin file: {e}")
 
+    # CheckM2 quality_report.tsv; CheckM1 names ("Bin Id", "Strain heterogeneity")
+    # do not exist here
     checkm_cols = [
-        "Bin Id",
+        "Name",
         "Completeness",
         "Contamination",
-        "Strain heterogeneity",
     ]
 
     if args.checkm and os.path.isfile(args.checkm):
@@ -148,7 +149,7 @@ def main():
 
     final_df = (
         df_bins
-        .merge(df_checkm, left_on="merge_id", right_on="Bin Id", how="left")
+        .merge(df_checkm, left_on="merge_id", right_on="Name", how="left")
         .merge(df_gtdb, left_on="merge_id", right_on="user_genome", how="left")
         .merge(df_coverm, left_on="merge_id", right_on="Genome", how="left")
     )
@@ -190,7 +191,6 @@ def main():
         "bin_filename",
         "Completeness",
         "Contamination",
-        "Strain heterogeneity",
         *ranks,
         "closest_placement_reference",
         "closest_placement_ani",
