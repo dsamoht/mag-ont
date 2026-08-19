@@ -79,11 +79,18 @@ def main():
     except Exception as e:
         sys.exit(f"ERROR writing contig2bin file: {e}")
 
+    # CheckM2 quality_report.tsv; CheckM1 names ("Bin Id", "Strain heterogeneity")
+    # do not exist here
     checkm_cols = [
-        "Bin Id",
+        "Name",
         "Completeness",
         "Contamination",
-        "Strain heterogeneity",
+        "Genome_Size",
+        "Contig_N50",
+        "GC_Content",
+        "Total_Contigs",
+        "Max_Contig_Length",
+        "Additional_Notes",
     ]
 
     if args.checkm and os.path.isfile(args.checkm):
@@ -96,6 +103,10 @@ def main():
                 raise ValueError(f"Missing CheckM columns: {missing}")
 
             df_checkm = df_checkm[checkm_cols]
+            # CheckM2 writes the literal "None" when it has nothing to report
+            df_checkm["Additional_Notes"] = df_checkm["Additional_Notes"].replace(
+                "None", pd.NA
+            )
         except Exception as e:
             print(f"WARNING: CheckM unreadable ({e}); filling NA", file=sys.stderr)
             df_checkm = pd.DataFrame(columns=checkm_cols)
@@ -148,7 +159,7 @@ def main():
 
     final_df = (
         df_bins
-        .merge(df_checkm, left_on="merge_id", right_on="Bin Id", how="left")
+        .merge(df_checkm, left_on="merge_id", right_on="Name", how="left")
         .merge(df_gtdb, left_on="merge_id", right_on="user_genome", how="left")
         .merge(df_coverm, left_on="merge_id", right_on="Genome", how="left")
     )
@@ -190,15 +201,20 @@ def main():
         "bin_filename",
         "Completeness",
         "Contamination",
-        "Strain heterogeneity",
+        "Genome_Size",
+        "Contig_N50",
+        "GC_Content",
+        "Total_Contigs",
+        "Max_Contig_Length",
         *ranks,
         "closest_placement_reference",
         "closest_placement_ani",
         "warnings",
     ]
 
-    final_df = final_df[base_cols + coverm_cols]
+    final_df = final_df[base_cols + coverm_cols + ["Additional_Notes"]]
     final_df.columns = final_df.columns.str.lower().str.replace(" ", "_")
+    final_df = final_df.rename(columns={"additional_notes": "checkm_notes"})
 
     final_df.to_csv(args.output, index=False)
 
