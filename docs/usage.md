@@ -91,7 +91,7 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 | Option                | Default                       | Description                                                     |
 | --------------------- | ----------------------------- | --------------------------------------------------------------- |
 | `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                      |
-| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Must match the flow cell, kit and basecaller used.              |
+| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only. Must match the flow cell, kit and basecaller used.   |
 | `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                            |
 | `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                   |
 | `--maxbin_minlen`     | `2500`                        | Minimum contig length considered by MaxBin2.                    |
@@ -101,6 +101,10 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 Any step can be turned off: `--skip_qc`, `--skip_nanoplot`, `--skip_porechop`,
 `--skip_medaka`, `--skip_maxbin`, `--skip_concoct`, `--skip_semibin`, `--skip_bin_qa`,
 `--skip_gtdbtk`, `--skip_multiqc`.
+
+Medaka polishes Flye assemblies only. metaMDBG produces its own consensus, so no polishing
+step runs with `--assembler metamdbg`, and passing `--medaka_model` or `--skip_medaka` on the
+command line together with it stops the run.
 
 ## Custom configuration
 

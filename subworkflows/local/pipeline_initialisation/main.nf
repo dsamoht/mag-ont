@@ -59,6 +59,17 @@ workflow PIPELINE_INITIALISATION {
         validateParameters()
     }
 
+    // Medaka polishes Flye assemblies only: metaMDBG already produces a consensus of its
+    // own, so `MEDAKA` never runs with `--assembler metamdbg`. Asking for it on the command
+    // line is refused instead of being ignored without a word. Values coming from a config
+    // file or a profile are left alone, they are not a request for this run.
+    if (params.assembler != 'flye') {
+        def medaka_flags = ['--medaka_model', '--skip_medaka'].findAll { flag -> workflow.commandLine.contains(flag) }
+        if (medaka_flags) {
+            error("${medaka_flags.join(' and ')} only applies to '--assembler flye'; Medaka does not run with '--assembler ${params.assembler}'.")
+        }
+    }
+
     // `outputDir` follows `params.outdir` (nextflow.config), and Nextflow falls back to
     // publishing in `./results` when it is null. Parameter validation already requires
     // `--outdir`, but it can be turned off, so the run is stopped here as well: the results
