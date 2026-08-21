@@ -9,7 +9,7 @@ report and the pipeline information, which are global.
 ## Pipeline overview
 
 - [Read QC](#read-qc) — NanoPlot, Porechop_ABI, Chopper
-- [Assembly](#assembly) — Flye or metaMDBG, polished with Medaka
+- [Assembly](#assembly) — Flye (polished with Medaka) or metaMDBG
 - [Gene prediction](#gene-prediction) — Pyrodigal
 - [Mapping and coverage](#mapping-and-coverage) — minimap2 or bwa-mem2, samtools, CoverM
 - [Binning](#binning) — MetaBAT2, MaxBin2, CONCOCT, SemiBin2, refined with DAS Tool
@@ -49,13 +49,16 @@ come with a pre-existing assembly skip QC.
   - `*.flye.log`: assembler log.
 - `group_<group>/assembly/medaka/`
   - `*.consensus.fasta`: the Medaka-polished assembly, used for binning when present.
+    Flye only; there is no such directory with `--assembler metamdbg`.
 - `group_<group>/assembly/provided/`
   - the assembly supplied in the sample sheet, when one was given.
 
 </details>
 
-All long reads of a group are concatenated and assembled together. The polished consensus
-is what downstream binning uses; the unpolished assembly is published alongside it.
+All long reads of a group are concatenated and assembled together. Flye assemblies are
+polished with Medaka unless `--skip_medaka` is set, and the polished consensus is what
+downstream binning uses; the unpolished assembly is published alongside it. metaMDBG is not
+polished: its own consensus goes straight to binning.
 
 ### Gene prediction
 
