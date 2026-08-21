@@ -52,13 +52,13 @@
                 "medaka_model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_hac_v5.2.0",
-                    "description": "Medaka model used to polish the assembly.",
-                    "help_text": "Must match the flow cell, kit and basecaller used to produce the reads. Run `medaka tools list_models` to see the models available in the container.",
+                    "description": "Medaka model used to polish the assembly. Only used with `--assembler flye`.",
+                    "help_text": "Must match the flow cell, kit and basecaller used to produce the reads. Run `medaka tools list_models` to see the models available in the container. Medaka polishes Flye assemblies only, so this parameter cannot be given with `--assembler metamdbg`.",
                     "fa_icon": "fas fa-microscope"
                 },
                 "skip_medaka": {
                     "type": "boolean",
-                    "description": "Skip Medaka polishing of the assembly.",
+                    "description": "Skip Medaka polishing of the assembly. Only used with `--assembler flye`.",
                     "fa_icon": "fas fa-forward"
                 }
             }
