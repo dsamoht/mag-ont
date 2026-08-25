@@ -52,13 +52,15 @@
                 "medaka_model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_hac_v5.2.0",
-                    "description": "Medaka model used to polish the assembly. Only used with `--assembler flye`.",
-                    "help_text": "Must match the flow cell, kit and basecaller used to produce the reads. Run `medaka tools list_models` to see the models available in the container. Medaka polishes Flye assemblies only, so this parameter cannot be given with `--assembler metamdbg`.",
+                    "description": "Medaka model used to polish the assembly. Only used with `--assembler flye` and `--skip_medaka false`.",
+                    "help_text": "Medaka is skipped by default, so this model is only used when polishing is turned back on with `--skip_medaka false`. Must match the flow cell, kit and basecaller used to produce the reads. Run `medaka tools list_models` to see the models available in the container. Medaka polishes Flye assemblies only, so this parameter cannot be given with `--assembler metamdbg`.",
                     "fa_icon": "fas fa-microscope"
                 },
                 "skip_medaka": {
                     "type": "boolean",
+                    "default": true,
                     "description": "Skip Medaka polishing of the assembly. Only used with `--assembler flye`.",
+                    "help_text": "Medaka is skipped by default: it is a haploid consensus model, and on a co-assembly it can rewrite a low coverage genome with the sequence of a high coverage relative. Pass `--skip_medaka false` to polish anyway, and make sure `--medaka_model` matches the basecaller.",
                     "fa_icon": "fas fa-forward"
                 }
             }
