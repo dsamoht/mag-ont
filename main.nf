@@ -41,9 +41,11 @@ workflow MAG_ONT {
     ch_versions      = channel.empty()
     ch_multiqc_files = channel.empty()
 
-    // Channel of pre-existing assemblies
+    // Channel of pre-existing assemblies. Everything past read QC hangs off this channel
+    // and off the assemblies built below, so `--only_qc` empties both: the run then stops
+    // after QC without an assembly, annotation, mapping or binning task being submitted.
     ch_input_assembly = ch_samplesheet
-        .filter { sample -> sample.assembly }
+        .filter { sample -> !params.only_qc && sample.assembly }
         .map { sample -> [ sample.group, sample.sample_id, sample.assembly ] }
         .groupTuple(by: 0)
         .map { group, sample_ids, assemblies ->
@@ -114,7 +116,7 @@ workflow MAG_ONT {
         }
 
     ch_reads_to_assemble = ch_grouped_reads
-        .filter { meta, _reads -> !meta.has_assembly }
+        .filter { meta, _reads -> !params.only_qc && !meta.has_assembly }
 
     ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble).reads
     ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first())
@@ -323,8 +325,17 @@ workflow MAG_ONT {
             ? channel.fromPath(params.multiqc_logo, checkIfExists: true)
             : channel.empty()
 
+        // MultiQC exits without writing a report when its search finds nothing it can parse,
+        // and the software versions file is not one of the things it parses. `collect()`
+        // emits nothing when no step produced a report of its own — with `--only_qc` and
+        // NanoPlot and Porechop both skipped, for instance — so MULTIQC is not submitted at
+        // all instead of failing on a report it never wrote.
+        ch_multiqc_input = ch_multiqc_files
+            .collect()
+            .combine(ch_collated_versions)
+
         MULTIQC(
-            ch_multiqc_files.mix(ch_collated_versions).collect(),
+            ch_multiqc_input,
             ch_multiqc_config.toList(),
             ch_multiqc_custom_config.toList(),
             ch_multiqc_logo.toList()

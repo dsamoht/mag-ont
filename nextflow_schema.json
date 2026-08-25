@@ -85,6 +85,12 @@
                     "description": "Minimum average read quality kept by Chopper.",
                     "fa_icon": "fas fa-award"
                 },
+                "only_qc": {
+                    "type": "boolean",
+                    "description": "Stop the pipeline after long read quality control.",
+                    "help_text": "Runs NanoPlot, Porechop_ABI and Chopper, publishes the QC'd reads and the MultiQC report, and submits no assembly, annotation, mapping or binning task. Samples that come with their own assembly skip read QC, so nothing runs for them. Cannot be combined with `--skip_qc`.",
+                    "fa_icon": "fas fa-stop"
+                },
                 "skip_qc": {
                     "type": "boolean",
                     "description": "Skip long read quality control entirely.",

@@ -94,9 +94,16 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 | `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used. |
 | `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                               |
 | `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                      |
+| `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                          |
 | `--maxbin_minlen`     | `2500`                        | Minimum contig length considered by MaxBin2.                                                       |
 | `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                     |
 | `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database, required unless `--skip_gtdbtk` is set.                                    |
+
+`--only_qc` stops the run after long read QC: NanoPlot, Porechop_ABI and Chopper run, the
+QC'd reads and the MultiQC report are published, and no assembly, annotation, mapping or
+binning task is submitted. Samples that come with their own assembly do not go through read
+QC, so nothing runs for them. It cannot be combined with `--skip_qc`, which would leave
+nothing to run.
 
 Any step can be turned off: `--skip_qc`, `--skip_nanoplot`, `--skip_porechop`,
 `--skip_medaka`, `--skip_maxbin`, `--skip_concoct`, `--skip_semibin`, `--skip_bin_qa`,
