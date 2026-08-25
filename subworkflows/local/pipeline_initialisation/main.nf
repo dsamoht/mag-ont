@@ -70,6 +70,12 @@ workflow PIPELINE_INITIALISATION {
         }
     }
 
+    // `--only_qc` stops the run after read QC, so with QC itself skipped there would be
+    // nothing left to run at all.
+    if (params.only_qc && params.skip_qc) {
+        error("--only_qc and --skip_qc cannot be combined: with read QC skipped, --only_qc would run nothing.")
+    }
+
     // `outputDir` follows `params.outdir` (nextflow.config), and Nextflow falls back to
     // publishing in `./results` when it is null. Parameter validation already requires
     // `--outdir`, but it can be turned off, so the run is stopped here as well: the results
