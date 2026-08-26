@@ -114,6 +114,15 @@ workflow PIPELINE_INITIALISATION {
         .groupTuple()
         .map { group, rows -> validateGroup(group, rows) }
 
+    //
+    // Checks that span the whole run rather than a single group. Only `--binning_map_mode
+    // all` maps a sample against another group's assembly, so a sample sheet that is valid
+    // today stays valid: nothing here fires in the default mode.
+    //
+    ch_samplesheet
+        .toList()
+        .map { rows -> validateRun(rows) }
+
     emit:
     samplesheet = ch_samplesheet
 }
@@ -210,4 +219,63 @@ def validateGroup(group, rows) {
     }
 
     return group
+}
+
+//
+// Validate the run as a whole. `--binning_map_mode all` maps every sample against every
+// group assembly, so the rows of the sample sheet stop being independent from one group
+// to the next: the mapper is chosen once for the run, and every sample ends up as a
+// column of every coverage table.
+//
+def validateRun(rows) {
+    if (params.binning_map_mode != 'all') {
+        return rows
+    }
+
+    // One mapper for the whole run, the run-wide version of the per-group rule above
+    def strategy_to_groups = [:]
+    rows.groupBy { row -> row.group }.each { group, group_rows ->
+        def strategy = group_rows.any { row -> row.sr1 && row.sr2 } ? 'paired-end' : 'long'
+        if (!strategy_to_groups[strategy]) {
+            strategy_to_groups[strategy] = []
+        }
+        strategy_to_groups[strategy] << group
+    }
+    if (strategy_to_groups.size() > 1) {
+        def described = strategy_to_groups.collect { strategy, groups ->
+            "${strategy}: [${groups.sort().join(', ')}]"
+        }
+        error("--binning_map_mode all maps every sample against every assembly, so the whole run must use one read type. Groups by read type — ${described.join('. ')}.")
+    }
+
+    // Sample ids name the BAM files, and so the columns of the coverage tables every group
+    // is given: under `all` two samples of the same name would collide in the same table.
+    def duplicate_ids = rows
+        .countBy { row -> row.sample_id }
+        .findAll { _id, count -> count > 1 }
+        .keySet()
+    if (duplicate_ids) {
+        error("--binning_map_mode all requires sample ids to be unique across the run, they name the coverage columns of every group. Repeated: ${duplicate_ids.sort().join(', ')}.")
+    }
+
+    // Same reason: the same read file under two sample ids is the same coverage counted twice
+    def path_to_samples = [:]
+    rows.each { row ->
+        [ row.long_reads, row.sr1, row.sr2 ].each { f ->
+            if (f) {
+                def p = f.toString()
+                if (!path_to_samples[p]) {
+                    path_to_samples[p] = []
+                }
+                path_to_samples[p] << row.sample_id
+            }
+        }
+    }
+    path_to_samples.each { path, ids ->
+        if (ids.unique().size() > 1) {
+            error("--binning_map_mode all: read file '${path}' is shared by samples ${ids.unique().sort().join(', ')}, which would map the same reads twice against every assembly.")
+        }
+    }
+
+    return rows
 }

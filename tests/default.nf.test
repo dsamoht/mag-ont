@@ -21,4 +21,25 @@ nextflow_pipeline {
             assert workflow.success
         }
     }
+
+    test("-profile test --binning_map_mode all") {
+
+        when {
+            params {
+                input            = "${projectDir}/tests/data/samplesheet_cobin.csv"
+                binning_map_mode = "all"
+                outdir           = "$outputDir"
+            }
+        }
+
+        then {
+            // Two pre-assembled long-read groups, so no Flye and nothing unstable to
+            // snapshot either. Both assemblies must collect a BAM from both samples.
+            assert workflow.success
+            assert path("$outputDir/group_ont_test3/mapping/samtools/test3.bam").exists()
+            assert path("$outputDir/group_ont_test3/mapping/samtools/test_genome.bam").exists()
+            assert path("$outputDir/group_test_genome/mapping/samtools/test3.bam").exists()
+            assert path("$outputDir/group_test_genome/mapping/samtools/test_genome.bam").exists()
+        }
+    }
 }
