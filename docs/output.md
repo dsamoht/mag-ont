@@ -82,7 +82,8 @@ chunk order.
 <summary>Output files</summary>
 
 - `group_<group>/mapping/samtools/`
-  - `*.bam`, `*.bam.bai`: sorted, indexed alignments, one per sample.
+  - `*.bam`, `*.bam.bai`: sorted, indexed alignments, one per sample mapped against this
+    group's assembly.
 - `group_<group>/mapping/coverm/`
   - `coverm_contig_stats.tsv`: mean, trimmed mean and covered fraction per contig.
 - `group_<group>/mapping/genes/`
@@ -92,6 +93,11 @@ chunk order.
 
 When any sample of a group has short reads, they are mapped with bwa-mem2; otherwise the
 long reads are mapped with minimap2.
+
+With `--binning_map_mode all`, the directory of every group holds one BAM per sample of the
+run, not per sample of the group, and every table built from those BAMs — the CoverM contig
+and genome statistics, their normalised versions, the MetaBAT2 depth file and the MAG
+summary — carries one set of columns per sample of the run.
 
 ### Binning
 
@@ -155,7 +161,9 @@ best, non-redundant set of bins. Individual binners can be turned off with
 <summary>Output files</summary>
 
 - `multiqc/`
-  - `multiqc_report.html`: a single report aggregating read QC, bin quality and coverage.
+  - `multiqc_report.html`: a single report aggregating read QC and bin quality. Not written when
+    both `--skip_qc` and `--skip_bin_qa` are set, since nothing then produces MultiQC-parseable
+    output.
   - `multiqc_data/`: parsed statistics behind the report.
 
 </details>

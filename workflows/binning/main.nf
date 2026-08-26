@@ -21,7 +21,7 @@ include { SEMIBIN                 } from '../../modules/local/semibin'
 
 workflow BINNING {
     take:
-    ch_binning_wf_input // [ val(meta), path(assembly) ] full assembly, drives read mapping
+    ch_mapping_pairs    // [ val(meta), path(reads), val(meta), path(assembly) ] one entry per mapping
     ch_assembly_to_bin  // [ val(meta), path(assembly) ] assembly with the single-contig MAGs removed
     ch_sc_mag_bins      // [ val(group), [ path(contig) ] ] one entry per group, possibly empty
     ch_gff // [ val(group), path(gff) ]
@@ -34,41 +34,31 @@ workflow BINNING {
     ch_assembly_to_join = ch_assembly_to_bin
         .map { meta, assembly -> [ [ id: meta.id ], assembly ] }
 
-    ch_binning_wf_input
-        .branch { meta, _assembly ->
-            short_mapping: meta.strategy == 'short'
-            long_mapping:  meta.strategy == 'long'
+    // The pairs arrive already fanned out, one per BAM to produce: each carries the reads,
+    // the assembly they are mapped against (`meta.ref`), and `n_bams`, the number of BAMs
+    // that assembly will collect - known up-front - so the grouping below releases each
+    // reference as soon as its own mappings are done.
+    ch_mapping_pairs
+        .branch { read_meta, _reads, _ref_meta, _assembly ->
+            short_mapping: read_meta.type == 'short'
+            long_mapping:  read_meta.type == 'long'
         }
         .set { ch_branched_inputs }
 
-    // Logic for short read mapping. `n_bams` records how many BAMs the group will
-    // produce - known up-front - so the grouping below can release each group early.
     ch_short_input = ch_branched_inputs.short_mapping
-        .flatMap { meta, assembly ->
-            meta.short_reads.collect { read_meta, reads ->
-                [ [ read_meta + [ n_bams: meta.short_reads.size() ], reads ], [ [ id: meta.id ], assembly ] ]
-            }
-        }
-
-    // Logic for long read mapping
-    ch_long_input = ch_branched_inputs.long_mapping
-        .flatMap { meta, assembly ->
-            meta.long_reads.collect { read_meta, reads ->
-                [ [ read_meta + [ n_bams: meta.long_reads.size() ], reads ], [ [ id: meta.id ], assembly ] ]
-            }
-        }
+    ch_long_input  = ch_branched_inputs.long_mapping
 
     // Long read mapping
     ch_sam_long = MINIMAP(
-        ch_long_input.map { it[0] },
-        ch_long_input.map { it[1] }
+        ch_long_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
+        ch_long_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
     ).sam
     ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
     // Short read mapping
     ch_sam_short = BWA_MEM(
-        ch_short_input.map { it[0] },
-        ch_short_input.map { it[1] }
+        ch_short_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
+        ch_short_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
     ).sam
     ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
@@ -79,11 +69,11 @@ workflow BINNING {
         .bam_pair
     ch_versions = ch_versions.mix(SAMTOOLS.out.versions.first())
 
-    // Group BAMs + index by Group ID. groupKey() carries the number of BAMs expected for
-    // the group, so binning starts as soon as that group is mapped rather than waiting
-    // for every other group's mappings to finish.
+    // Group BAMs + index by the assembly they were mapped against. groupKey() carries the
+    // number of BAMs expected there, so binning starts as soon as that assembly is mapped
+    // rather than waiting for every other one's mappings to finish.
     ch_grouped_bam_index = ch_bam_pair_mixed
-        .map { meta, bam, index -> [ groupKey(meta.group, meta.n_bams), meta, bam, index ] }
+        .map { meta, bam, index -> [ groupKey(meta.ref, meta.n_bams), meta, bam, index ] }
         .groupTuple()
         .map { group, metas, bams, indexes -> [ [ id: group.toString() ], metas, bams, indexes ] }
 
@@ -158,15 +148,18 @@ workflow BINNING {
     }
 
     if (!params.skip_semibin) {
-        ch_semibin_input = ch_binning_wf_input
-            .map { meta, _assembly -> [ [ id: meta.id ], meta.strategy ] }
-            .join(ch_binning_bam)
+        // SemiBin2's sequencing type follows the BAMs it is actually given: `long_read`
+        // only when every one of them comes from long reads.
+        ch_semibin_input = ch_binning_bam
+            .map { meta, assembly, metas, bams, _indexes ->
+                [ meta, assembly, bams, metas.every { m -> m.type == 'long' } ? 'long' : 'short' ]
+            }
 
         // Run semibin
         ch_semibin_out = SEMIBIN(
+            ch_semibin_input.map { it -> [ it[0], it[1] ] },
             ch_semibin_input.map { it -> [ it[0], it[2] ] },
-            ch_semibin_input.map { it -> [ it[3], it[4] ] },
-            ch_semibin_input.map { it -> it[1] }
+            ch_semibin_input.map { it -> it[3] }
         )
         ch_semibin_bins = ch_semibin_out.semibin_bins // Assign for emit
         ch_versions = ch_versions.mix(SEMIBIN.out.versions.first())
@@ -281,10 +274,11 @@ workflow BINNING {
 
     }
 
-    // Files picked up by MultiQC
+    // Files picked up by MultiQC. Only files a MultiQC module can parse belong here: an
+    // unparseable file makes the channel non-empty without giving MultiQC anything to report,
+    // and MULTIQC then fails on a report it never writes. CoverM has no MultiQC module.
     ch_multiqc_files = channel.empty()
         .mix(ch_checkm_stats.map { _meta, stats -> stats })
-        .mix(ch_coverm_contig_out.coverm_stats.map { _meta, stats -> stats })
 
     emit:
     versions               = ch_versions

@@ -44,6 +44,30 @@ Rules that apply across the rows of a group, checked before any task is submitte
 When any sample of a group carries short reads, those reads drive the coverage signal for
 binning; otherwise the long reads are mapped with minimap2.
 
+### Which reads are mapped against which assembly
+
+`--binning_map_mode` decides what the binners see as coverage.
+
+| Mode              | Reads mapped against a group assembly | Mapping jobs         | Coverage columns per binning run |
+| ----------------- | ------------------------------------- | -------------------- | -------------------------------- |
+| `group` (default) | the samples of that group only        | one per sample       | one per sample of the group      |
+| `all`             | every sample of the run               | assemblies x samples | one per sample of the run        |
+
+`all` is what to use when the samples of a run belong to one experiment — a time series, a
+gradient, replicates of several conditions — but are assembled separately. A group holding a
+single sample then still gets a differential coverage signal, which is what MetaBAT2, CONCOCT
+and SemiBin2 bin on besides composition; without it they fall back on composition alone.
+
+It is not free: mapping goes from one job per sample to one job per assembly and per sample,
+every coverage table gains a column set per sample of the run, and the CoverM normalization
+steps read every BAM of the run for every group.
+
+`all` additionally requires the whole run to use one read type: a run that mixes short-read
+groups with long-read-only groups is stopped at start-up, since the mapper — and with it the
+meaning of a coverage column — is chosen once for the run. Sample ids must be unique across
+the run and no read file may be shared by two samples, because sample ids name the BAM files
+and therefore the columns of every group's coverage table.
+
 ## Running the pipeline
 
 ```bash
@@ -119,45 +143,3 @@ metaMDBG produces its own consensus, so no polishing step runs with `--assembler
 and passing `--medaka_model` or `--skip_medaka` on the command line together with it stops
 the run.
 
-## Custom configuration
-
-### Resource requests
-
-Resource requests are set per process label in `conf/base.config`. To change them for one
-process, supply your own config with `-c`:
-
-```groovy title="custom.config"
-process {
-    withName: 'FLYE' {
-        memory = 200.GB
-        time   = 48.h
-    }
-}
-```
-
-### Custom containers or tool arguments
-
-Tool flags come from `ext.args` in `conf/modules.config`, so they can be overridden the
-same way:
-
-```groovy title="custom.config"
-process {
-    withName: 'MINIMAP' {
-        ext.args = '-ax lr:hq'
-    }
-}
-```
-
-## Running in the background
-
-```bash
-nextflow run dsamoht/mag-ont -profile docker --input ./samplesheet.csv --outdir ./results -bg
-```
-
-## Nextflow memory requirements
-
-Add the following to `~/.bashrc` to cap the memory the Nextflow JVM takes:
-
-```bash
-export NXF_OPTS='-Xms1g -Xmx4g'
-```
