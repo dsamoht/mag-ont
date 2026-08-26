@@ -52,16 +52,22 @@ workflow MAG_ONT {
             [ [ id: group, sample_ids: sample_ids.unique() ], assemblies[0] ]
         }
 
-    // Channel of input short reads: every group gets an entry (an empty list when the
-    // group has no short reads) so that downstream joins always match immediately
-    ch_short_reads_grouped = ch_samplesheet
-        .map { sample ->
-            def meta = [ id: sample.sample_id, group: sample.group ]
-            def entry = sample.sr1 && sample.sr2 ? [ [ meta, [ sample.sr1, sample.sr2 ] ] ] : []
-            [ sample.group, entry ]
-        }
+    // Which reads a group contributes to mapping: its paired-end reads when it has any, its
+    // long reads otherwise. Decided once per group, as the mapper is.
+    ch_group_strategy = ch_samplesheet
+        .map { sample -> [ sample.group, sample.sr1 && sample.sr2 ? 1 : 0 ] }
         .groupTuple()
-        .map { group, entries -> [ group, entries.collectMany { entry -> entry } ] }
+        .map { group, flags -> [ group, flags.sum() > 0 ? 'short' : 'long' ] }
+
+    // Number of read sets each group contributes to mapping - one BAM each. Read off the
+    // sample sheet, so the fan-in in BINNING is sized before a single mapping is submitted.
+    ch_map_units_per_group = ch_samplesheet
+        .map { sample -> [ sample.group, sample ] }
+        .groupTuple()
+        .map { group, rows ->
+            def n_short = rows.count { row -> row.sr1 && row.sr2 }
+            [ group, n_short > 0 ? n_short : rows.count { row -> row.long_reads } ]
+        }
 
     // Number of long read samples per group. Known as soon as the sample sheet is read,
     // so groupKey() can release each group as soon as its own samples are ready.
@@ -254,49 +260,48 @@ workflow MAG_ONT {
     ch_genes = MERGE_PYRODIGAL(ch_genes_to_merge)
     ch_versions = ch_versions.mix(MERGE_PYRODIGAL.out.versions.first())
 
-    // Groups whose samples have no long reads still need an entry, so that the join
-    // below matches straight away instead of waiting on `remainder: true`
-    ch_groups_without_long_reads = ch_samplesheet
-        .map { sample -> [ sample.group, sample.long_reads ? 1 : 0 ] }
-        .groupTuple()
-        .filter { _group, flags -> flags.sum() == 0 }
-        .map { group, _flags -> [ group, [] ] }
+    // One entry per read set to be mapped, keyed by the group it comes from. Long reads
+    // come out of QC, paired-end reads straight from the sample sheet - they are never
+    // assembled, only mapped - and each group keeps whichever of the two its strategy
+    // names, so a group with paired-end reads maps those alone, as before.
+    ch_map_units = ch_samplesheet
+        .filter { sample -> sample.sr1 && sample.sr2 }
+        .map { sample -> [ sample.group, [ id: sample.sample_id, type: 'short' ], [ sample.sr1, sample.sr2 ] ] }
+        .mix(ch_long_reads_final.map { meta, reads -> [ meta.group, [ id: meta.id, type: 'long' ], reads ] })
+        .combine(ch_group_strategy, by: 0)
+        .filter { _group, meta, _reads, strategy -> meta.type == strategy }
+        .map { group, meta, reads, _strategy -> [ group, meta, reads ] }
 
-    ch_long_reads_grouped = ch_long_reads_final
-        .map { meta, reads -> [ groupKey(meta.group, meta.group_size), [ meta, reads ] ] }
-        .groupTuple()
-        .map { group, entries -> [ group.toString(), entries ] }
-        .mix(ch_groups_without_long_reads)
-
-    ch_binning_input = ch_assembly_for_binning
-        .map { meta, assembly -> [ meta.id, meta, assembly ] }
-        .join(ch_long_reads_grouped)
-        .join(ch_short_reads_grouped)
-        .map { grp, meta, assembly, raw_long, raw_short ->
-            def sorted_long  = raw_long.sort  { a, b -> a[0].id <=> b[0].id }
-            def sorted_short = raw_short.sort { a, b -> a[0].id <=> b[0].id }
-
-            def new_meta = meta + [
-                id          : grp,
-                strategy    : sorted_short.size() > 0 ? 'short' : 'long',
-                long_reads  : sorted_long,
-                short_reads : sorted_short
-            ]
-
-            [ new_meta, assembly ]
-        }
+    // Each read set paired with the assembly it is mapped against. `--binning_map_mode
+    // group` pairs a group's reads with its own assembly. `all` pairs every read set of
+    // the run with every assembly, so a group is binned on a coverage column per sample of
+    // the run instead of one per sample of the group - at one mapping job per pair.
+    ch_mapping_pairs = params.binning_map_mode == 'all'
+        ? ch_assembly_for_binning
+            .combine(ch_map_units)
+            .combine(ch_map_units_per_group.map { _group, n_units -> n_units }.sum())
+            .map { ref_meta, assembly, _group, read_meta, reads, n_bams ->
+                [ read_meta + [ ref: ref_meta.id, n_bams: n_bams ], reads, [ id: ref_meta.id ], assembly ]
+            }
+        : ch_assembly_for_binning
+            .map { meta, assembly -> [ meta.id, assembly ] }
+            .combine(ch_map_units, by: 0)
+            .combine(ch_map_units_per_group, by: 0)
+            .map { group, assembly, read_meta, reads, n_bams ->
+                [ read_meta + [ ref: group, n_bams: n_bams ], reads, [ id: group ], assembly ]
+            }
 
     //
     // SUBWORKFLOW: map reads, bin contigs and assess the resulting MAGs
     //
-    // Reads are mapped against the full assembly (`ch_binning_input`) so that coverage
+    // Reads are mapped against the full assembly (`ch_mapping_pairs`) so that coverage
     // stays correct and the held-out single-contig MAGs keep an abundance estimate, while
     // the binners only ever see `ch_assembly_to_bin`.
     //
     // The gene predictions are only needed to normalize contig coverage, so they are
     // passed separately: mapping and binning must not wait for Pyrodigal.
     //
-    BINNING(ch_binning_input, ch_assembly_to_bin, ch_sc_mag_bins, ch_genes.gff)
+    BINNING(ch_mapping_pairs, ch_assembly_to_bin, ch_sc_mag_bins, ch_genes.gff)
     ch_versions      = ch_versions.mix(BINNING.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(BINNING.out.multiqc_files)
 
@@ -325,11 +330,12 @@ workflow MAG_ONT {
             ? channel.fromPath(params.multiqc_logo, checkIfExists: true)
             : channel.empty()
 
-        // MultiQC exits without writing a report when its search finds nothing it can parse,
-        // and the software versions file is not one of the things it parses. `collect()`
-        // emits nothing when no step produced a report of its own — with `--only_qc` and
-        // NanoPlot and Porechop both skipped, for instance — so MULTIQC is not submitted at
-        // all instead of failing on a report it never wrote.
+        // MultiQC writes no report when its search turns up nothing a module can parse. The
+        // software versions file alone does not count: it only fills the versions table and
+        // renders no section. Everything mixed into `ch_multiqc_files` is parseable, so
+        // `collect()` emitting nothing means there is genuinely no report to write — with
+        // `--skip_qc --skip_bin_qa`, for instance — and MULTIQC is not submitted at all
+        // instead of failing on a report it never wrote.
         ch_multiqc_input = ch_multiqc_files
             .collect()
             .combine(ch_collated_versions)
@@ -473,7 +479,7 @@ output {
         path { meta, _file -> "group_${meta.id}/assembly/pyrodigal" }
     }
     bam {
-        path { meta, _bam, _bai -> "group_${meta.group}/mapping/samtools" }
+        path { meta, _bam, _bai -> "group_${meta.ref}/mapping/samtools" }
     }
     coverm_contig_stats {
         path { meta, _file -> "group_${meta.id}/mapping/coverm" }

@@ -2,7 +2,7 @@ process SAMTOOLS {
 
     label 'process_low'
 
-    tag "$meta.id"
+    tag "${meta.ref}:${meta.id}"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

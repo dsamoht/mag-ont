@@ -114,6 +114,14 @@
             "fa_icon": "fas fa-boxes-stacked",
             "description": "Control which binners run and how they are configured.",
             "properties": {
+                "binning_map_mode": {
+                    "type": "string",
+                    "default": "group",
+                    "enum": ["group", "all"],
+                    "description": "Which reads are mapped against each group assembly: 'group' maps a group's own samples, 'all' maps every sample of the run against every assembly.",
+                    "help_text": "With 'all', each binning run sees one coverage column per sample of the run instead of one per sample of the group, which gives the binners a differential coverage signal even for a group holding a single sample. It costs one mapping job per assembly and per sample, and it requires every group of the run to use the same read type.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
                 "maxbin_minlen": {
                     "type": "integer",
                     "default": 2500,
