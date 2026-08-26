@@ -2,7 +2,7 @@ process BWA_MEM {
 
     label 'process_medium'
 
-    tag "$meta_reads.id"
+    tag "${meta_reads.ref}:${meta_reads.id}"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
