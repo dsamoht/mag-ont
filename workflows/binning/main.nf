@@ -15,7 +15,6 @@ include { MAXBIN                  } from '../../modules/local/maxbin/maxbin'
 include { MAXBIN_ABUND            } from '../../modules/local/maxbin/maxbin_abundance'
 include { METABAT                 } from '../../modules/local/metabat'
 include { MINIMAP                 } from '../../modules/local/minimap'
-include { SAMTOOLS                } from '../../modules/local/samtools'
 include { SEMIBIN                 } from '../../modules/local/semibin'
 
 
@@ -49,25 +48,20 @@ workflow BINNING {
     ch_long_input  = ch_branched_inputs.long_mapping
 
     // Long read mapping
-    ch_sam_long = MINIMAP(
+    ch_bam_long = MINIMAP(
         ch_long_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
         ch_long_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
-    ).sam
+    ).bam_pair
     ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
     // Short read mapping
-    ch_sam_short = BWA_MEM(
+    ch_bam_short = BWA_MEM(
         ch_short_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
         ch_short_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
-    ).sam
+    ).bam_pair
     ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
-    ch_sam_mixed = ch_sam_short.mix(ch_sam_long)
-
-    // Convert SAMs to sorted BAMs
-    ch_bam_pair_mixed = SAMTOOLS(ch_sam_mixed)
-        .bam_pair
-    ch_versions = ch_versions.mix(SAMTOOLS.out.versions.first())
+    ch_bam_pair_mixed = ch_bam_short.mix(ch_bam_long)
 
     // Group BAMs + index by the assembly they were mapped against. groupKey() carries the
     // number of BAMs expected there, so binning starts as soon as that assembly is mapped
