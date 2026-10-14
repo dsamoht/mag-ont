@@ -55,7 +55,7 @@ binning; otherwise the long reads are mapped with minimap2.
 
 `all` is what to use when the samples of a run belong to one experiment — a time series, a
 gradient, replicates of several conditions — but are assembled separately. A group holding a
-single sample then still gets a differential coverage signal, which is what MetaBAT2, CONCOCT
+single sample then still gets a differential coverage signal, which is what MetaBAT2, COMEBin
 and SemiBin2 bin on besides composition; without it they fall back on composition alone.
 
 It is not free: mapping goes from one job per sample to one job per assembly and per sample,
@@ -100,8 +100,9 @@ comma-separated and order matters, the last one wins.
 - `docker`, `singularity`, `apptainer`, `podman`, `shifter`, `charliecloud`, `wave`
 - `conda` / `mamba` — only if none of the container engines are available, and only together with
   `--skip_bin_qa`: CheckM2 needs a DIAMOND reference database that the pipeline supplies through
-  its container image, and the Bioconda package ships none, so `CHECKM` fails without it
-- `gpu` — passes the GPU through to Medaka and SemiBin2
+  its container image, and the Bioconda package ships none, so `CHECKM` fails without it. COMEBin
+  has no Conda environment either, so `--skip_comebin` is needed too
+- `gpu` — passes the GPU through to Medaka, SemiBin2 and COMEBin
 - `drac` — slurm executor and resources for Digital Research Alliance of Canada clusters
 - `test` — a minimal dataset that exercises the whole pipeline
 - `test_full` — full-size test
@@ -119,7 +120,6 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 | `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                               |
 | `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                      |
 | `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                          |
-| `--maxbin_minlen`     | `2500`                        | Minimum contig length considered by MaxBin2.                                                       |
 | `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                     |
 | `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database, required unless `--skip_gtdbtk` is set.                                    |
 
@@ -130,7 +130,7 @@ QC, so nothing runs for them. It cannot be combined with `--skip_qc`, which woul
 nothing to run.
 
 Any step can be turned off: `--skip_qc`, `--skip_nanoplot`, `--skip_porechop`,
-`--skip_medaka`, `--skip_maxbin`, `--skip_concoct`, `--skip_semibin`, `--skip_bin_qa`,
+`--skip_medaka`, `--skip_comebin`, `--skip_semibin`, `--skip_bin_qa`,
 `--skip_gtdbtk`, `--skip_multiqc`. All default to `false` except `--skip_medaka`.
 
 Medaka polishes Flye assemblies only, and is **skipped by default**. Medaka is a haploid
