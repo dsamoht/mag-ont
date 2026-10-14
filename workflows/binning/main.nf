@@ -2,7 +2,7 @@
 
 include { BWA_MEM                 } from '../../modules/local/bwa'
 include { CHECKM                  } from '../../modules/local/checkm'
-include { CONCOCT                 } from '../../modules/local/concoct'
+include { COMEBIN                 } from '../../modules/local/comebin'
 include { COVERM_CONTIG           } from '../../modules/local/coverm/contig'
 include { COVERM_GENOME           } from '../../modules/local/coverm/genome'
 include { NORMALIZE_COVERM_CONTIG } from '../../modules/local/coverm/normalize/contig'
@@ -11,8 +11,6 @@ include { DASTOOL                 } from '../../modules/local/dastool/dastool'
 include { DASTOOL_CONTIG2BIN      } from '../../modules/local/dastool/dastool_contig2bin'
 include { GTDBTK                  } from '../../modules/local/gtdbtk'
 include { MAG_SUMMARY             } from '../../modules/local/mag_summary'
-include { MAXBIN                  } from '../../modules/local/maxbin/maxbin'
-include { MAXBIN_ABUND            } from '../../modules/local/maxbin/maxbin_abundance'
 include { METABAT                 } from '../../modules/local/metabat'
 include { MINIMAP                 } from '../../modules/local/minimap'
 include { SEMIBIN                 } from '../../modules/local/semibin'
@@ -106,39 +104,17 @@ workflow BINNING {
     ch_versions = ch_versions.mix(METABAT.out.versions.first())
 
     // Initialize the EXACT channels you plan to emit as empty
-    ch_maxbin_abund_out = channel.empty()
-    ch_maxbin_bins      = channel.empty()
-    ch_concoct_bins     = channel.empty()
-    ch_semibin_bins     = channel.empty()
+    ch_comebin_bins = channel.empty()
+    ch_semibin_bins = channel.empty()
 
-    if (!params.skip_maxbin) {
-        // Convert depth.txt to maxbin "abund"
-        ch_maxbin_abund_run = MAXBIN_ABUND(ch_metabat_out.metabat_depth)
-        ch_maxbin_abund_out = ch_maxbin_abund_run.maxbin_abund // Assign for emit
-        ch_versions = ch_versions.mix(MAXBIN_ABUND.out.versions.first())
-
-        // `join` already yields one entry per group: grouping again would only wrap the
-        // files in single-element lists, at the cost of waiting for every group.
-        ch_maxbin_input = ch_assembly_to_join
-            .join(ch_maxbin_abund_out)
-
-        // Run maxbin
-        ch_maxbin_out = MAXBIN(
-            ch_maxbin_input.map { it -> [ it[0], it[1] ] },
-            ch_maxbin_input.map { it -> [ it[0], it[2] ] }
+    if (!params.skip_comebin) {
+        // Run comebin
+        ch_comebin_out = COMEBIN(
+            ch_binning_bam.map { meta, assembly, _metas, _bams, _indexes -> [ meta, assembly ] },
+            ch_binning_bam.map { meta, _assembly, _metas, bams, _indexes -> [ meta, bams ] }
         )
-        ch_maxbin_bins = ch_maxbin_out.maxbin_bins // Assign for emit
-        ch_versions = ch_versions.mix(MAXBIN.out.versions.first())
-    }
-
-    if (!params.skip_concoct) {
-        // Run concoct
-        ch_concoct_out = CONCOCT(
-            ch_binning_bam.map { it -> [ it[0], it[1] ] },
-            ch_binning_bam.map { it -> [ it[2], it[3], it[4] ] },
-        )
-        ch_concoct_bins = ch_concoct_out.concoct_bins // Assign for emit
-        ch_versions = ch_versions.mix(CONCOCT.out.versions.first())
+        ch_comebin_bins = ch_comebin_out.comebin_bins // Assign for emit
+        ch_versions = ch_versions.mix(COMEBIN.out.versions.first())
     }
 
     if (!params.skip_semibin) {
@@ -163,14 +139,9 @@ workflow BINNING {
     ch_combined_bins = ch_metabat_out.metabat_bins
         .map { group, bins -> [ group, 'metabat', bins ] }
 
-    if (!params.skip_maxbin) {
+    if (!params.skip_comebin) {
         ch_combined_bins = ch_combined_bins
-            .mix( ch_maxbin_bins.map { group, bins -> [ group, 'maxbin', bins ] } )
-    }
-
-    if (!params.skip_concoct) {
-        ch_combined_bins = ch_combined_bins
-            .mix( ch_concoct_bins.map { group, bins -> [ group, 'concoct', bins ] } )
+            .mix( ch_comebin_bins.map { group, bins -> [ group, 'comebin', bins ] } )
     }
 
     if (!params.skip_semibin) {
@@ -182,8 +153,7 @@ workflow BINNING {
     // released as soon as its own binners are done; `remainder` covers the binners that
     // produced no bins at all (their contig2bin output is optional).
     def n_binners = 1 +
-        (params.skip_maxbin  ? 0 : 1) +
-        (params.skip_concoct ? 0 : 1) +
+        (params.skip_comebin ? 0 : 1) +
         (params.skip_semibin ? 0 : 1)
 
     ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_combined_bins)
@@ -282,9 +252,7 @@ workflow BINNING {
     coverm_contig_norm     = ch_coverm_contig_norm_out.gene_abund_norm
     metabat_bins           = ch_metabat_out.metabat_bins
     metabat_depth          = ch_metabat_out.metabat_depth
-    maxbin_bins            = ch_maxbin_bins
-    maxbin_abund           = ch_maxbin_abund_out
-    concoct_bins           = ch_concoct_bins
+    comebin_bins           = ch_comebin_bins
     semibin_bins           = ch_semibin_bins
     dastool_bins           = ch_dastool_out.dastool_bins
     final_bins             = ch_final_bins

@@ -122,13 +122,6 @@
                     "help_text": "With 'all', each binning run sees one coverage column per sample of the run instead of one per sample of the group, which gives the binners a differential coverage signal even for a group holding a single sample. It costs one mapping job per assembly and per sample, and it requires every group of the run to use the same read type.",
                     "fa_icon": "fas fa-project-diagram"
                 },
-                "maxbin_minlen": {
-                    "type": "integer",
-                    "default": 2500,
-                    "minimum": 0,
-                    "description": "Minimum contig length considered by MaxBin2.",
-                    "fa_icon": "fas fa-ruler-horizontal"
-                },
                 "sc_mag_minimum": {
                     "type": "integer",
                     "default": 500000,
@@ -144,14 +137,9 @@
                     "description": "CheckM2 completeness (%) a long contig must reach to be held out of binning and kept as a single-contig MAG.",
                     "fa_icon": "fas fa-percent"
                 },
-                "skip_maxbin": {
+                "skip_comebin": {
                     "type": "boolean",
-                    "description": "Skip binning with MaxBin2.",
-                    "fa_icon": "fas fa-forward"
-                },
-                "skip_concoct": {
-                    "type": "boolean",
-                    "description": "Skip binning with CONCOCT.",
+                    "description": "Skip binning with COMEBin.",
                     "fa_icon": "fas fa-forward"
                 },
                 "skip_semibin": {

@@ -12,7 +12,7 @@ report and the pipeline information, which are global.
 - [Assembly](#assembly) — Flye (optionally polished with Medaka) or metaMDBG
 - [Gene prediction](#gene-prediction) — Pyrodigal
 - [Mapping and coverage](#mapping-and-coverage) — minimap2 or bwa-mem2, samtools, CoverM
-- [Binning](#binning) — MetaBAT2, MaxBin2, CONCOCT, SemiBin2, refined with DAS Tool
+- [Binning](#binning) — MetaBAT2, COMEBin, SemiBin2, refined with DAS Tool
 - [Bin quality and taxonomy](#bin-quality-and-taxonomy) — CheckM2, GTDB-Tk, MAG summary
 - [MultiQC](#multiqc)
 - [Pipeline information](#pipeline-information)
@@ -106,10 +106,8 @@ summary — carries one set of columns per sample of the run.
 
 - `group_<group>/binning/metabat/`
   - `metabat_bin.*.fa`, `*_depth.txt`
-- `group_<group>/binning/maxbin/`
-  - `maxbin_bin.*.fasta`, abundance files
-- `group_<group>/binning/concoct/`
-  - `concoct_*.fa`
+- `group_<group>/binning/comebin/`
+  - `comebin_*.fa`
 - `group_<group>/binning/semibin/`
   - `*.fa`
 - `group_<group>/binning/contig2bin/`
@@ -121,9 +119,9 @@ summary — carries one set of columns per sample of the run.
 
 </details>
 
-Up to four binners run on the same assembly and coverage data; DAS Tool then selects the
+Up to three binners run on the same assembly and coverage data; DAS Tool then selects the
 best, non-redundant set of bins. Individual binners can be turned off with
-`--skip_maxbin`, `--skip_concoct` and `--skip_semibin`.
+`--skip_comebin` and `--skip_semibin`.
 
 ### Bin quality and taxonomy
 

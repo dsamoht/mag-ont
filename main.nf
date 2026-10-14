@@ -368,9 +368,7 @@ workflow MAG_ONT {
     coverm_contig_norm     = BINNING.out.coverm_contig_norm
     metabat_bins           = BINNING.out.metabat_bins
     metabat_depth          = BINNING.out.metabat_depth
-    maxbin_bins            = BINNING.out.maxbin_bins
-    maxbin_abund           = BINNING.out.maxbin_abund
-    concoct_bins           = BINNING.out.concoct_bins
+    comebin_bins           = BINNING.out.comebin_bins
     semibin_bins           = BINNING.out.semibin_bins
     dastool_bins           = BINNING.out.dastool_bins
     final_bins             = BINNING.out.final_bins
@@ -426,9 +424,7 @@ workflow {
     coverm_contig_norm     = MAG_ONT.out.coverm_contig_norm
     metabat_bins           = MAG_ONT.out.metabat_bins
     metabat_depth          = MAG_ONT.out.metabat_depth
-    maxbin_bins            = MAG_ONT.out.maxbin_bins
-    maxbin_abund           = MAG_ONT.out.maxbin_abund
-    concoct_bins           = MAG_ONT.out.concoct_bins
+    comebin_bins           = MAG_ONT.out.comebin_bins
     semibin_bins           = MAG_ONT.out.semibin_bins
     dastool_bins           = MAG_ONT.out.dastool_bins
     final_bins             = MAG_ONT.out.final_bins
@@ -493,14 +489,8 @@ output {
     metabat_depth {
         path { meta, _file -> "group_${meta.id}/binning/metabat" }
     }
-    maxbin_bins {
-        path { meta, _file -> "group_${meta.id}/binning/maxbin" }
-    }
-    maxbin_abund {
-        path { meta, _file -> "group_${meta.id}/binning/maxbin" }
-    }
-    concoct_bins {
-        path { meta, _file -> "group_${meta.id}/binning/concoct" }
+    comebin_bins {
+        path { meta, _file -> "group_${meta.id}/binning/comebin" }
     }
     semibin_bins {
         path { meta, _file -> "group_${meta.id}/binning/semibin" }
