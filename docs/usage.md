@@ -87,7 +87,7 @@ nextflow pull dsamoht/mag-ont
 Specify the pipeline version with `-r`, and record it in your methods:
 
 ```bash
-nextflow run dsamoht/mag-ont -r 1.4.0 -profile docker --input ./samplesheet.csv --outdir ./results
+nextflow run dsamoht/mag-ont -r 1.5.0 -profile docker --input ./samplesheet.csv --outdir ./results
 ```
 
 ## Core Nextflow arguments
