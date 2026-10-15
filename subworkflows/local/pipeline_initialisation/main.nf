@@ -102,9 +102,8 @@ workflow PIPELINE_INITIALISATION {
     // nf-schema returns [ meta, assembly_fasta, long_reads, short_reads_1, short_reads_2 ]
     // with an empty list for any column left blank.
     //
-    ch_samplesheet = channel
-        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
-        .map { meta, assembly, long_reads, short_reads_1, short_reads_2 ->
+    def samples = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .collect { meta, assembly, long_reads, short_reads_1, short_reads_2 ->
             [
                 sample_id     : meta.id,
                 group         : meta.group,
@@ -118,21 +117,21 @@ workflow PIPELINE_INITIALISATION {
 
     //
     // Checks that span several rows of the sample sheet, which a per-row JSON schema
-    // cannot express. Failures stop the pipeline before any task is submitted.
+    // cannot express. They run on the parsed sample sheet, before the channel the rest of
+    // the pipeline reads from exists, so a failure stops the run before any task is submitted.
     //
-    ch_samplesheet
-        .map { sample -> [ sample.group, sample ] }
-        .groupTuple()
-        .map { group, rows -> validateGroup(group, rows) }
+    samples
+        .groupBy { sample -> sample.group }
+        .each { group, rows -> validateGroup(group, rows) }
 
     //
     // Checks that span the whole run rather than a single group. Only `--binning_map_mode
     // all` maps a sample against another group's assembly, so a sample sheet that is valid
     // today stays valid: nothing here fires in the default mode.
     //
-    ch_samplesheet
-        .toList()
-        .map { rows -> validateRun(rows) }
+    validateRun(samples)
+
+    ch_samplesheet = channel.fromList(samples)
 
     emit:
     samplesheet = ch_samplesheet
@@ -250,8 +249,6 @@ def validateGroup(group, rows) {
             error("group '${group}' mixes read types across samples: it maps the paired-end reads of [${short_samples}], so [${long_samples}], with long reads only, would contribute no coverage. Give every sample of the group paired-end reads, or none.")
         }
     }
-
-    return group
 }
 
 //
@@ -262,7 +259,7 @@ def validateGroup(group, rows) {
 //
 def validateRun(rows) {
     if (params.binning_map_mode != 'all') {
-        return rows
+        return
     }
 
     // One mapper for the whole run, the run-wide version of the per-group rule above
@@ -309,6 +306,4 @@ def validateRun(rows) {
             error("--binning_map_mode all: read file '${path}' is shared by samples ${ids.unique().sort().join(', ')}, which would map the same reads twice against every assembly.")
         }
     }
-
-    return rows
 }
