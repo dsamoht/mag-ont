@@ -25,16 +25,18 @@ def normalize_coverm_genome(coverm_tsv, bam_files, output_file):
     # 2. Load CoverM results
     df = pd.read_table(coverm_tsv)
 
-    # 3. Apply normalization
-    for col in df.columns:
-        for sample, total_depth in sample_depths.items():
-            # Match columns containing the sample name and the metrics
-            if sample in col and ("Mean" in col or "Trimmed Mean" in col):
-                new_col_name = f"{col}_norm_per_bp"
-                if total_depth > 0:
-                    df[new_col_name] = df[col] * (1_000_000 / total_depth)
-                else:
-                    df[new_col_name] = 0
+    # 3. Apply normalization. CoverM names its columns "<sample> <metric>": match them
+    # exactly, a substring match would pair "S10 Mean" with the depth of sample "S1"
+    for sample, total_depth in sample_depths.items():
+        for metric in ("Mean", "Trimmed Mean"):
+            col = f"{sample} {metric}"
+            if col not in df.columns:
+                continue
+            new_col_name = f"{col}_norm_per_bp"
+            if total_depth > 0:
+                df[new_col_name] = df[col] * (1_000_000 / total_depth)
+            else:
+                df[new_col_name] = 0
 
     df.to_csv(output_file, sep="\t", index=False)
 
