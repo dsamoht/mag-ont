@@ -11,7 +11,7 @@ process CHECKM {
     tuple val(meta), path(bins, stageAs: "bins/*")
 
     output:
-    tuple val(meta), path("checkm2_out/quality_report.tsv"), emit: checkm_stats, optional: true
+    tuple val(meta), path("checkm2_out/quality_report.tsv"), emit: checkm_stats
     path("versions.yml")                                   , emit: versions
 
     script:
