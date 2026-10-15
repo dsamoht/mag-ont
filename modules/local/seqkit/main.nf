@@ -14,7 +14,7 @@ process SEQKIT_SPLITBYLENGTH {
     val threshold
 
     output:
-    tuple val(meta), path("large_contigs/*.fa")  , emit: large, optional: true
+    tuple val(meta), path("large_contigs/*.fa", arity: '0..*'), emit: large
     tuple val(meta), path("*_contig_mapping.tsv"), emit: contig_mapping
     tuple val(meta), path("*.small.fa")          , emit: small
     path  "versions.yml"                         , emit: versions

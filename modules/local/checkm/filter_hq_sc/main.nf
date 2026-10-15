@@ -12,9 +12,9 @@ process FILTER_HQ_SC {
     val threshold
 
     output:
-    tuple val(meta), path("hq_contigs/*.fa"), emit: hq_sc, optional: true
-    tuple val(meta), path("lq_contigs/*.fa"), emit: lq_sc, optional: true
-    path "versions.yml"                     , emit: versions
+    tuple val(meta), path("hq_contigs/*.fa", arity: '0..*'), emit: hq_sc
+    tuple val(meta), path("lq_contigs/*.fa", arity: '0..*'), emit: lq_sc
+    path "versions.yml"                                    , emit: versions
 
     script:
     """

@@ -180,31 +180,41 @@ workflow MAG_ONT {
         ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum)
         ch_versions = ch_versions.mix(SEQKIT_SPLITBYLENGTH.out.versions.first())
 
+        // Every group comes out of the split, with an empty list when no contig reaches
+        // --sc_mag_minimum, so that every step below has exactly one entry per group and is
+        // joined without `remainder`: a group never waits for the other groups.
+        ch_candidates = ch_split_by_contig_lengths.large
+            .branch { _meta, large ->
+                assess: large
+                none:   true
+            }
+
         // One CheckM job per group, with every candidate of that group as a genome of the
         // run, rather than one job per contig.
-        ch_potential_sc_hq_mag = ch_split_by_contig_lengths.large
-
-        ch_sc_mag_checkm = CHECKM(ch_potential_sc_hq_mag).checkm_stats
+        ch_sc_mag_checkm = CHECKM(ch_candidates.assess).checkm_stats
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
 
         //
         // MODULE: sort the candidates on completeness
         //
         ch_sc_mag_qa = FILTER_HQ_SC(
-            ch_potential_sc_hq_mag.join(ch_sc_mag_checkm),
+            ch_candidates.assess.join(ch_sc_mag_checkm),
             params.sc_mag_min_completeness
         )
         ch_versions = ch_versions.mix(FILTER_HQ_SC.out.versions.first())
 
+        // [ meta, held-out MAGs, rejected candidates ], one entry per group
+        ch_sorted_candidates = ch_sc_mag_qa.hq_sc
+            .join(ch_sc_mag_qa.lq_sc)
+            .mix(ch_candidates.none.map { meta, _none -> [ meta, [], [] ] })
+
         //
         // MODULE: put the short contigs and the rejected candidates back together
         //
-        // `remainder` covers the groups FILTER_HQ_SC did not run for, or that it rejected
-        // nothing in: their assembly is rebuilt from the short contigs alone.
         ch_concat_input = ch_split_by_contig_lengths.small
             .join(ch_split_by_contig_lengths.contig_mapping)
-            .join(ch_sc_mag_qa.lq_sc, remainder: true)
-            .map { meta, small_fa, mapping, lq_fa -> [ meta, small_fa, lq_fa ?: [], mapping ] }
+            .join(ch_sorted_candidates)
+            .map { meta, small_fa, mapping, _hq_fa, lq_fa -> [ meta, small_fa, lq_fa, mapping ] }
 
         ch_rebuilt_assembly = CAT_CONTIGS(ch_concat_input).fasta
         ch_versions = ch_versions.mix(CAT_CONTIGS.out.versions.first())
@@ -215,15 +225,8 @@ workflow MAG_ONT {
             .filter { _meta, assembly -> assembly.size() > 0 }
 
         // BINNING joins on this, so every group needs an entry, empty or not.
-        ch_sc_mag_bins = ch_rebuilt_assembly
-            .map { meta, _assembly -> [ meta.id, [] ] }
-            .join(
-                ch_sc_mag_qa.hq_sc.map { meta, hq_sc ->
-                    [ meta.id, hq_sc instanceof List ? hq_sc : [ hq_sc ] ]
-                },
-                remainder: true
-            )
-            .map { group, _none, hq_sc -> [ group, hq_sc ?: [] ] }
+        ch_sc_mag_bins = ch_sorted_candidates
+            .map { meta, hq_fa, _lq_fa -> [ meta.id, hq_fa ] }
     }
     else {
         // Without bin QA there is no completeness to sort candidates on, so nothing is
