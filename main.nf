@@ -29,6 +29,33 @@ include { SEQKIT_SPLITBYLENGTH    } from './modules/local/seqkit'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    BOOLEAN PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Declared with their type so that Nextflow converts `--skip_qc false` on the command line
+// to false: undeclared, the value stays the string "false", which Groovy reads as true.
+// Defaults are set in nextflow.config. `--help` is left out, it also takes a string.
+params {
+    only_qc         : Boolean
+    skip_qc         : Boolean
+    skip_medaka     : Boolean
+    skip_nanoplot   : Boolean
+    skip_porechop   : Boolean
+    skip_comebin    : Boolean
+    skip_semibin    : Boolean
+    skip_bin_qa     : Boolean
+    skip_gtdbtk     : Boolean
+    skip_multiqc    : Boolean
+    monochrome_logs : Boolean
+    help_full       : Boolean
+    show_hidden     : Boolean
+    version         : Boolean
+    validate_params : Boolean
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
