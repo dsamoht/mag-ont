@@ -20,7 +20,7 @@ include { SEMIBIN                 } from '../../modules/local/semibin'
 workflow BINNING {
     take:
     ch_mapping_pairs    // [ val(meta), path(reads), val(meta), path(assembly) ] one entry per mapping
-    ch_assembly_to_bin  // [ val(meta), path(assembly) ] assembly with the single-contig MAGs removed
+    ch_assembly_to_bin  // [ val(meta), path(assembly) ] assembly with the single-contig MAGs removed, empty when they were all of it
     ch_sc_mag_bins      // [ val(group), [ path(contig) ] ] one entry per group, possibly empty
     ch_gff // [ val(group), path(gff) ]
 
@@ -29,8 +29,15 @@ workflow BINNING {
 
     // Everything inside this subworkflow is keyed by a minimal group meta map, so that
     // each process receives a proper `meta` and joins stay value-comparable.
-    ch_assembly_to_join = ch_assembly_to_bin
+    // A group whose every contig was held out as a single-contig MAG has nothing to bin.
+    ch_assembly_by_content = ch_assembly_to_bin
         .map { meta, assembly -> [ [ id: meta.id ], assembly ] }
+        .branch { _meta, assembly ->
+            to_bin: assembly.size() > 0
+            empty:  true
+        }
+
+    ch_assembly_to_join = ch_assembly_by_content.to_bin
 
     // The pairs arrive already fanned out, one per BAM to produce: each carries the reads,
     // the assembly they are mapped against (`meta.ref`), and `n_bams`, the number of BAMs
@@ -178,14 +185,17 @@ workflow BINNING {
         (params.skip_comebin ? 0 : 1) +
         (params.skip_semibin ? 0 : 1)
 
-    ch_bin_sets = ch_combined_bins
+    // [ meta, [ [ software, bins ], ... ] ] with the bin sets that are not empty
+    ch_binner_results = ch_combined_bins
         .map { group, software, bins -> [ groupKey(group, n_binners), software, bins ] }
         .groupTuple()
-        .flatMap { group, softwares, bin_lists ->
-            def bin_sets = [ softwares, bin_lists ].transpose().findAll { bin_set -> bin_set[1] }
-            bin_sets.collect { bin_set ->
-                [ group.getGroupTarget() + [ n_bin_sets: bin_sets.size() ], bin_set[0], bin_set[1] ]
-            }
+        .map { group, softwares, bin_lists ->
+            [ group.getGroupTarget(), [ softwares, bin_lists ].transpose().findAll { bin_set -> bin_set[1] } ]
+        }
+
+    ch_bin_sets = ch_binner_results
+        .flatMap { meta, bin_sets ->
+            bin_sets.collect { bin_set -> [ meta + [ n_bin_sets: bin_sets.size() ], bin_set[0], bin_set[1] ] }
         }
 
     ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_bin_sets)
@@ -202,17 +212,24 @@ workflow BINNING {
     ch_dastool_out = DASTOOL(ch_dastool_input)
     ch_versions = ch_versions.mix(DASTOOL.out.versions.first())
 
+    // The refined bins of every group, one entry each: DAS_Tool's, or an empty list for a
+    // group DAS_Tool does not run for - no binner found a bin, or there was nothing to bin.
+    // Every group is then accounted for without a `remainder` join, which would hold the
+    // groups DAS_Tool skips back until the last DAS_Tool of the run.
+    ch_refined_bins = ch_dastool_out.dastool_bins
+        .map { meta, bins -> [ meta.id, bins ] }
+        .mix(
+            ch_binner_results
+                .filter { _meta, bin_sets -> !bin_sets }
+                .map { meta, _bin_sets -> [ meta.id, [] ] }
+        )
+        .mix(ch_assembly_by_content.empty.map { meta, _assembly -> [ meta.id, [] ] })
+
     // The single-contig MAGs held out of binning re-enter here, so that everything below
     // - coverage, quality, taxonomy and the summary - treats them like any other MAG.
-    // `remainder` covers the groups DAS_Tool never ran for, either because it produced no
-    // bins or because the group had nothing left to bin.
     ch_final_bins = ch_sc_mag_bins
-        .join(
-            ch_dastool_out.dastool_bins
-                .map { meta, bins -> [ meta.id, bins instanceof List ? bins : [ bins ] ] },
-            remainder: true
-        )
-        .map { group, sc_mags, dastool_bins -> [ [ id: group ], (sc_mags ?: []) + (dastool_bins ?: []) ] }
+        .join(ch_refined_bins)
+        .map { group, sc_mags, refined_bins -> [ [ id: group ], sc_mags + refined_bins ] }
         .filter { _meta, bins -> bins.size() > 0 }
 
     ch_coverm_genome_input = ch_final_bins

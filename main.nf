@@ -216,13 +216,10 @@ workflow MAG_ONT {
             .join(ch_sorted_candidates)
             .map { meta, small_fa, mapping, _hq_fa, lq_fa -> [ meta, small_fa, lq_fa, mapping ] }
 
-        ch_rebuilt_assembly = CAT_CONTIGS(ch_concat_input).fasta
+        // A group whose every contig was held out gets an empty assembly here: BINNING
+        // keeps it away from the binners and picks its MAGs up through `ch_sc_mag_bins`.
+        ch_assembly_to_bin = CAT_CONTIGS(ch_concat_input).fasta
         ch_versions = ch_versions.mix(CAT_CONTIGS.out.versions.first())
-
-        // A group whose every contig was held out has nothing left to bin: it skips the
-        // binners, and BINNING picks its MAGs up again through `ch_sc_mag_bins`.
-        ch_assembly_to_bin = ch_rebuilt_assembly
-            .filter { _meta, assembly -> assembly.size() > 0 }
 
         // BINNING joins on this, so every group needs an entry, empty or not.
         ch_sc_mag_bins = ch_sorted_candidates
