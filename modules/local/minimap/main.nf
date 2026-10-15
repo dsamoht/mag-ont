@@ -15,6 +15,7 @@ process MINIMAP {
 
     output:
     tuple val(meta_reads), path('*.bam'), path('*.bam.bai'), emit: bam_pair
+    tuple val(meta_reads), path('*.aligned_bases.tsv')     , emit: aligned_bases
     path("versions.yml"), emit: versions
 
     script:
@@ -38,6 +39,13 @@ process MINIMAP {
             --write-index \
             -o ${prefix}.bam##idx##${prefix}.bam.bai \
             -
+
+    # Aligned bases of the sample, the denominator of the coverage normalization: CIGAR
+    # M/I/=/X of primary and supplementary alignments. Like CoverM, samtools stats leaves
+    # secondary alignments out. Counted here, once per BAM, while the BAM is at hand.
+    samtools stats -@ ${sort_threads} ${prefix}.bam \
+        | awk -F '\t' -v sample=${prefix} '\$1 == "SN" && \$2 == "bases mapped (cigar):" { print sample "\t" \$3 }' \
+        > ${prefix}.aligned_bases.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -14,7 +14,8 @@ process GTDBTK {
     path(gtdbtk_db)
 
     output:
-    tuple val(meta), path("gtdbtk.*.summary.tsv"), emit: gtdbtk_summary, optional: true
+    // Empty when GTDB-Tk placed no genome, so that the group still reaches MAG_SUMMARY
+    tuple val(meta), path("gtdbtk.*.summary.tsv", arity: '0..*'), emit: gtdbtk_summary
     path("versions.yml"), emit: versions
 
     script:

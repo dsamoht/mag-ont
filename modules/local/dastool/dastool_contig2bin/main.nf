@@ -11,7 +11,7 @@ process DASTOOL_CONTIG2BIN {
     tuple val(meta), val(software), path(bins, stageAs: "input_bins/*")
 
     output:
-    tuple val(meta), path("*_contig2bin.tsv"), emit: contig2bin, optional: true
+    tuple val(meta), path("*_contig2bin.tsv"), emit: contig2bin
     path "versions.yml", emit: versions
 
     script:
