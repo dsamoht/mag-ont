@@ -8,7 +8,7 @@ process NORMALIZE_COVERM_CONTIG {
     container "docker.io/dsamoht/bio-utils@sha256:f0cad0d32d8d8fac7bb971736f158200cf19b4817dd796bd9d76240a054bacf2"
 
     input:
-    tuple val(meta), path(coverm_contig_stats), path(gff_file), path(bam_files)
+    tuple val(meta), path(coverm_contig_stats), path(gff_file), path(aligned_bases)
 
     output:
     tuple val(meta), path("gene_abund_norm.tsv"), emit: gene_abund_norm
@@ -19,7 +19,7 @@ process NORMALIZE_COVERM_CONTIG {
     normalize_coverm_contig.py \
         --input ${coverm_contig_stats} \
         --gff ${gff_file} \
-        --bams ${bam_files.join(' ')} \
+        --depths ${aligned_bases} \
         --output gene_abund_norm.tsv
 
     cat <<-END_VERSIONS > versions.yml

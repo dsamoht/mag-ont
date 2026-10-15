@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import pysam
-import os
 import argparse
 
 """
@@ -12,18 +10,21 @@ sample-wise normalization of coverM genome statistics.
 -> Result interpretation: mean (or trimmed mean) coverage per million aligned bases
 """
 
-def normalize_coverm_genome(coverm_tsv, bam_files, output_file):
-    # 1. Calculate total aligned nucleotides for each BAM
+def read_aligned_bases(depth_files):
+    """sample -> aligned bases, from the `<sample>\t<bases>` files written by the mappers."""
     sample_depths = {}
-    for bam in bam_files:
-        sample_name = os.path.basename(bam).rsplit('.', 1)[0]
-        with pysam.AlignmentFile(bam, "rb") as sam:
-            # Sum of aligned lengths, excluding unmapped reads, soft-clips and secondary
-            # alignments, which CoverM leaves out of the coverage as well
-            sample_depths[sample_name] = sum(
-                r.query_alignment_length for r in sam if not (r.is_unmapped or r.is_secondary)
-            )
-            print(f" - {sample_name}: {sample_depths[sample_name]} bp")
+    for depth_file in depth_files:
+        with open(depth_file) as f:
+            for line in f:
+                sample, bases = line.rstrip("\n").split("\t")
+                sample_depths[sample] = int(bases)
+                print(f" - {sample}: {bases} bp")
+    return sample_depths
+
+
+def normalize_coverm_genome(coverm_tsv, depth_files, output_file):
+    # 1. Total aligned nucleotides of each sample
+    sample_depths = read_aligned_bases(depth_files)
 
     # 2. Load CoverM results
     df = pd.read_table(coverm_tsv)
@@ -46,8 +47,8 @@ def normalize_coverm_genome(coverm_tsv, bam_files, output_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="normalize CoverM genome statistics by sample nucleotide depth.")
     parser.add_argument("-i", "--input", required=True, help="tsv output from CoverM Genome.")
-    parser.add_argument("-b", "--bams", required=True, nargs='+', help="bam file(s).")
+    parser.add_argument("-d", "--depths", required=True, nargs='+', help="aligned bases file(s), one '<sample>\\t<bases>' line each.")
     parser.add_argument("-o", "--output", required=True, help="output tsv file name.")
 
     args = parser.parse_args()
-    normalize_coverm_genome(args.input, args.bams, args.output)
+    normalize_coverm_genome(args.input, args.depths, args.output)

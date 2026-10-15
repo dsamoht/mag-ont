@@ -20,9 +20,9 @@ input:
     - coverm_genome_stats:
         type: file
         description: Coverm genome stats
-    - bam_files:
+    - aligned_bases:
         type: file
-        description: One or more sorted BAM files
+        description: One `<sample>\t<aligned bases>` file per sample, written by the mapper
 output:
   coverm_genome_norm:
     - - meta:

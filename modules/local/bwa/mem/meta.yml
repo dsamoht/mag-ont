@@ -46,6 +46,14 @@ output:
           type: file
           description: BAM index
           pattern: "*.bam.bai"
+  aligned_bases:
+    - - meta_reads:
+          type: map
+          description: Meta reads
+      - "*.aligned_bases.tsv":
+          type: file
+          description: "One line, `<sample>\\t<bases>`: bases of the primary and supplementary alignments (samtools stats 'bases mapped (cigar)')"
+          pattern: "*.aligned_bases.tsv"
   versions:
     - "versions.yml":
         type: file
