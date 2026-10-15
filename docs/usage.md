@@ -39,8 +39,9 @@ Rules that apply across the rows of a group, checked before any task is submitte
 - Sample ids must be unique within a group: they name the group's BAM files and QC outputs.
 - All rows of a group must reference the same `assembly_fasta`, or none of them.
 - A read file cannot be shared by two samples of the same group.
-- A group cannot mix long-read-only samples with short-read-only samples, because the
-  mapping strategy is chosen once per group.
+- When any sample of a group carries paired-end reads, every sample of the group with long
+  reads must carry paired-end reads too, because the mapping strategy is chosen once per
+  group.
 
 When any sample of a group carries short reads, those reads drive the coverage signal for
 binning; otherwise the long reads are mapped with minimap2.
