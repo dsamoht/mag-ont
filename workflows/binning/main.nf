@@ -247,7 +247,8 @@ workflow BINNING {
 
         // Run GTDB-Tk
         if (!params.skip_gtdbtk) {
-            ch_gtdbtk_out = GTDBTK(ch_final_bins, params.gtdbtk_db)
+            // Resolved as a file so that a relative path is taken from the launch directory
+            ch_gtdbtk_out = GTDBTK(ch_final_bins, file(params.gtdbtk_db, checkIfExists: true))
             ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
             ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
         }
