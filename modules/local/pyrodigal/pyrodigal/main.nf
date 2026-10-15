@@ -22,6 +22,7 @@ process PYRODIGAL {
     """
     pyrodigal \\
         -i ${fasta} \\
+        -j ${task.cpus} \\
         -f gff \\
         -o ${prefix}.chunk${chunk_idx}.gff \\
         -d ${prefix}.chunk${chunk_idx}.fna \\
