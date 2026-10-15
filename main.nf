@@ -369,7 +369,6 @@ workflow MAG_ONT {
             ch_multiqc_logo.toList()
         )
         ch_multiqc_report = MULTIQC.out.report
-        ch_versions = ch_versions.mix(MULTIQC.out.versions)
     }
 
     emit:
