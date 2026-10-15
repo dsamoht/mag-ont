@@ -239,15 +239,15 @@ def validateGroup(group, rows) {
         }
     }
 
-    // Mapping strategy is chosen per group, so read types cannot be mixed within one
-    if (rows.size() > 1) {
-        def samples_with_only_long  = rows.findAll { row -> row.long_reads && !row.sr1 }
-        def samples_with_only_short = rows.findAll { row -> !row.long_reads && row.sr1 && row.sr2 }
-
-        if (!samples_with_only_long.isEmpty() && !samples_with_only_short.isEmpty()) {
-            def long_samples  = samples_with_only_long.collect { row -> row.sample_id }.join(', ')
-            def short_samples = samples_with_only_short.collect { row -> row.sample_id }.join(', ')
-            error("group '${group}' mixes read types across samples. Samples with long reads: [${long_samples}]. Samples with paired-end reads: [${short_samples}].")
+    // Mapping strategy is chosen per group: a group with paired-end reads maps those alone.
+    // A sample of it with long reads but no paired-end reads would then be left out of
+    // every coverage table, so it is refused rather than dropped without a word.
+    if (rows.any { row -> row.sr1 && row.sr2 }) {
+        def long_only = rows.findAll { row -> row.long_reads && !(row.sr1 && row.sr2) }
+        if (long_only) {
+            def long_samples  = long_only.collect { row -> row.sample_id }.join(', ')
+            def short_samples = rows.findAll { row -> row.sr1 && row.sr2 }.collect { row -> row.sample_id }.join(', ')
+            error("group '${group}' mixes read types across samples: it maps the paired-end reads of [${short_samples}], so [${long_samples}], with long reads only, would contribute no coverage. Give every sample of the group paired-end reads, or none.")
         }
     }
 
