@@ -7,7 +7,9 @@ import argparse
 
 def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
     # 1. Calculate sequencing depth (Total Aligned Nucleotides)
-    # Standard practice: sum of alignment lengths excluding unmapped reads and soft-clips.
+    # Sum of alignment lengths excluding unmapped reads, soft-clips and secondary alignments:
+    # CoverM leaves secondary alignments out of the coverage, so they stay out of the
+    # denominator too. Supplementary alignments cover other bases of the read and are kept.
     sample_depths = {}
     for bam in bam_files:
         # CoverM names the columns after the BAM file name without its `.bam` extension, so a
@@ -15,7 +17,9 @@ def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
         sample_name = os.path.basename(bam).rsplit('.', 1)[0]
         with pysam.AlignmentFile(bam, "rb") as sam:
             # Calculate total aligned bases for the denominator
-            total_bases = sum(r.query_alignment_length for r in sam if not r.is_unmapped)
+            total_bases = sum(
+                r.query_alignment_length for r in sam if not (r.is_unmapped or r.is_secondary)
+            )
             sample_depths[sample_name] = total_bases
             print(f" - {sample_name}: {total_bases} aligned bp")
 
