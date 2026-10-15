@@ -13,8 +13,8 @@ process DASTOOL {
     tuple val(meta), path(assembly), path(contig2bin)
 
     output:
-    tuple val(meta), path("*.fa"), emit: dastool_bins, optional: true
-    path("versions.yml")         , emit: versions
+    tuple val(meta), path("*.fa", arity: '0..*'), emit: dastool_bins
+    path("versions.yml")                        , emit: versions
 
     script:
     def args = task.ext.args ?: ''
