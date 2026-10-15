@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "bwa_index"
+description: Build the bwa-mem2 index of an assembly, once for every read set mapped against it
+keywords:
+  - index
+  - fasta
+  - short reads
+tools:
+  - "bwa-mem2":
+      description: Fast suffix-array based read aligner, a rewrite of bwa mem
+      homepage: https://github.com/bwa-mem2/bwa-mem2
+      documentation: https://github.com/bwa-mem2/bwa-mem2#usage
+      licence: ["MIT"]
+      identifier: biotools:bwa-mem2
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing group information, e.g. `[ id:'group1' ]`
+    - reference:
+        type: file
+        description: Reference assembly in FASTA format
+output:
+  index:
+    - - meta:
+          type: map
+          description: Groovy Map containing group information, e.g. `[ id:'group1' ]`
+      - "bwa_index":
+          type: directory
+          description: bwa-mem2 index files, named after `meta.id`
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

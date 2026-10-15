@@ -11,7 +11,7 @@ process BWA_MEM {
 
     input:
     tuple val(meta_reads), path(reads)
-    tuple val(meta_ref)  , path(reference)
+    tuple val(meta_ref)  , path(index)
 
     output:
     tuple val(meta_reads), path("*.bam"), path("*.bam.bai"), emit: bam_pair
@@ -25,15 +25,10 @@ process BWA_MEM {
     def sort_threads = Math.min(4, task.cpus as int)
     def sort_mem = task.memory ? "-m ${((task.memory.toMega() * 0.4) / sort_threads) as int}M" : ''
     """
-    PREFIX=${prefix}_index
-    bwa-mem2 index \
-        -p \$PREFIX \
-        ${reference}
-
     bwa-mem2 mem \
         ${args} \
         -t $task.cpus \
-        \$PREFIX \
+        ${index}/${meta_ref.id} \
         ${reads[0]} \
         ${reads[1]} \
         | samtools sort \

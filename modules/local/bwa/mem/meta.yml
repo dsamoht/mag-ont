@@ -30,9 +30,9 @@ input:
   - - meta_ref:
         type: map
         description: Meta ref
-    - reference:
-        type: file
-        description: Reference assembly in FASTA format
+    - index:
+        type: directory
+        description: bwa-mem2 index of the reference assembly, from BWA_INDEX
 output:
   bam_pair:
     - - meta_reads:

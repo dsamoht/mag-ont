@@ -1,6 +1,7 @@
 #!usr/bin/env nextflow
 
-include { BWA_MEM                 } from '../../modules/local/bwa'
+include { BWA_INDEX               } from '../../modules/local/bwa/index'
+include { BWA_MEM                 } from '../../modules/local/bwa/mem'
 include { CHECKM                  } from '../../modules/local/checkm'
 include { COMEBIN                 } from '../../modules/local/comebin'
 include { COVERM_CONTIG           } from '../../modules/local/coverm/contig'
@@ -52,10 +53,22 @@ workflow BINNING {
     ).bam_pair
     ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
-    // Short read mapping
+    // Short read mapping. Each assembly is indexed once, however many read sets are mapped
+    // against it: the index is several times the size of the assembly.
+    ch_bwa_index = BWA_INDEX(
+        ch_short_input
+            .map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
+            .unique()
+    ).index
+    ch_versions = ch_versions.mix(BWA_INDEX.out.versions.first())
+
+    ch_short_to_map = ch_short_input
+        .map { read_meta, reads, ref_meta, _assembly -> [ ref_meta, read_meta, reads ] }
+        .combine(ch_bwa_index, by: 0)
+
     ch_bam_short = BWA_MEM(
-        ch_short_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
-        ch_short_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
+        ch_short_to_map.map { _ref_meta, read_meta, reads, _index -> [ read_meta, reads ] },
+        ch_short_to_map.map { ref_meta, _read_meta, _reads, index -> [ ref_meta, index ] }
     ).bam_pair
     ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
@@ -149,16 +162,29 @@ workflow BINNING {
             .mix( ch_semibin_bins.map { group, bins -> [ group, 'semibin', bins ] } )
     }
 
-    // DAS Tool. The number of binners is known from the parameters, so each group can be
-    // released as soon as its own binners are done; `remainder` covers the binners that
-    // produced no bins at all (their contig2bin output is optional).
+    // DAS Tool. Every binner reports every group, with an empty list when it found no bins,
+    // and the number of binners is known from the parameters: each group is released as
+    // soon as its own binners are done. Only the bin sets that are not empty go on, and
+    // their count travels with them so the contig2bin tables are regrouped the same way.
     def n_binners = 1 +
         (params.skip_comebin ? 0 : 1) +
         (params.skip_semibin ? 0 : 1)
 
-    ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_combined_bins)
+    ch_bin_sets = ch_combined_bins
+        .map { group, software, bins -> [ groupKey(group, n_binners), software, bins ] }
+        .groupTuple()
+        .flatMap { group, softwares, bin_lists ->
+            def bin_sets = [ softwares, bin_lists ].transpose().findAll { bin_set -> bin_set[1] }
+            bin_sets.collect { bin_set ->
+                [ group.getGroupTarget() + [ n_bin_sets: bin_sets.size() ], bin_set[0], bin_set[1] ]
+            }
+        }
+
+    ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_bin_sets)
         .contig2bin
-        .groupTuple(size: n_binners, remainder: true)
+        .map { meta, contig2bin -> [ groupKey([ id: meta.id ], meta.n_bin_sets), contig2bin ] }
+        .groupTuple()
+        .map { group, contig2bins -> [ group.getGroupTarget(), contig2bins ] }
     ch_versions = ch_versions.mix(DASTOOL_CONTIG2BIN.out.versions.first())
 
     ch_dastool_input = ch_assembly_to_join

@@ -158,6 +158,7 @@
                 "gtdbtk_db": {
                     "type": "string",
                     "format": "directory-path",
+                    "exists": true,
                     "description": "Path to a local copy of the GTDB-Tk reference database.",
                     "help_text": "Required unless `--skip_gtdbtk` is set. See https://ecogenomics.github.io/GTDBTk/installing/index.html for how to obtain the database.",
                     "fa_icon": "fas fa-database"

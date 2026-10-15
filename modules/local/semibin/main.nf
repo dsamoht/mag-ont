@@ -14,7 +14,7 @@ process SEMIBIN {
     val(strategy_type)
 
     output:
-    tuple val(meta), path("semibin_output/output_bins/*.fa"), emit: semibin_bins, optional: true
+    tuple val(meta), path("semibin_output/output_bins/*.fa", arity: '0..*'), emit: semibin_bins
     path("versions.yml")                                    , emit: versions
 
     script:

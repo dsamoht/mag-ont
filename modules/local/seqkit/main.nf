@@ -50,7 +50,13 @@ process SEQKIT_SPLITBYLENGTH {
         if (out) close(out)
         safe_id = \$1
         sub(/^>/, "", safe_id)
-        out = "large_contigs/" safe_id ".fa"
+        # The file name is the ID with anything a path cannot hold replaced, and made unique
+        # again if that maps two IDs to one name. The header inside the file is left as is.
+        file_id = safe_id
+        gsub(/[^A-Za-z0-9._-]/, "_", file_id)
+        if (file_id in seen) file_id = file_id "_" NR
+        seen[file_id] = 1
+        out = "large_contigs/" file_id ".fa"
         print \$0 > out
         next
     }
