@@ -10,7 +10,9 @@ def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
     # Standard practice: sum of alignment lengths excluding unmapped reads and soft-clips.
     sample_depths = {}
     for bam in bam_files:
-        sample_name = os.path.basename(bam).split('.')[0]
+        # CoverM names the columns after the BAM file name without its `.bam` extension, so a
+        # sample id that contains a dot keeps it
+        sample_name = os.path.basename(bam).rsplit('.', 1)[0]
         with pysam.AlignmentFile(bam, "rb") as sam:
             # Calculate total aligned bases for the denominator
             total_bases = sum(r.query_alignment_length for r in sam if not r.is_unmapped)
