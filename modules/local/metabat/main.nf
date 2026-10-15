@@ -22,6 +22,9 @@ process METABAT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta_assembly.id}"
     """
+    # Both tools default to every core of the node, not the cores of the task
+    export OMP_NUM_THREADS=${task.cpus}
+
     jgi_summarize_bam_contig_depths \\
         --outputDepth ${prefix}_depth_all.txt \\
         ${bam}
@@ -40,6 +43,7 @@ process METABAT {
 
     metabat2 \\
         ${args} \\
+        -t ${task.cpus} \\
         -i ${assembly} \\
         -a ${prefix}_depth.txt \\
         -o metabat_bin
