@@ -23,6 +23,7 @@ process PORECHOP_ABI {
     """
     porechop_abi \
         ${args} \
+        -t ${task.cpus} \
         -i ${reads} \
         -o ${prefix}.porechopped.fastq.gz > ${prefix}.porechop.log
 
