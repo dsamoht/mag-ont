@@ -21,6 +21,7 @@ workflow PIPELINE_INITIALISATION {
     help            // boolean or string: display the help message
     help_full       // boolean: display the full help message
     show_hidden     // boolean: display hidden parameters in the help message
+    version         // boolean: display the pipeline version
 
     main:
 
@@ -42,13 +43,16 @@ workflow PIPELINE_INITIALISATION {
             ],
             help instanceof String && help != "true" ? help : "",
         ))
-        // Nextflow creates the work directory when the session starts, before this script
-        // runs, so printing the help message leaves an empty `work/` behind in whatever
-        // directory it was called from. Remove it again, but only if this run is the one
-        // that created it.
-        if (workflow.workDir.exists() && workflow.workDir.list().size() == 0) {
-            workflow.workDir.deleteDir()
-        }
+        removeEmptyWorkDir()
+        exit(0)
+    }
+
+    //
+    // Print the pipeline version and exit
+    //
+    if (version) {
+        log.info("${workflow.manifest.name} v${workflow.manifest.version}")
+        removeEmptyWorkDir()
         exit(0)
     }
 
@@ -160,6 +164,18 @@ ${workflow.manifest.description}
      Version: v${workflow.manifest.version}
 
 """
+}
+
+//
+// Nextflow creates the work directory when the session starts, before this script runs, so
+// a run that only prints the help message or the version leaves an empty `work/` behind in
+// whatever directory it was called from. Remove it again, but only if it is still empty,
+// i.e. if this run is the one that created it.
+//
+def removeEmptyWorkDir() {
+    if (workflow.workDir.exists() && workflow.workDir.list().size() == 0) {
+        workflow.workDir.deleteDir()
+    }
 }
 
 //
