@@ -76,6 +76,13 @@ workflow PIPELINE_INITIALISATION {
         error("--only_qc and --skip_qc cannot be combined: with read QC skipped, --only_qc would run nothing.")
     }
 
+    // GTDB-Tk is the last step of the run, so a missing database would otherwise only
+    // surface once assembly and binning are done. The schema checks that a path given
+    // exists; whether one is needed at all depends on the skip flags, so that is checked here.
+    if (!params.only_qc && !params.skip_bin_qa && !params.skip_gtdbtk && !params.gtdbtk_db) {
+        error("No GTDB-Tk database: pass --gtdbtk_db, or --skip_gtdbtk to run without taxonomic classification.")
+    }
+
     // `outputDir` follows `params.outdir` (nextflow.config), and Nextflow falls back to
     // publishing in `./results` when it is null. Parameter validation already requires
     // `--outdir`, but it can be turned off, so the run is stopped here as well: the results
@@ -167,6 +174,16 @@ def validateGroup(group, rows) {
 
     if (assemblies.isEmpty() && long_reads.isEmpty()) {
         error("group '${group}' has no assembly and no long reads to assemble")
+    }
+
+    // Sample ids name the BAM files and QC outputs of a group: two samples of the same name
+    // would collide when their BAMs are staged together for binning
+    def duplicate_ids = rows
+        .countBy { row -> row.sample_id }
+        .findAll { _id, count -> count > 1 }
+        .keySet()
+    if (duplicate_ids) {
+        error("group '${group}' has repeated sample ids: ${duplicate_ids.sort().join(', ')}. Sample ids must be unique within a group.")
     }
 
     // The same read file must not be claimed by two samples of the same group

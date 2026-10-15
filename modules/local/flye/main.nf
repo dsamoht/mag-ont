@@ -36,6 +36,10 @@ process FLYE {
     mv flye.log ${prefix}.flye.log
     mv params.json ${prefix}.params.json
 
+    # The stage directories hold the draft assemblies and the read alignments to them, each
+    # on the scale of the read set; nothing downstream reads them
+    rm -rf 00-assembly 10-consensus 20-repeat 30-contigger 40-polishing
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         flye: \$( flye --version )

@@ -51,7 +51,8 @@ come with a pre-existing assembly skip QC.
   - `*.consensus.fasta`: the Medaka-polished assembly, used for binning when present.
     Flye with `--skip_medaka false` only; there is no such directory otherwise.
 - `group_<group>/assembly/provided/`
-  - the assembly supplied in the sample sheet, when one was given.
+  - the assembly supplied in the sample sheet, when one was given; a gzipped one is
+    published decompressed, as the pipeline used it.
 
 </details>
 

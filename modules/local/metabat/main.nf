@@ -14,7 +14,7 @@ process METABAT {
     tuple val(meta_bam),      path(bam)
 
     output:
-    tuple val(meta_assembly), path("metabat_bin.*.fa"), emit: metabat_bins, optional: true
+    tuple val(meta_assembly), path("metabat_bin.*.fa", arity: '0..*'), emit: metabat_bins
     tuple val(meta_assembly), path("*_depth.txt"), emit: metabat_depth
     path("versions.yml"), emit: versions
 

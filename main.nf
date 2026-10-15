@@ -18,6 +18,7 @@ include { CAT_CONTIGS             } from './modules/local/cat/contig'
 include { CAT_FASTQ               } from './modules/local/cat'
 include { CHECKM                  } from './modules/local/checkm'
 include { FILTER_HQ_SC            } from './modules/local/checkm/filter_hq_sc'
+include { GUNZIP                  } from './modules/local/gunzip'
 include { LONGREAD_ASSEMBLY       } from './workflows/longread_assembly'
 include { LONGREAD_QC             } from './workflows/longread_qc'
 include { MERGE_PYRODIGAL         } from './modules/local/pyrodigal/merge'
@@ -51,6 +52,20 @@ workflow MAG_ONT {
         .map { group, sample_ids, assemblies ->
             [ [ id: group, sample_ids: sample_ids.unique() ], assemblies[0] ]
         }
+        .branch { _meta, assembly ->
+            gzipped: assembly.name.endsWith('.gz')
+            plain:   true
+        }
+
+    //
+    // MODULE: decompress the gzipped assemblies given in the sample sheet
+    //
+    // Several steps read the assembly as text (the contig split, MetaBAT2's contig order,
+    // COMEBin, DAS_Tool), so every assembly past this point is plain FASTA.
+    ch_unzipped_assembly = GUNZIP(ch_input_assembly.gzipped).file
+    ch_versions = ch_versions.mix(GUNZIP.out.versions.first())
+
+    ch_plain_input_assembly = ch_input_assembly.plain.mix(ch_unzipped_assembly)
 
     // Which reads a group contributes to mapping: its paired-end reads when it has any, its
     // long reads otherwise. Decided once per group, as the mapper is.
@@ -121,10 +136,17 @@ workflow MAG_ONT {
             [ [ id: group.toString(), sample_ids: metas.id, has_assembly: has_assembly ], sorted_reads ]
         }
 
+    // Only a group of several samples has reads to pool: a single sample's reads go to the
+    // assembler as they are, rather than being copied whole into a "merged" file
     ch_reads_to_assemble = ch_grouped_reads
         .filter { meta, _reads -> !params.only_qc && !meta.has_assembly }
+        .branch { _meta, reads ->
+            single: reads.size() == 1
+            pooled: true
+        }
 
-    ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble).reads
+    ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble.pooled).reads
+        .mix(ch_reads_to_assemble.single.map { meta, reads -> [ meta, reads[0] ] })
     ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first())
 
     //
@@ -152,7 +174,7 @@ workflow MAG_ONT {
     // For binning: medaka if available, otherwise flye or metamdbg
     ch_assembly_for_binning = ch_assembly_consensus_join
         .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
-        .mix(ch_input_assembly)
+        .mix(ch_plain_input_assembly)
 
     // A contig long enough to be a MAG on its own is assessed as a genome of its own, and
     // kept out of binning when it is complete enough: a contig that is already a genome
@@ -357,7 +379,7 @@ workflow MAG_ONT {
     nanoplot_qc_html       = ch_qc_long_reads_out.nanoplot_qc_html
     porechop_log           = ch_qc_long_reads_out.porechop_log
     qc_long_reads          = ch_qc_long_reads
-    input_assembly         = ch_input_assembly
+    input_assembly         = ch_plain_input_assembly
     assembly               = ch_assembly_to_publish
     sc_mag_checkm          = ch_sc_mag_checkm
     pyrodigal_gff          = ch_genes.gff
