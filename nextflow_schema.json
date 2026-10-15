@@ -49,6 +49,14 @@
                     "description": "Long read assembler to use.",
                     "fa_icon": "fas fa-puzzle-piece"
                 },
+                "flye_read_type": {
+                    "type": "string",
+                    "default": "nano-hq",
+                    "enum": ["nano-hq", "nano-raw", "nano-corr", "pacbio-hifi", "pacbio-raw", "pacbio-corr"],
+                    "description": "Read type given to Flye. Only used with `--assembler flye`.",
+                    "help_text": "`nano-hq` is for Nanopore reads basecalled with Guppy 5+ or Dorado (error rate below 5%), `nano-raw` for older Nanopore reads. The PacBio types are for HiFi (`pacbio-hifi`) and CLR (`pacbio-raw`) reads.",
+                    "fa_icon": "fas fa-dna"
+                },
                 "medaka_model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_hac_v5.2.0",
@@ -122,6 +130,14 @@
                     "help_text": "With 'all', each binning run sees one coverage column per sample of the run instead of one per sample of the group, which gives the binners a differential coverage signal even for a group holding a single sample. It costs one mapping job per assembly and per sample, and it requires every group of the run to use the same read type.",
                     "fa_icon": "fas fa-project-diagram"
                 },
+                "minimap2_preset": {
+                    "type": "string",
+                    "default": "map-ont",
+                    "enum": ["map-ont", "lr:hq", "map-hifi", "map-pb"],
+                    "description": "minimap2 preset used to map the long reads against the assemblies.",
+                    "help_text": "`map-ont` suits every Nanopore read. `lr:hq` is minimap2's preset for Nanopore Q20+ reads (R10.4.1 with a sup or hac basecaller, or duplex); `map-hifi` and `map-pb` are for PacBio HiFi and CLR reads.",
+                    "fa_icon": "fas fa-map-signs"
+                },
                 "sc_mag_minimum": {
                     "type": "integer",
                     "default": 500000,
@@ -158,13 +174,15 @@
                 "gtdbtk_db": {
                     "type": "string",
                     "format": "directory-path",
+                    "exists": true,
                     "description": "Path to a local copy of the GTDB-Tk reference database.",
                     "help_text": "Required unless `--skip_gtdbtk` is set. See https://ecogenomics.github.io/GTDBTk/installing/index.html for how to obtain the database.",
                     "fa_icon": "fas fa-database"
                 },
                 "skip_bin_qa": {
                     "type": "boolean",
-                    "description": "Skip bin quality assessment (CheckM2, GTDB-Tk and the MAG summary).",
+                    "description": "Skip CheckM2: no quality assessment of the bins, and no single-contig MAGs held out of binning.",
+                    "help_text": "The single-contig MAG candidates are sorted on CheckM2 completeness, so without CheckM2 every contig goes to the binners. GTDB-Tk and the MAG summary still run; the summary's quality columns are then empty.",
                     "fa_icon": "fas fa-forward"
                 },
                 "skip_gtdbtk": {
@@ -257,14 +275,6 @@
                     "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
-                "max_multiqc_email_size": {
-                    "type": "string",
-                    "description": "File size limit when attaching MultiQC reports to summary emails.",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-                    "default": "25.MB",
-                    "fa_icon": "fas fa-file-upload",
-                    "hidden": true
-                },
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
@@ -283,12 +293,6 @@
                     "format": "file-path",
                     "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file.",
                     "fa_icon": "fas fa-image",
-                    "hidden": true
-                },
-                "multiqc_methods_description": {
-                    "type": "string",
-                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
-                    "fa_icon": "fas fa-cog",
                     "hidden": true
                 },
                 "validate_params": {

@@ -51,7 +51,8 @@ come with a pre-existing assembly skip QC.
   - `*.consensus.fasta`: the Medaka-polished assembly, used for binning when present.
     Flye with `--skip_medaka false` only; there is no such directory otherwise.
 - `group_<group>/assembly/provided/`
-  - the assembly supplied in the sample sheet, when one was given.
+  - the assembly supplied in the sample sheet, when one was given; a gzipped one is
+    published decompressed, as the pipeline used it.
 
 </details>
 
@@ -141,7 +142,7 @@ best, non-redundant set of bins. Individual binners can be turned off with
     - `bin_id`, `group_id`, `bin_filename`: the id given to the MAG by the pipeline, its group,
       and the bin file it was built from.
     - `completeness`, `contamination`, `genome_size`, `contig_n50`, `gc_content`,
-      `total_contigs`, `max_contig_length`: CheckM2.
+      `total_contigs`, `max_contig_length`: CheckM2. Empty under `--skip_bin_qa`.
     - `domain`, `phylum`, `class`, `order`, `family`, `genus`, `species`: the GTDB-Tk
       classification split by rank, `Unclassified` for the ranks GTDB-Tk left unassigned.
     - `closest_placement_reference`, `closest_placement_ani`, `warnings`: GTDB-Tk. Empty under

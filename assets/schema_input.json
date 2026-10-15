@@ -30,22 +30,22 @@
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "Long reads must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "Long reads must be FastQ ('.fq' or '.fastq', optionally gzipped) and cannot contain spaces"
             },
             "short_reads_1": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "Short reads 1 must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "Short reads 1 must be FastQ ('.fq' or '.fastq', optionally gzipped) and cannot contain spaces"
             },
             "short_reads_2": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "Short reads 2 must be gzipped FastQ ('.fq.gz' or '.fastq.gz') and cannot contain spaces"
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "errorMessage": "Short reads 2 must be FastQ ('.fq' or '.fastq', optionally gzipped) and cannot contain spaces"
             }
         },
         "required": ["sample_id", "group"],

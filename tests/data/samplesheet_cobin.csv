@@ -1,0 +1,3 @@
+sample_id,group,assembly_fasta,long_reads,short_reads_1,short_reads_2
+test3,ont_test3,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/ont_test3.assembly.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST3_ONT.fastq.gz,,
+test_genome,test_genome,https://raw.githubusercontent.com/dsamoht/mag-ont/refs/heads/dev/tests/data/genome_test.fasta,https://github.com/dsamoht/mag-ont/raw/refs/heads/main/tests/data/TEST4_ONT.fastq.gz,,

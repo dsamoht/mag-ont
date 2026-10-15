@@ -11,13 +11,14 @@ process FLYE {
 
     input:
     tuple val(meta), path(reads)
+    val mode
 
     output:
-    tuple val(meta), path("*.fasta") , emit: fasta, optional: true
-    tuple val(meta), path("*.gfa")   , emit: gfa, optional: true
-    tuple val(meta), path("*.txt")   , emit: txt, optional: true
+    tuple val(meta), path("*.fasta") , emit: fasta
+    tuple val(meta), path("*.gfa")   , emit: gfa
+    tuple val(meta), path("*.txt")   , emit: txt
     tuple val(meta), path("*.log")   , emit: log
-    tuple val(meta), path("*.json")  , emit: json, optional: true
+    tuple val(meta), path("*.json")  , emit: json
     path "versions.yml"              , emit: versions
 
     script:
@@ -26,7 +27,7 @@ process FLYE {
     """
     flye \
         ${args} \
-        --nano-hq ${reads} \
+        --${mode} ${reads} \
         --threads ${task.cpus} \
         --out-dir .
 
@@ -35,6 +36,10 @@ process FLYE {
     mv assembly_info.txt ${prefix}.assembly_info.txt
     mv flye.log ${prefix}.flye.log
     mv params.json ${prefix}.params.json
+
+    # The stage directories hold the draft assemblies and the read alignments to them, each
+    # on the scale of the read set; nothing downstream reads them
+    rm -rf 00-assembly 10-consensus 20-repeat 30-contigger 40-polishing
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

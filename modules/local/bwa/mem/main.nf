@@ -11,10 +11,11 @@ process BWA_MEM {
 
     input:
     tuple val(meta_reads), path(reads)
-    tuple val(meta_ref)  , path(reference)
+    tuple val(meta_ref)  , path(index)
 
     output:
     tuple val(meta_reads), path("*.bam"), path("*.bam.bai"), emit: bam_pair
+    tuple val(meta_reads), path("*.aligned_bases.tsv")     , emit: aligned_bases
     path("versions.yml"), emit: versions
 
     script:
@@ -25,15 +26,10 @@ process BWA_MEM {
     def sort_threads = Math.min(4, task.cpus as int)
     def sort_mem = task.memory ? "-m ${((task.memory.toMega() * 0.4) / sort_threads) as int}M" : ''
     """
-    PREFIX=${prefix}_index
-    bwa-mem2 index \
-        -p \$PREFIX \
-        ${reference}
-
     bwa-mem2 mem \
         ${args} \
         -t $task.cpus \
-        \$PREFIX \
+        ${index}/${meta_ref.id} \
         ${reads[0]} \
         ${reads[1]} \
         | samtools sort \
@@ -44,6 +40,13 @@ process BWA_MEM {
             --write-index \
             -o ${prefix}.bam##idx##${prefix}.bam.bai \
             -
+
+    # Aligned bases of the sample, the denominator of the coverage normalization: CIGAR
+    # M/I/=/X of primary and supplementary alignments. Like CoverM, samtools stats leaves
+    # secondary alignments out. Counted here, once per BAM, while the BAM is at hand.
+    samtools stats -@ ${sort_threads} ${prefix}.bam \
+        | awk -F '\t' -v sample=${prefix} '\$1 == "SN" && \$2 == "bases mapped (cigar):" { print sample "\t" \$3 }' \
+        > ${prefix}.aligned_bases.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

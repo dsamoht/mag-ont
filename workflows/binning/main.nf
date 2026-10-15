@@ -1,6 +1,7 @@
 #!usr/bin/env nextflow
 
-include { BWA_MEM                 } from '../../modules/local/bwa'
+include { BWA_INDEX               } from '../../modules/local/bwa/index'
+include { BWA_MEM                 } from '../../modules/local/bwa/mem'
 include { CHECKM                  } from '../../modules/local/checkm'
 include { COMEBIN                 } from '../../modules/local/comebin'
 include { COVERM_CONTIG           } from '../../modules/local/coverm/contig'
@@ -19,7 +20,7 @@ include { SEMIBIN                 } from '../../modules/local/semibin'
 workflow BINNING {
     take:
     ch_mapping_pairs    // [ val(meta), path(reads), val(meta), path(assembly) ] one entry per mapping
-    ch_assembly_to_bin  // [ val(meta), path(assembly) ] assembly with the single-contig MAGs removed
+    ch_assembly_to_bin  // [ val(meta), path(assembly) ] assembly with the single-contig MAGs removed, empty when they were all of it
     ch_sc_mag_bins      // [ val(group), [ path(contig) ] ] one entry per group, possibly empty
     ch_gff // [ val(group), path(gff) ]
 
@@ -28,8 +29,15 @@ workflow BINNING {
 
     // Everything inside this subworkflow is keyed by a minimal group meta map, so that
     // each process receives a proper `meta` and joins stay value-comparable.
-    ch_assembly_to_join = ch_assembly_to_bin
+    // A group whose every contig was held out as a single-contig MAG has nothing to bin.
+    ch_assembly_by_content = ch_assembly_to_bin
         .map { meta, assembly -> [ [ id: meta.id ], assembly ] }
+        .branch { _meta, assembly ->
+            to_bin: assembly.size() > 0
+            empty:  true
+        }
+
+    ch_assembly_to_join = ch_assembly_by_content.to_bin
 
     // The pairs arrive already fanned out, one per BAM to produce: each carries the reads,
     // the assembly they are mapped against (`meta.ref`), and `n_bams`, the number of BAMs
@@ -52,10 +60,22 @@ workflow BINNING {
     ).bam_pair
     ch_versions = ch_versions.mix(MINIMAP.out.versions.first())
 
-    // Short read mapping
+    // Short read mapping. Each assembly is indexed once, however many read sets are mapped
+    // against it: the index is several times the size of the assembly.
+    ch_bwa_index = BWA_INDEX(
+        ch_short_input
+            .map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
+            .unique()
+    ).index
+    ch_versions = ch_versions.mix(BWA_INDEX.out.versions.first())
+
+    ch_short_to_map = ch_short_input
+        .map { read_meta, reads, ref_meta, _assembly -> [ ref_meta, read_meta, reads ] }
+        .combine(ch_bwa_index, by: 0)
+
     ch_bam_short = BWA_MEM(
-        ch_short_input.map { read_meta, reads, _ref_meta, _assembly -> [ read_meta, reads ] },
-        ch_short_input.map { _read_meta, _reads, ref_meta, assembly -> [ ref_meta, assembly ] }
+        ch_short_to_map.map { _ref_meta, read_meta, reads, _index -> [ read_meta, reads ] },
+        ch_short_to_map.map { ref_meta, _read_meta, _reads, index -> [ ref_meta, index ] }
     ).bam_pair
     ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
 
@@ -68,6 +88,14 @@ workflow BINNING {
         .map { meta, bam, index -> [ groupKey(meta.ref, meta.n_bams), meta, bam, index ] }
         .groupTuple()
         .map { group, metas, bams, indexes -> [ [ id: group.toString() ], metas, bams, indexes ] }
+
+    // Aligned bases of every sample, the denominator of the coverage normalization, grouped
+    // the same way as the BAMs they were counted from
+    ch_group_aligned_bases = MINIMAP.out.aligned_bases
+        .mix(BWA_MEM.out.aligned_bases)
+        .map { meta, aligned_bases -> [ groupKey(meta.ref, meta.n_bams), aligned_bases ] }
+        .groupTuple()
+        .map { group, aligned_bases -> [ [ id: group.toString() ], aligned_bases ] }
 
     // Coverage is keyed by group only: it comes from the mappings against the full
     // assembly, so a group whose contigs all became single-contig MAGs - and which
@@ -87,11 +115,11 @@ workflow BINNING {
 
 
     ch_norm_coverm_contig_in = ch_coverm_contig_out.coverm_stats
-        .join(ch_group_bams)
+        .join(ch_group_aligned_bases)
         .join(ch_gff)
 
     ch_coverm_contig_norm_out = NORMALIZE_COVERM_CONTIG(
-        ch_norm_coverm_contig_in.map { group, stats, bams, gff -> [ group, stats, gff, bams ] }
+        ch_norm_coverm_contig_in.map { group, stats, aligned_bases, gff -> [ group, stats, gff, aligned_bases ] }
     )
     ch_versions = ch_versions.mix(NORMALIZE_COVERM_CONTIG.out.versions.first())
 
@@ -149,16 +177,32 @@ workflow BINNING {
             .mix( ch_semibin_bins.map { group, bins -> [ group, 'semibin', bins ] } )
     }
 
-    // DAS Tool. The number of binners is known from the parameters, so each group can be
-    // released as soon as its own binners are done; `remainder` covers the binners that
-    // produced no bins at all (their contig2bin output is optional).
+    // DAS Tool. Every binner reports every group, with an empty list when it found no bins,
+    // and the number of binners is known from the parameters: each group is released as
+    // soon as its own binners are done. Only the bin sets that are not empty go on, and
+    // their count travels with them so the contig2bin tables are regrouped the same way.
     def n_binners = 1 +
         (params.skip_comebin ? 0 : 1) +
         (params.skip_semibin ? 0 : 1)
 
-    ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_combined_bins)
+    // [ meta, [ [ software, bins ], ... ] ] with the bin sets that are not empty
+    ch_binner_results = ch_combined_bins
+        .map { group, software, bins -> [ groupKey(group, n_binners), software, bins ] }
+        .groupTuple()
+        .map { group, softwares, bin_lists ->
+            [ group.getGroupTarget(), [ softwares, bin_lists ].transpose().findAll { bin_set -> bin_set[1] } ]
+        }
+
+    ch_bin_sets = ch_binner_results
+        .flatMap { meta, bin_sets ->
+            bin_sets.collect { bin_set -> [ meta + [ n_bin_sets: bin_sets.size() ], bin_set[0], bin_set[1] ] }
+        }
+
+    ch_dastoolc2b_out = DASTOOL_CONTIG2BIN(ch_bin_sets)
         .contig2bin
-        .groupTuple(size: n_binners, remainder: true)
+        .map { meta, contig2bin -> [ groupKey([ id: meta.id ], meta.n_bin_sets), contig2bin ] }
+        .groupTuple()
+        .map { group, contig2bins -> [ group.getGroupTarget(), contig2bins ] }
     ch_versions = ch_versions.mix(DASTOOL_CONTIG2BIN.out.versions.first())
 
     ch_dastool_input = ch_assembly_to_join
@@ -168,17 +212,24 @@ workflow BINNING {
     ch_dastool_out = DASTOOL(ch_dastool_input)
     ch_versions = ch_versions.mix(DASTOOL.out.versions.first())
 
+    // The refined bins of every group, one entry each: DAS_Tool's, or an empty list for a
+    // group DAS_Tool does not run for - no binner found a bin, or there was nothing to bin.
+    // Every group is then accounted for without a `remainder` join, which would hold the
+    // groups DAS_Tool skips back until the last DAS_Tool of the run.
+    ch_refined_bins = ch_dastool_out.dastool_bins
+        .map { meta, bins -> [ meta.id, bins ] }
+        .mix(
+            ch_binner_results
+                .filter { _meta, bin_sets -> !bin_sets }
+                .map { meta, _bin_sets -> [ meta.id, [] ] }
+        )
+        .mix(ch_assembly_by_content.empty.map { meta, _assembly -> [ meta.id, [] ] })
+
     // The single-contig MAGs held out of binning re-enter here, so that everything below
     // - coverage, quality, taxonomy and the summary - treats them like any other MAG.
-    // `remainder` covers the groups DAS_Tool never ran for, either because it produced no
-    // bins or because the group had nothing left to bin.
     ch_final_bins = ch_sc_mag_bins
-        .join(
-            ch_dastool_out.dastool_bins
-                .map { meta, bins -> [ meta.id, bins instanceof List ? bins : [ bins ] ] },
-            remainder: true
-        )
-        .map { group, sc_mags, dastool_bins -> [ [ id: group ], (sc_mags ?: []) + (dastool_bins ?: []) ] }
+        .join(ch_refined_bins)
+        .map { group, sc_mags, refined_bins -> [ [ id: group ], sc_mags + refined_bins ] }
         .filter { _meta, bins -> bins.size() > 0 }
 
     ch_coverm_genome_input = ch_final_bins
@@ -191,52 +242,50 @@ workflow BINNING {
     ch_versions = ch_versions.mix(COVERM_GENOME.out.versions.first())
 
     ch_norm_coverm_genome_in = ch_coverm_out.coverm_stats
-        .join(ch_group_bams)
+        .join(ch_group_aligned_bases)
 
     ch_coverm_genome_norm_out = NORMALIZE_COVERM_GENOME(
         ch_norm_coverm_genome_in.map { it -> [ it[0], it[1], it[2] ] }
     )
     ch_versions = ch_versions.mix(NORMALIZE_COVERM_GENOME.out.versions.first())
 
-    // Initialize downstream variables for emit block
     ch_checkm_stats     = channel.empty()
     ch_gtdbtk_summary   = channel.empty()
-    ch_mag_summary_out  = channel.empty()
-    ch_final_contig2bin = channel.empty()
 
     if (!params.skip_bin_qa) {
-
         // Run CheckM
         ch_checkm_out = CHECKM(ch_final_bins)
         ch_checkm_stats = ch_checkm_out.checkm_stats // Assign for emit
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
-
-        // Run GTDB-Tk
-        if (!params.skip_gtdbtk) {
-            ch_gtdbtk_out = GTDBTK(ch_final_bins, params.gtdbtk_db)
-            ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
-            ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
-        }
-
-        // Summary. When GTDB-Tk is skipped its channel is empty, so it must not be
-        // joined: the join would match nothing and silently drop every group.
-        ch_summarize = ch_final_bins
-            .join(ch_checkm_stats)
-            .join(ch_coverm_out.coverm_stats)
-
-        ch_summarize_taxonomy = params.skip_gtdbtk
-            ? ch_summarize.map { group, bins, checkm, coverm -> [ group, bins, checkm, coverm, [] ] }
-            : ch_summarize.join(ch_gtdbtk_summary)
-
-        // Run Summary
-        ch_summary_run = MAG_SUMMARY(
-            ch_summarize_taxonomy.map { group, bins, checkm, coverm, gtdbtk -> [ group, bins, checkm, gtdbtk, coverm ] }
-        )
-        ch_mag_summary_out = ch_summary_run.mag_summary // Assign for emit
-        ch_final_contig2bin = ch_summary_run.contig2bin // Assign for emit
-        ch_versions = ch_versions.mix(MAG_SUMMARY.out.versions.first())
-
     }
+
+    if (!params.skip_gtdbtk) {
+        // Run GTDB-Tk. Resolved as a file so that a relative path is taken from the launch directory
+        ch_gtdbtk_out = GTDBTK(ch_final_bins, file(params.gtdbtk_db, checkIfExists: true))
+        ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
+        ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
+    }
+
+    // Summary of every MAG: coverage always, quality and taxonomy when they ran. A skipped
+    // step stands in as an empty list, so that it is not joined: a join with an empty
+    // channel would match nothing and silently drop every group.
+    ch_summary_checkm = params.skip_bin_qa
+        ? ch_final_bins.map { meta, _bins -> [ meta, [] ] }
+        : ch_checkm_stats
+    ch_summary_gtdbtk = params.skip_gtdbtk
+        ? ch_final_bins.map { meta, _bins -> [ meta, [] ] }
+        : ch_gtdbtk_summary
+
+    // Run Summary
+    ch_summary_run = MAG_SUMMARY(
+        ch_final_bins
+            .join(ch_summary_checkm)
+            .join(ch_summary_gtdbtk)
+            .join(ch_coverm_out.coverm_stats)
+    )
+    ch_mag_summary_out  = ch_summary_run.mag_summary
+    ch_final_contig2bin = ch_summary_run.contig2bin
+    ch_versions = ch_versions.mix(MAG_SUMMARY.out.versions.first())
 
     // Files picked up by MultiQC. Only files a MultiQC module can parse belong here: an
     // unparseable file makes the channel non-empty without giving MultiQC anything to report,

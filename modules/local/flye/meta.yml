@@ -21,6 +21,10 @@ input:
     - reads:
         type: file
         description: Sequencing reads in FastQ format
+  - mode:
+      type: string
+      description: Flye read type, the input flag without its dashes
+      enum: ["nano-raw", "nano-corr", "nano-hq", "pacbio-raw", "pacbio-corr", "pacbio-hifi"]
 output:
   fasta:
     - - meta:

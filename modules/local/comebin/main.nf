@@ -12,7 +12,7 @@ process COMEBIN {
     tuple val(bam_meta), path(bams, stageAs: 'bams/*')
 
     output:
-    tuple val(meta), path("comebin_*.fa"), emit: comebin_bins, optional: true
+    tuple val(meta), path("comebin_*.fa", arity: '0..*'), emit: comebin_bins
     path("versions.yml")                 , emit: versions
 
     script:
@@ -42,6 +42,9 @@ process COMEBIN {
         [ -f "\$f" ] || continue
         mv "\$f" "comebin_\$(basename \$f)"
     done
+
+    # The trained model checkpoint alone is hundreds of MB; only the bins are emitted
+    rm -rf comebin_output contigs.fa*
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
