@@ -18,12 +18,10 @@ process CHOPPER {
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     # chopper reads gzipped and plain FastQ alike when given the file itself
     chopper ${args} --threads ${task.cpus} -i ${reads} \
-        | chopper ${args2} --threads ${task.cpus} \
         | gzip > ${prefix}.choppered.fastq.gz
 
     cat <<-END_VERSIONS > versions.yml
