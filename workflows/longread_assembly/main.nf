@@ -22,11 +22,7 @@ workflow LONGREAD_ASSEMBLY {
         ch_assembly = FLYE.out.fasta
         ch_final_assembly = ch_assembly
 
-        // `--skip_medaka` is the one skip flag that defaults to true, so it is also the
-        // only one that has to be turned off from the command line. Nextflow passes
-        // `--skip_medaka false` through as the string "false", which Groovy reads as true,
-        // so the value is parsed rather than tested for truth.
-        if (!params.skip_medaka.toString().toBoolean()) {
+        if (!params.skip_medaka) {
             ch_medaka_input = ch_long_reads.join(ch_assembly)
             MEDAKA(ch_medaka_input)
             ch_versions  = ch_versions.mix(MEDAKA.out.versions.first())
