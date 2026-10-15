@@ -22,7 +22,8 @@ process MERGE_PYRODIGAL {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     head -n1 ${gffs[0]} > ${prefix}.gff
-    cat ${gffs} | grep -v '^#' >> ${prefix}.gff
+    # awk rather than grep -v: grep exits 1 when no line is left, i.e. when no gene was found
+    awk '!/^#/' ${gffs} >> ${prefix}.gff
 
     cat ${fnas} > ${prefix}.fna
     cat ${faas} > ${prefix}.faa
