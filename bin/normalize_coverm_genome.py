@@ -18,8 +18,11 @@ def normalize_coverm_genome(coverm_tsv, bam_files, output_file):
     for bam in bam_files:
         sample_name = os.path.basename(bam).rsplit('.', 1)[0]
         with pysam.AlignmentFile(bam, "rb") as sam:
-            # Sum of aligned lengths (excludes unmapped reads and soft-clips)
-            sample_depths[sample_name] = sum(r.query_alignment_length for r in sam if not r.is_unmapped)
+            # Sum of aligned lengths, excluding unmapped reads, soft-clips and secondary
+            # alignments, which CoverM leaves out of the coverage as well
+            sample_depths[sample_name] = sum(
+                r.query_alignment_length for r in sam if not (r.is_unmapped or r.is_secondary)
+            )
             print(f" - {sample_name}: {sample_depths[sample_name]} bp")
 
     # 2. Load CoverM results
