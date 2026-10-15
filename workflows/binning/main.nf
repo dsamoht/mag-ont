@@ -82,6 +82,14 @@ workflow BINNING {
         .groupTuple()
         .map { group, metas, bams, indexes -> [ [ id: group.toString() ], metas, bams, indexes ] }
 
+    // Aligned bases of every sample, the denominator of the coverage normalization, grouped
+    // the same way as the BAMs they were counted from
+    ch_group_aligned_bases = MINIMAP.out.aligned_bases
+        .mix(BWA_MEM.out.aligned_bases)
+        .map { meta, aligned_bases -> [ groupKey(meta.ref, meta.n_bams), aligned_bases ] }
+        .groupTuple()
+        .map { group, aligned_bases -> [ [ id: group.toString() ], aligned_bases ] }
+
     // Coverage is keyed by group only: it comes from the mappings against the full
     // assembly, so a group whose contigs all became single-contig MAGs - and which
     // therefore never reaches the binners below - still gets its stats.
@@ -100,11 +108,11 @@ workflow BINNING {
 
 
     ch_norm_coverm_contig_in = ch_coverm_contig_out.coverm_stats
-        .join(ch_group_bams)
+        .join(ch_group_aligned_bases)
         .join(ch_gff)
 
     ch_coverm_contig_norm_out = NORMALIZE_COVERM_CONTIG(
-        ch_norm_coverm_contig_in.map { group, stats, bams, gff -> [ group, stats, gff, bams ] }
+        ch_norm_coverm_contig_in.map { group, stats, aligned_bases, gff -> [ group, stats, gff, aligned_bases ] }
     )
     ch_versions = ch_versions.mix(NORMALIZE_COVERM_CONTIG.out.versions.first())
 
@@ -217,7 +225,7 @@ workflow BINNING {
     ch_versions = ch_versions.mix(COVERM_GENOME.out.versions.first())
 
     ch_norm_coverm_genome_in = ch_coverm_out.coverm_stats
-        .join(ch_group_bams)
+        .join(ch_group_aligned_bases)
 
     ch_coverm_genome_norm_out = NORMALIZE_COVERM_GENOME(
         ch_norm_coverm_genome_in.map { it -> [ it[0], it[1], it[2] ] }
