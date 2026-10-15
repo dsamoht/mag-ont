@@ -14,11 +14,11 @@ process FLYE {
     val mode
 
     output:
-    tuple val(meta), path("*.fasta") , emit: fasta, optional: true
-    tuple val(meta), path("*.gfa")   , emit: gfa, optional: true
-    tuple val(meta), path("*.txt")   , emit: txt, optional: true
+    tuple val(meta), path("*.fasta") , emit: fasta
+    tuple val(meta), path("*.gfa")   , emit: gfa
+    tuple val(meta), path("*.txt")   , emit: txt
     tuple val(meta), path("*.log")   , emit: log
-    tuple val(meta), path("*.json")  , emit: json, optional: true
+    tuple val(meta), path("*.json")  , emit: json
     path "versions.yml"              , emit: versions
 
     script:
