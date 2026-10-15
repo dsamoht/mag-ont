@@ -129,6 +129,7 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 | `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                                                      |
 | `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                                             |
 | `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                                                 |
+| `--minimap2_preset`   | `map-ont`                     | minimap2 preset for long-read mapping: `map-ont`, `lr:hq` (Nanopore Q20+), `map-hifi` or `map-pb`.                        |
 | `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                                            |
 | `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database. Required, and checked at start-up, unless `--skip_gtdbtk`, `--skip_bin_qa` or `--only_qc` is set. |
 

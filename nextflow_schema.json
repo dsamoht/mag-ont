@@ -122,6 +122,14 @@
                     "help_text": "With 'all', each binning run sees one coverage column per sample of the run instead of one per sample of the group, which gives the binners a differential coverage signal even for a group holding a single sample. It costs one mapping job per assembly and per sample, and it requires every group of the run to use the same read type.",
                     "fa_icon": "fas fa-project-diagram"
                 },
+                "minimap2_preset": {
+                    "type": "string",
+                    "default": "map-ont",
+                    "enum": ["map-ont", "lr:hq", "map-hifi", "map-pb"],
+                    "description": "minimap2 preset used to map the long reads against the assemblies.",
+                    "help_text": "`map-ont` suits every Nanopore read. `lr:hq` is minimap2's preset for Nanopore Q20+ reads (R10.4.1 with a sup or hac basecaller, or duplex); `map-hifi` and `map-pb` are for PacBio HiFi and CLR reads.",
+                    "fa_icon": "fas fa-map-signs"
+                },
                 "sc_mag_minimum": {
                     "type": "integer",
                     "default": 500000,
