@@ -49,6 +49,14 @@
                     "description": "Long read assembler to use.",
                     "fa_icon": "fas fa-puzzle-piece"
                 },
+                "flye_read_type": {
+                    "type": "string",
+                    "default": "nano-hq",
+                    "enum": ["nano-hq", "nano-raw", "nano-corr", "pacbio-hifi", "pacbio-raw", "pacbio-corr"],
+                    "description": "Read type given to Flye. Only used with `--assembler flye`.",
+                    "help_text": "`nano-hq` is for Nanopore reads basecalled with Guppy 5+ or Dorado (error rate below 5%), `nano-raw` for older Nanopore reads. The PacBio types are for HiFi (`pacbio-hifi`) and CLR (`pacbio-raw`) reads.",
+                    "fa_icon": "fas fa-dna"
+                },
                 "medaka_model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_hac_v5.2.0",

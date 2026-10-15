@@ -17,7 +17,7 @@ workflow LONGREAD_ASSEMBLY {
     ch_final_assembly = channel.empty()
 
     if (params.assembler == 'flye') {
-        FLYE(ch_long_reads)
+        FLYE(ch_long_reads, params.flye_read_type)
         ch_versions = ch_versions.mix(FLYE.out.versions.first())
         ch_assembly = FLYE.out.fasta
         ch_final_assembly = ch_assembly

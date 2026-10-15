@@ -11,6 +11,7 @@ process FLYE {
 
     input:
     tuple val(meta), path(reads)
+    val mode
 
     output:
     tuple val(meta), path("*.fasta") , emit: fasta, optional: true
@@ -26,7 +27,7 @@ process FLYE {
     """
     flye \
         ${args} \
-        --nano-hq ${reads} \
+        --${mode} ${reads} \
         --threads ${task.cpus} \
         --out-dir .
 

@@ -125,6 +125,7 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 | Option                | Default                       | Description                                                                                                               |
 | --------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                                                                                |
+| `--flye_read_type`    | `nano-hq`                     | Flye only. Read type passed to Flye: `nano-hq`, `nano-raw`, `nano-corr`, `pacbio-hifi`, `pacbio-raw` or `pacbio-corr`.    |
 | `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used.                        |
 | `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                                                      |
 | `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                                             |
