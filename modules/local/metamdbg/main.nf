@@ -13,7 +13,7 @@ process METAMDBG {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.contigs.fasta"), emit: fasta, optional: true
+    tuple val(meta), path("*.contigs.fasta"), emit: fasta
     tuple val(meta), path("*.metaMDBG.log") , emit: log
     path "versions.yml"                     , emit: versions
 
