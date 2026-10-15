@@ -17,12 +17,14 @@ process MAG_SUMMARY {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    // `gtdbtk_res` is empty when GTDB-Tk is skipped, and a glob output is a single path
-    // rather than a list when it matched exactly one file: normalize both here.
+    // `checkm_stats` and `gtdbtk_res` are empty when their step is skipped, and a glob
+    // output is a single path rather than a list when it matched exactly one file:
+    // normalize both here.
     def bins        = dastool_bins instanceof List ? dastool_bins : [ dastool_bins ]
     def gtdbtk_out  = gtdbtk_res instanceof List ? gtdbtk_res : [ gtdbtk_res ]
     def gtdbtk_bac  = gtdbtk_out.find { f -> f.name.contains('bac120') }
     def gtdbtk_ar   = gtdbtk_out.find { f -> f.name.contains('ar53') }
+    def checkm_arg  = checkm_stats ? "--checkm ${checkm_stats}" : ''
     def gtdbtk_args = [
         gtdbtk_bac ? "--bac120 ${gtdbtk_bac}" : '',
         gtdbtk_ar  ? "--ar53 ${gtdbtk_ar}"    : ''
@@ -30,7 +32,7 @@ process MAG_SUMMARY {
     """
     mag_summary.py \
         --bins ${bins.join(' ')} \
-        --checkm ${checkm_stats} \
+        ${checkm_arg} \
         --coverm ${coverm_stats} \
         ${gtdbtk_args} \
         --group ${prefix} \

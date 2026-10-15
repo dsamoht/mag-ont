@@ -249,46 +249,43 @@ workflow BINNING {
     )
     ch_versions = ch_versions.mix(NORMALIZE_COVERM_GENOME.out.versions.first())
 
-    // Initialize downstream variables for emit block
     ch_checkm_stats     = channel.empty()
     ch_gtdbtk_summary   = channel.empty()
-    ch_mag_summary_out  = channel.empty()
-    ch_final_contig2bin = channel.empty()
 
     if (!params.skip_bin_qa) {
-
         // Run CheckM
         ch_checkm_out = CHECKM(ch_final_bins)
         ch_checkm_stats = ch_checkm_out.checkm_stats // Assign for emit
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
-
-        // Run GTDB-Tk
-        if (!params.skip_gtdbtk) {
-            // Resolved as a file so that a relative path is taken from the launch directory
-            ch_gtdbtk_out = GTDBTK(ch_final_bins, file(params.gtdbtk_db, checkIfExists: true))
-            ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
-            ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
-        }
-
-        // Summary. When GTDB-Tk is skipped its channel is empty, so it must not be
-        // joined: the join would match nothing and silently drop every group.
-        ch_summarize = ch_final_bins
-            .join(ch_checkm_stats)
-            .join(ch_coverm_out.coverm_stats)
-
-        ch_summarize_taxonomy = params.skip_gtdbtk
-            ? ch_summarize.map { group, bins, checkm, coverm -> [ group, bins, checkm, coverm, [] ] }
-            : ch_summarize.join(ch_gtdbtk_summary)
-
-        // Run Summary
-        ch_summary_run = MAG_SUMMARY(
-            ch_summarize_taxonomy.map { group, bins, checkm, coverm, gtdbtk -> [ group, bins, checkm, gtdbtk, coverm ] }
-        )
-        ch_mag_summary_out = ch_summary_run.mag_summary // Assign for emit
-        ch_final_contig2bin = ch_summary_run.contig2bin // Assign for emit
-        ch_versions = ch_versions.mix(MAG_SUMMARY.out.versions.first())
-
     }
+
+    if (!params.skip_gtdbtk) {
+        // Run GTDB-Tk. Resolved as a file so that a relative path is taken from the launch directory
+        ch_gtdbtk_out = GTDBTK(ch_final_bins, file(params.gtdbtk_db, checkIfExists: true))
+        ch_gtdbtk_summary = ch_gtdbtk_out.gtdbtk_summary // Assign for emit
+        ch_versions = ch_versions.mix(GTDBTK.out.versions.first())
+    }
+
+    // Summary of every MAG: coverage always, quality and taxonomy when they ran. A skipped
+    // step stands in as an empty list, so that it is not joined: a join with an empty
+    // channel would match nothing and silently drop every group.
+    ch_summary_checkm = params.skip_bin_qa
+        ? ch_final_bins.map { meta, _bins -> [ meta, [] ] }
+        : ch_checkm_stats
+    ch_summary_gtdbtk = params.skip_gtdbtk
+        ? ch_final_bins.map { meta, _bins -> [ meta, [] ] }
+        : ch_gtdbtk_summary
+
+    // Run Summary
+    ch_summary_run = MAG_SUMMARY(
+        ch_final_bins
+            .join(ch_summary_checkm)
+            .join(ch_summary_gtdbtk)
+            .join(ch_coverm_out.coverm_stats)
+    )
+    ch_mag_summary_out  = ch_summary_run.mag_summary
+    ch_final_contig2bin = ch_summary_run.contig2bin
+    ch_versions = ch_versions.mix(MAG_SUMMARY.out.versions.first())
 
     // Files picked up by MultiQC. Only files a MultiQC module can parse belong here: an
     // unparseable file makes the channel non-empty without giving MultiQC anything to report,

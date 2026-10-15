@@ -142,7 +142,7 @@ best, non-redundant set of bins. Individual binners can be turned off with
     - `bin_id`, `group_id`, `bin_filename`: the id given to the MAG by the pipeline, its group,
       and the bin file it was built from.
     - `completeness`, `contamination`, `genome_size`, `contig_n50`, `gc_content`,
-      `total_contigs`, `max_contig_length`: CheckM2.
+      `total_contigs`, `max_contig_length`: CheckM2. Empty under `--skip_bin_qa`.
     - `domain`, `phylum`, `class`, `order`, `family`, `genus`, `species`: the GTDB-Tk
       classification split by rank, `Unclassified` for the ranks GTDB-Tk left unassigned.
     - `closest_placement_reference`, `closest_placement_ani`, `warnings`: GTDB-Tk. Empty under

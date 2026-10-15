@@ -122,17 +122,17 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 
 ## Pipeline specific options
 
-| Option                | Default                       | Description                                                                                                               |
-| --------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                                                                                |
-| `--flye_read_type`    | `nano-hq`                     | Flye only. Read type passed to Flye: `nano-hq`, `nano-raw`, `nano-corr`, `pacbio-hifi`, `pacbio-raw` or `pacbio-corr`.    |
-| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used.                        |
-| `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                                                      |
-| `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                                             |
-| `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                                                 |
-| `--minimap2_preset`   | `map-ont`                     | minimap2 preset for long-read mapping: `map-ont`, `lr:hq` (Nanopore Q20+), `map-hifi` or `map-pb`.                        |
-| `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                                            |
-| `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database. Required, and checked at start-up, unless `--skip_gtdbtk`, `--skip_bin_qa` or `--only_qc` is set. |
+| Option                | Default                       | Description                                                                                                            |
+| --------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                                                                             |
+| `--flye_read_type`    | `nano-hq`                     | Flye only. Read type passed to Flye: `nano-hq`, `nano-raw`, `nano-corr`, `pacbio-hifi`, `pacbio-raw` or `pacbio-corr`. |
+| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used.                     |
+| `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                                                   |
+| `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                                          |
+| `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                                              |
+| `--minimap2_preset`   | `map-ont`                     | minimap2 preset for long-read mapping: `map-ont`, `lr:hq` (Nanopore Q20+), `map-hifi` or `map-pb`.                     |
+| `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                                         |
+| `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database. Required, and checked at start-up, unless `--skip_gtdbtk` or `--only_qc` is set.               |
 
 `--only_qc` stops the run after long read QC: NanoPlot, Porechop_ABI and Chopper run, the
 QC'd reads and the MultiQC report are published, and no assembly, annotation, mapping or
@@ -143,6 +143,9 @@ nothing to run.
 Any step can be turned off: `--skip_qc`, `--skip_nanoplot`, `--skip_porechop`,
 `--skip_medaka`, `--skip_comebin`, `--skip_semibin`, `--skip_bin_qa`,
 `--skip_gtdbtk`, `--skip_multiqc`. All default to `false` except `--skip_medaka`.
+`--skip_bin_qa` skips CheckM2 only: without completeness estimates no contig is held out as a
+single-contig MAG, and the quality columns of the MAG summary are empty. GTDB-Tk and the
+summary still run.
 
 Medaka polishes Flye assemblies only, and is **skipped by default**. Medaka is a haploid
 consensus model: on a co-assembly of related organisms at uneven depth it can replace a low
