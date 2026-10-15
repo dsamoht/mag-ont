@@ -155,25 +155,16 @@ workflow MAG_ONT {
     ch_generated_assembly_out = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly)
     ch_versions = ch_versions.mix(ch_generated_assembly_out.versions)
 
-    ch_assembly  = ch_generated_assembly_out.assembly
-    ch_consensus = ch_generated_assembly_out.consensus
-
-    ch_assembly_consensus_join = ch_assembly
-        .join(ch_consensus, remainder: true)
-
     // For publishing: both the raw assembly and the Medaka consensus when available
-    ch_assembly_to_publish = ch_assembly_consensus_join
-        .flatMap { meta, assembly, consensus ->
-            def results = [ [ meta + [ assembler: params.assembler ], assembly ] ]
-            if (consensus) {
-                results << [ meta + [ assembler: 'medaka' ], consensus ]
-            }
-            results
-        }
+    ch_assembly_to_publish = ch_generated_assembly_out.assembly
+        .map { meta, assembly -> [ meta + [ assembler: params.assembler ], assembly ] }
+        .mix(
+            ch_generated_assembly_out.consensus
+                .map { meta, consensus -> [ meta + [ assembler: 'medaka' ], consensus ] }
+        )
 
-    // For binning: medaka if available, otherwise flye or metamdbg
-    ch_assembly_for_binning = ch_assembly_consensus_join
-        .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
+    // For binning: medaka if it ran, otherwise flye or metamdbg
+    ch_assembly_for_binning = ch_generated_assembly_out.final_assembly
         .mix(ch_plain_input_assembly)
 
     // A contig long enough to be a MAG on its own is assessed as a genome of its own, and
