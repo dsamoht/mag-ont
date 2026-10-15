@@ -83,7 +83,7 @@ workflow PIPELINE_INITIALISATION {
     // GTDB-Tk is the last step of the run, so a missing database would otherwise only
     // surface once assembly and binning are done. The schema checks that a path given
     // exists; whether one is needed at all depends on the skip flags, so that is checked here.
-    if (!params.only_qc && !params.skip_bin_qa && !params.skip_gtdbtk && !params.gtdbtk_db) {
+    if (!params.only_qc && !params.skip_gtdbtk && !params.gtdbtk_db) {
         error("No GTDB-Tk database: pass --gtdbtk_db, or --skip_gtdbtk to run without taxonomic classification.")
     }
 

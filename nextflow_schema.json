@@ -181,7 +181,8 @@
                 },
                 "skip_bin_qa": {
                     "type": "boolean",
-                    "description": "Skip bin quality assessment (CheckM2, GTDB-Tk and the MAG summary).",
+                    "description": "Skip CheckM2: no quality assessment of the bins, and no single-contig MAGs held out of binning.",
+                    "help_text": "The single-contig MAG candidates are sorted on CheckM2 completeness, so without CheckM2 every contig goes to the binners. GTDB-Tk and the MAG summary still run; the summary's quality columns are then empty.",
                     "fa_icon": "fas fa-forward"
                 },
                 "skip_gtdbtk": {
