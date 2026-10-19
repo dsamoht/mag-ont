@@ -14,6 +14,7 @@ include { GTDBTK                  } from '../../modules/local/gtdbtk'
 include { MAG_SUMMARY             } from '../../modules/local/mag_summary'
 include { METABAT                 } from '../../modules/local/metabat'
 include { MINIMAP                 } from '../../modules/local/minimap'
+include { RENAME_BINS             } from '../../modules/local/rename_bins'
 include { SEMIBIN                 } from '../../modules/local/semibin'
 
 
@@ -227,10 +228,16 @@ workflow BINNING {
 
     // The single-contig MAGs held out of binning re-enter here, so that everything below
     // - coverage, quality, taxonomy and the summary - treats them like any other MAG.
-    ch_final_bins = ch_sc_mag_bins
+    ch_bins_to_name = ch_sc_mag_bins
         .join(ch_refined_bins)
         .map { group, sc_mags, refined_bins -> [ [ id: group ], sc_mags + refined_bins ] }
         .filter { _meta, bins -> bins.size() > 0 }
+
+    // The bins take their final name, `<group>_bin_NNN`, before anything reads them, so
+    // that CoverM, CheckM2, GTDB-Tk and the published files all name a MAG the same way
+    RENAME_BINS(ch_bins_to_name)
+    ch_final_bins = RENAME_BINS.out.bins
+    ch_versions = ch_versions.mix(RENAME_BINS.out.versions.first())
 
     ch_coverm_genome_input = ch_final_bins
         .join(ch_group_bams)
@@ -279,6 +286,7 @@ workflow BINNING {
     // Run Summary
     ch_summary_run = MAG_SUMMARY(
         ch_final_bins
+            .join(RENAME_BINS.out.bin_names)
             .join(ch_summary_checkm)
             .join(ch_summary_gtdbtk)
             .join(ch_coverm_out.coverm_stats)

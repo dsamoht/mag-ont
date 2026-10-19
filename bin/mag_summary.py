@@ -3,7 +3,6 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 import pandas as pd
 
@@ -14,7 +13,11 @@ def parse_args():
     )
     parser.add_argument(
         "--bins", nargs="+", required=True,
-        help="Paths to bin FASTA files (e.g. DAS Tool output .fa/.fna/.fasta)"
+        help="Paths to bin FASTA files, named <group>_bin_NNN.fa"
+    )
+    parser.add_argument(
+        "--bin-names", required=True,
+        help="CSV with the final name of each bin (bin_id) and its original file (original_bin)"
     )
     parser.add_argument("--checkm", help="Path to checkm_qa.tsv")
     parser.add_argument("--coverm", help="Path to coverm_stats.tsv")
@@ -51,31 +54,21 @@ def main():
     group = args.group
     bin_paths = sorted(Path(p) for p in args.bins)
 
-    bin_id_map: Dict[str, str] = {}
-    bin_rows: List[dict] = []
+    df_names = pd.read_csv(args.bin_names, dtype=str)
+    df_bins = pd.DataFrame({"bin_id": [p.stem for p in bin_paths]}).merge(
+        df_names, on="bin_id", how="left"
+    )
+    unnamed = df_bins.loc[df_bins["original_bin"].isna(), "bin_id"].tolist()
+    if unnamed:
+        sys.exit(f"ERROR: Bins missing from {args.bin_names}: {unnamed}")
 
-    for i, bin_path in enumerate(bin_paths, start=1):
-        new_bin_id = f"{group}_bin_{i:03d}"
-        stem = bin_path.stem
-
-        bin_id_map[stem] = new_bin_id
-        bin_rows.append({
-            "bin_filename": bin_path.name,
-            "merge_id": stem,
-            "bin_id": new_bin_id
-        })
-
-    df_bins = pd.DataFrame(bin_rows)
     contig2bin_path = f"{group}_contig2bin.csv"
 
     try:
         with open(contig2bin_path, "w") as c2b:
             for bin_path in bin_paths:
-                stem = bin_path.stem
-                new_bin_id = bin_id_map[stem]
-
                 for contig in iter_fasta_contigs(bin_path):
-                    c2b.write(f"{new_bin_id},{contig}\n")
+                    c2b.write(f"{bin_path.stem},{contig}\n")
     except Exception as e:
         sys.exit(f"ERROR writing contig2bin file: {e}")
 
@@ -159,9 +152,9 @@ def main():
 
     final_df = (
         df_bins
-        .merge(df_checkm, left_on="merge_id", right_on="Name", how="left")
-        .merge(df_gtdb, left_on="merge_id", right_on="user_genome", how="left")
-        .merge(df_coverm, left_on="merge_id", right_on="Genome", how="left")
+        .merge(df_checkm, left_on="bin_id", right_on="Name", how="left")
+        .merge(df_gtdb, left_on="bin_id", right_on="user_genome", how="left")
+        .merge(df_coverm, left_on="bin_id", right_on="Genome", how="left")
     )
 
     final_df["group_id"] = group
@@ -198,7 +191,7 @@ def main():
     base_cols = [
         "bin_id",
         "group_id",
-        "bin_filename",
+        "original_bin",
         "Completeness",
         "Contamination",
         "Genome_Size",
