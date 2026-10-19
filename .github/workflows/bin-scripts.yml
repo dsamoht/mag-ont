@@ -1,0 +1,24 @@
+name: bin scripts
+# Unit tests of the helper scripts in bin/. Kept out of linting.yml, which nf-core lint
+# requires to match the template.
+on:
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      # pandas pinned to the version in the modules' environment.yml
+      - name: Install dependencies
+        run: pip install pandas==2.2.3 pytest
+
+      - name: Test the helper scripts in bin/
+        run: pytest tests/bin

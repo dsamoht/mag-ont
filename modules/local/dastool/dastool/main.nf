@@ -13,13 +13,13 @@ process DASTOOL {
     tuple val(meta), path(assembly), path(contig2bin)
 
     output:
-    tuple val(meta), path("*.fa"), emit: dastool_bins, optional: true
-    path("versions.yml")         , emit: versions
+    tuple val(meta), path("*.fa", arity: '0..*'), emit: dastool_bins
+    path("versions.yml")                        , emit: versions
 
     script:
     def args = task.ext.args ?: ''
     def contig2binList = contig2bin.join(",")
-    def labels = contig2bin.collect { it.name.replaceAll(/_contigs?2bin\.tsv$/, "") }.join(",")
+    def labels = contig2bin.collect { f -> f.name.replaceAll(/_contigs?2bin\.tsv$/, "") }.join(",")
     """
     DAS_Tool \\
         -i ${contig2binList} \\

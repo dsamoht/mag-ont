@@ -12,7 +12,7 @@ report and the pipeline information, which are global.
 - [Assembly](#assembly) — Flye (optionally polished with Medaka) or metaMDBG
 - [Gene prediction](#gene-prediction) — Pyrodigal
 - [Mapping and coverage](#mapping-and-coverage) — minimap2 or bwa-mem2, samtools, CoverM
-- [Binning](#binning) — MetaBAT2, MaxBin2, CONCOCT, SemiBin2, refined with DAS Tool
+- [Binning](#binning) — MetaBAT2, COMEBin, SemiBin2, refined with DAS Tool
 - [Bin quality and taxonomy](#bin-quality-and-taxonomy) — CheckM2, GTDB-Tk, MAG summary
 - [MultiQC](#multiqc)
 - [Pipeline information](#pipeline-information)
@@ -51,7 +51,8 @@ come with a pre-existing assembly skip QC.
   - `*.consensus.fasta`: the Medaka-polished assembly, used for binning when present.
     Flye with `--skip_medaka false` only; there is no such directory otherwise.
 - `group_<group>/assembly/provided/`
-  - the assembly supplied in the sample sheet, when one was given.
+  - the assembly supplied in the sample sheet, when one was given; a gzipped one is
+    published decompressed, as the pipeline used it.
 
 </details>
 
@@ -106,10 +107,8 @@ summary — carries one set of columns per sample of the run.
 
 - `group_<group>/binning/metabat/`
   - `metabat_bin.*.fa`, `*_depth.txt`
-- `group_<group>/binning/maxbin/`
-  - `maxbin_bin.*.fasta`, abundance files
-- `group_<group>/binning/concoct/`
-  - `concoct_*.fa`
+- `group_<group>/binning/comebin/`
+  - `comebin_*.fa`
 - `group_<group>/binning/semibin/`
   - `*.fa`
 - `group_<group>/binning/contig2bin/`
@@ -121,15 +120,19 @@ summary — carries one set of columns per sample of the run.
 
 </details>
 
-Up to four binners run on the same assembly and coverage data; DAS Tool then selects the
+Up to three binners run on the same assembly and coverage data; DAS Tool then selects the
 best, non-redundant set of bins. Individual binners can be turned off with
-`--skip_maxbin`, `--skip_concoct` and `--skip_semibin`.
+`--skip_comebin` and `--skip_semibin`.
 
 ### Bin quality and taxonomy
 
 <details markdown="1">
 <summary>Output files</summary>
 
+- `group_<group>/binning/final_bins/`
+  - `<group>_bin_NNN.fa`: every MAG of the group, DAS Tool bins and single-contig MAGs, under
+    its final name, numbered in the order of the original file names. CoverM, CheckM2, GTDB-Tk
+    and the summary all use these names.
 - `group_<group>/binning/checkm/`
   - `quality_report.tsv`: completeness and contamination of each bin.
 - `group_<group>/binning/single_contig_mags/<contig>/`
@@ -140,10 +143,10 @@ best, non-redundant set of bins. Individual binners can be turned off with
 - `group_<group>/binning/summary/`
   - `*_mag_summary.csv`: quality, coverage and taxonomy of every MAG in one table, one row per
     bin, columns in this order:
-    - `bin_id`, `group_id`, `bin_filename`: the id given to the MAG by the pipeline, its group,
-      and the bin file it was built from.
+    - `bin_id`, `group_id`, `original_bin`: the final name of the MAG, its group, and the DAS
+      Tool bin or single-contig MAG file it was copied from.
     - `completeness`, `contamination`, `genome_size`, `contig_n50`, `gc_content`,
-      `total_contigs`, `max_contig_length`: CheckM2.
+      `total_contigs`, `max_contig_length`: CheckM2. Empty under `--skip_bin_qa`.
     - `domain`, `phylum`, `class`, `order`, `family`, `genus`, `species`: the GTDB-Tk
       classification split by rank, `Unclassified` for the ranks GTDB-Tk left unassigned.
     - `closest_placement_reference`, `closest_placement_ani`, `warnings`: GTDB-Tk. Empty under

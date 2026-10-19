@@ -17,9 +17,12 @@ input:
   - - meta:
         type: map
         description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
-    - dastool_bins:
+    - bins:
         type: file
-        description: Dastool bins
+        description: Final bins of the group, under their final names
+    - bin_names:
+        type: file
+        description: Final name of each bin and the bin file it was copied from (RENAME_BINS)
     - checkm_stats:
         type: file
         description: Checkm stats
@@ -47,6 +50,10 @@ output:
           description: contig2bin.csv
           pattern: "*_contig2bin.csv"
   versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
 authors:
   - "@dsamoht"
 maintainers:

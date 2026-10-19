@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "rename_bins"
+description: Give the final bins of a group their final names, `<group>_bin_NNN.fa`, numbered in file name order
+keywords:
+  - rename
+  - bins
+  - mag
+tools:
+  - "coreutils":
+      description: GNU core utilities
+      homepage: https://www.gnu.org/software/coreutils/
+      documentation: https://www.gnu.org/software/coreutils/manual/
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - bins:
+        type: file
+        description: Final bins of the group, DAS Tool bins and single-contig MAGs
+        pattern: "*.fa"
+output:
+  bins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*_bin_*.fa":
+          type: file
+          description: The bins under their final names
+          pattern: "*_bin_*.fa"
+  bin_names:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "*_bin_names.csv":
+          type: file
+          description: Final name of each bin and the bin file it was copied from
+          pattern: "*_bin_names.csv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

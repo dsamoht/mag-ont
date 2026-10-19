@@ -21,6 +21,7 @@ workflow PIPELINE_INITIALISATION {
     help            // boolean or string: display the help message
     help_full       // boolean: display the full help message
     show_hidden     // boolean: display hidden parameters in the help message
+    version         // boolean: display the pipeline version
 
     main:
 
@@ -42,13 +43,16 @@ workflow PIPELINE_INITIALISATION {
             ],
             help instanceof String && help != "true" ? help : "",
         ))
-        // Nextflow creates the work directory when the session starts, before this script
-        // runs, so printing the help message leaves an empty `work/` behind in whatever
-        // directory it was called from. Remove it again, but only if this run is the one
-        // that created it.
-        if (workflow.workDir.exists() && workflow.workDir.list().size() == 0) {
-            workflow.workDir.deleteDir()
-        }
+        removeEmptyWorkDir()
+        exit(0)
+    }
+
+    //
+    // Print the pipeline version and exit
+    //
+    if (version) {
+        log.info("${workflow.manifest.name} v${workflow.manifest.version}")
+        removeEmptyWorkDir()
         exit(0)
     }
 
@@ -76,6 +80,13 @@ workflow PIPELINE_INITIALISATION {
         error("--only_qc and --skip_qc cannot be combined: with read QC skipped, --only_qc would run nothing.")
     }
 
+    // GTDB-Tk is the last step of the run, so a missing database would otherwise only
+    // surface once assembly and binning are done. The schema checks that a path given
+    // exists; whether one is needed at all depends on the skip flags, so that is checked here.
+    if (!params.only_qc && !params.skip_gtdbtk && !params.gtdbtk_db) {
+        error("No GTDB-Tk database: pass --gtdbtk_db, or --skip_gtdbtk to run without taxonomic classification.")
+    }
+
     // `outputDir` follows `params.outdir` (nextflow.config), and Nextflow falls back to
     // publishing in `./results` when it is null. Parameter validation already requires
     // `--outdir`, but it can be turned off, so the run is stopped here as well: the results
@@ -91,9 +102,8 @@ workflow PIPELINE_INITIALISATION {
     // nf-schema returns [ meta, assembly_fasta, long_reads, short_reads_1, short_reads_2 ]
     // with an empty list for any column left blank.
     //
-    ch_samplesheet = channel
-        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
-        .map { meta, assembly, long_reads, short_reads_1, short_reads_2 ->
+    def samples = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .collect { meta, assembly, long_reads, short_reads_1, short_reads_2 ->
             [
                 sample_id     : meta.id,
                 group         : meta.group,
@@ -107,21 +117,21 @@ workflow PIPELINE_INITIALISATION {
 
     //
     // Checks that span several rows of the sample sheet, which a per-row JSON schema
-    // cannot express. Failures stop the pipeline before any task is submitted.
+    // cannot express. They run on the parsed sample sheet, before the channel the rest of
+    // the pipeline reads from exists, so a failure stops the run before any task is submitted.
     //
-    ch_samplesheet
-        .map { sample -> [ sample.group, sample ] }
-        .groupTuple()
-        .map { group, rows -> validateGroup(group, rows) }
+    samples
+        .groupBy { sample -> sample.group }
+        .each { group, rows -> validateGroup(group, rows) }
 
     //
     // Checks that span the whole run rather than a single group. Only `--binning_map_mode
     // all` maps a sample against another group's assembly, so a sample sheet that is valid
     // today stays valid: nothing here fires in the default mode.
     //
-    ch_samplesheet
-        .toList()
-        .map { rows -> validateRun(rows) }
+    validateRun(samples)
+
+    ch_samplesheet = channel.fromList(samples)
 
     emit:
     samplesheet = ch_samplesheet
@@ -156,6 +166,18 @@ ${workflow.manifest.description}
 }
 
 //
+// Nextflow creates the work directory when the session starts, before this script runs, so
+// a run that only prints the help message or the version leaves an empty `work/` behind in
+// whatever directory it was called from. Remove it again, but only if it is still empty,
+// i.e. if this run is the one that created it.
+//
+def removeEmptyWorkDir() {
+    if (workflow.workDir.exists() && workflow.workDir.list().size() == 0) {
+        workflow.workDir.deleteDir()
+    }
+}
+
+//
 // Validate one group of samples: every group is assembled and binned as a unit, so the
 // rows sharing a group have to agree with each other.
 //
@@ -167,6 +189,16 @@ def validateGroup(group, rows) {
 
     if (assemblies.isEmpty() && long_reads.isEmpty()) {
         error("group '${group}' has no assembly and no long reads to assemble")
+    }
+
+    // Sample ids name the BAM files and QC outputs of a group: two samples of the same name
+    // would collide when their BAMs are staged together for binning
+    def duplicate_ids = rows
+        .countBy { row -> row.sample_id }
+        .findAll { _id, count -> count > 1 }
+        .keySet()
+    if (duplicate_ids) {
+        error("group '${group}' has repeated sample ids: ${duplicate_ids.sort().join(', ')}. Sample ids must be unique within a group.")
     }
 
     // The same read file must not be claimed by two samples of the same group
@@ -206,19 +238,17 @@ def validateGroup(group, rows) {
         }
     }
 
-    // Mapping strategy is chosen per group, so read types cannot be mixed within one
-    if (rows.size() > 1) {
-        def samples_with_only_long  = rows.findAll { row -> row.long_reads && !row.sr1 }
-        def samples_with_only_short = rows.findAll { row -> !row.long_reads && row.sr1 && row.sr2 }
-
-        if (!samples_with_only_long.isEmpty() && !samples_with_only_short.isEmpty()) {
-            def long_samples  = samples_with_only_long.collect { row -> row.sample_id }.join(', ')
-            def short_samples = samples_with_only_short.collect { row -> row.sample_id }.join(', ')
-            error("group '${group}' mixes read types across samples. Samples with long reads: [${long_samples}]. Samples with paired-end reads: [${short_samples}].")
+    // Mapping strategy is chosen per group: a group with paired-end reads maps those alone.
+    // A sample of it with long reads but no paired-end reads would then be left out of
+    // every coverage table, so it is refused rather than dropped without a word.
+    if (rows.any { row -> row.sr1 && row.sr2 }) {
+        def long_only = rows.findAll { row -> row.long_reads && !(row.sr1 && row.sr2) }
+        if (long_only) {
+            def long_samples  = long_only.collect { row -> row.sample_id }.join(', ')
+            def short_samples = rows.findAll { row -> row.sr1 && row.sr2 }.collect { row -> row.sample_id }.join(', ')
+            error("group '${group}' mixes read types across samples: it maps the paired-end reads of [${short_samples}], so [${long_samples}], with long reads only, would contribute no coverage. Give every sample of the group paired-end reads, or none.")
         }
     }
-
-    return group
 }
 
 //
@@ -229,7 +259,7 @@ def validateGroup(group, rows) {
 //
 def validateRun(rows) {
     if (params.binning_map_mode != 'all') {
-        return rows
+        return
     }
 
     // One mapper for the whole run, the run-wide version of the per-group rule above
@@ -276,6 +306,4 @@ def validateRun(rows) {
             error("--binning_map_mode all: read file '${path}' is shared by samples ${ids.unique().sort().join(', ')}, which would map the same reads twice against every assembly.")
         }
     }
-
-    return rows
 }

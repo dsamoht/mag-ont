@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::concoct=1.1.0
+  - conda-forge::coreutils=9.5

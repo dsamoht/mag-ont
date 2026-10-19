@@ -14,7 +14,7 @@ process METABAT {
     tuple val(meta_bam),      path(bam)
 
     output:
-    tuple val(meta_assembly), path("metabat_bin.*.fa"), emit: metabat_bins, optional: true
+    tuple val(meta_assembly), path("metabat_bin.*.fa", arity: '0..*'), emit: metabat_bins
     tuple val(meta_assembly), path("*_depth.txt"), emit: metabat_depth
     path("versions.yml"), emit: versions
 
@@ -22,6 +22,9 @@ process METABAT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta_assembly.id}"
     """
+    # Both tools default to every core of the node, not the cores of the task
+    export OMP_NUM_THREADS=${task.cpus}
+
     jgi_summarize_bam_contig_depths \\
         --outputDepth ${prefix}_depth_all.txt \\
         ${bam}
@@ -40,6 +43,7 @@ process METABAT {
 
     metabat2 \\
         ${args} \\
+        -t ${task.cpus} \\
         -i ${assembly} \\
         -a ${prefix}_depth.txt \\
         -o metabat_bin

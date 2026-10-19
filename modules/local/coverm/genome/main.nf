@@ -10,7 +10,7 @@ process COVERM_GENOME {
         'biocontainers/coverm:0.7.0--hcb7b614_4' }"
 
     input:
-    tuple val(meta), path(dastool_bins, stageAs: "bins/*"), path(bam_files)
+    tuple val(meta), path(bins, stageAs: "bins/*"), path(bam_files)
 
     output:
     tuple val(meta), path("coverm_genome_stats.tsv"), emit: coverm_stats

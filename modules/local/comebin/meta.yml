@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "comebin"
+description: Bin contigs with COMEBin
+keywords:
+  - binning
+  - metagenomics
+  - mag
+  - deep learning
+tools:
+  - "comebin":
+      description: Metagenomic binning with contrastive multi-view representation learning
+      homepage: https://github.com/ziyewang/COMEBin
+      documentation: https://github.com/ziyewang/COMEBin
+      licence: ["GPL-3.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - assembly:
+        type: file
+        description: Assembly in FASTA format
+  - - bam_meta:
+        type: map
+        description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+    - bams:
+        type: file
+        description: Alignments in sorted BAM format, one per sample
+        pattern: "*.bam"
+output:
+  comebin_bins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
+      - "comebin_*.fa":
+          type: file
+          description: Bins in FASTA format
+          pattern: "comebin_*.fa"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dsamoht"
+maintainers:
+  - "@dsamoht"

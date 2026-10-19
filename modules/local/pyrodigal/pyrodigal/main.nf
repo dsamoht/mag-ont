@@ -1,6 +1,6 @@
 process PYRODIGAL {
 
-    label 'process_medium'
+    label 'process_single'
 
     tag "$meta.id"
 

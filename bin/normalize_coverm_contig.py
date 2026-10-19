@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import pysam
-import os
 import argparse
 
-def normalize_coverm_contig(coverm_tsv, bam_files, gff_file, output_file):
-    # 1. Calculate sequencing depth (Total Aligned Nucleotides)
-    # Standard practice: sum of alignment lengths excluding unmapped reads and soft-clips.
+def read_aligned_bases(depth_files):
+    """sample -> aligned bases, from the `<sample>\t<bases>` files written by the mappers."""
     sample_depths = {}
-    for bam in bam_files:
-        sample_name = os.path.basename(bam).split('.')[0]
-        with pysam.AlignmentFile(bam, "rb") as sam:
-            # Calculate total aligned bases for the denominator
-            total_bases = sum(r.query_alignment_length for r in sam if not r.is_unmapped)
-            sample_depths[sample_name] = total_bases
-            print(f" - {sample_name}: {total_bases} aligned bp")
+    for depth_file in depth_files:
+        with open(depth_file) as f:
+            for line in f:
+                sample, bases = line.rstrip("\n").split("\t")
+                sample_depths[sample] = int(bases)
+                print(f" - {sample}: {bases} aligned bp")
+    return sample_depths
+
+
+def normalize_coverm_contig(coverm_tsv, depth_files, gff_file, output_file):
+    # 1. Sequencing depth of each sample: aligned bases excluding unmapped reads, soft-clips
+    # and secondary alignments, counted by `samtools stats` when the reads were mapped
+    sample_depths = read_aligned_bases(depth_files)
 
     # 2. Parse GFF: Mapping Gene ID -> Parent Contig
     gff_mapping = []
@@ -68,8 +71,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Normalize CoverM coverage metrics by sample depth.")
     parser.add_argument("-i", "--input", required=True, help="CoverM contig output TSV.")
     parser.add_argument("-g", "--gff", required=True, help="GFF3 annotation file.")
-    parser.add_argument("-b", "--bams", required=True, nargs='+', help="Input BAM files.")
+    parser.add_argument("-d", "--depths", required=True, nargs='+', help="Aligned bases file(s), one '<sample>\\t<bases>' line each.")
     parser.add_argument("-o", "--output", required=True, help="Output TSV file name.")
 
     args = parser.parse_args()
-    normalize_coverm_contig(args.input, args.bams, args.gff, args.output)
+    normalize_coverm_contig(args.input, args.depths, args.gff, args.output)

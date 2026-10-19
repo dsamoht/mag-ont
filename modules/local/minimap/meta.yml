@@ -7,7 +7,7 @@ keywords:
   - map
   - long reads
   - nanopore
-  - sam
+  - bam
 tools:
   - "minimap2":
       description: Versatile pairwise aligner for genomic and spliced nucleotide sequences
@@ -15,6 +15,12 @@ tools:
       documentation: https://lh3.github.io/minimap2/minimap2.html
       licence: ["MIT"]
       identifier: biotools:minimap2
+  - "samtools":
+      description: Tools for manipulating next-generation sequencing data
+      homepage: http://www.htslib.org/
+      documentation: https://www.htslib.org/doc/samtools.html
+      licence: ["MIT"]
+      identifier: biotools:samtools
 input:
   - - meta_reads:
         type: map
@@ -29,14 +35,26 @@ input:
         type: file
         description: Reference assembly in FASTA format
 output:
-  sam:
+  bam_pair:
     - - meta_reads:
           type: map
           description: Meta reads
-      - "*.sam":
+      - "*.bam":
           type: file
-          description: Alignments in SAM format
-          pattern: "*.sam"
+          description: Alignments in coordinate-sorted BAM format
+          pattern: "*.bam"
+      - "*.bam.bai":
+          type: file
+          description: BAM index
+          pattern: "*.bam.bai"
+  aligned_bases:
+    - - meta_reads:
+          type: map
+          description: Meta reads
+      - "*.aligned_bases.tsv":
+          type: file
+          description: "One line, `<sample>\\t<bases>`: bases of the primary and supplementary alignments (samtools stats 'bases mapped (cigar)')"
+          pattern: "*.aligned_bases.tsv"
   versions:
     - "versions.yml":
         type: file

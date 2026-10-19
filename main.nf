@@ -18,6 +18,7 @@ include { CAT_CONTIGS             } from './modules/local/cat/contig'
 include { CAT_FASTQ               } from './modules/local/cat'
 include { CHECKM                  } from './modules/local/checkm'
 include { FILTER_HQ_SC            } from './modules/local/checkm/filter_hq_sc'
+include { GUNZIP                  } from './modules/local/gunzip'
 include { LONGREAD_ASSEMBLY       } from './workflows/longread_assembly'
 include { LONGREAD_QC             } from './workflows/longread_qc'
 include { MERGE_PYRODIGAL         } from './modules/local/pyrodigal/merge'
@@ -25,6 +26,33 @@ include { MULTIQC                 } from './modules/local/multiqc'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/pipeline_initialisation'
 include { PYRODIGAL               } from './modules/local/pyrodigal/pyrodigal'
 include { SEQKIT_SPLITBYLENGTH    } from './modules/local/seqkit'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    BOOLEAN PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Declared with their type so that Nextflow converts `--skip_qc false` on the command line
+// to false: undeclared, the value stays the string "false", which Groovy reads as true.
+// Defaults are set in nextflow.config. `--help` is left out, it also takes a string.
+params {
+    only_qc         : Boolean
+    skip_qc         : Boolean
+    skip_medaka     : Boolean
+    skip_nanoplot   : Boolean
+    skip_porechop   : Boolean
+    skip_comebin    : Boolean
+    skip_semibin    : Boolean
+    skip_bin_qa     : Boolean
+    skip_gtdbtk     : Boolean
+    skip_multiqc    : Boolean
+    monochrome_logs : Boolean
+    help_full       : Boolean
+    show_hidden     : Boolean
+    version         : Boolean
+    validate_params : Boolean
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,6 +79,20 @@ workflow MAG_ONT {
         .map { group, sample_ids, assemblies ->
             [ [ id: group, sample_ids: sample_ids.unique() ], assemblies[0] ]
         }
+        .branch { _meta, assembly ->
+            gzipped: assembly.name.endsWith('.gz')
+            plain:   true
+        }
+
+    //
+    // MODULE: decompress the gzipped assemblies given in the sample sheet
+    //
+    // Several steps read the assembly as text (the contig split, MetaBAT2's contig order,
+    // COMEBin, DAS_Tool), so every assembly past this point is plain FASTA.
+    ch_unzipped_assembly = GUNZIP(ch_input_assembly.gzipped).file
+    ch_versions = ch_versions.mix(GUNZIP.out.versions.first())
+
+    ch_plain_input_assembly = ch_input_assembly.plain.mix(ch_unzipped_assembly)
 
     // Which reads a group contributes to mapping: its paired-end reads when it has any, its
     // long reads otherwise. Decided once per group, as the mapper is.
@@ -121,10 +163,17 @@ workflow MAG_ONT {
             [ [ id: group.toString(), sample_ids: metas.id, has_assembly: has_assembly ], sorted_reads ]
         }
 
+    // Only a group of several samples has reads to pool: a single sample's reads go to the
+    // assembler as they are, rather than being copied whole into a "merged" file
     ch_reads_to_assemble = ch_grouped_reads
         .filter { meta, _reads -> !params.only_qc && !meta.has_assembly }
+        .branch { _meta, reads ->
+            single: reads.size() == 1
+            pooled: true
+        }
 
-    ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble).reads
+    ch_qc_reads_to_assembly = CAT_FASTQ(ch_reads_to_assemble.pooled).reads
+        .mix(ch_reads_to_assemble.single.map { meta, reads -> [ meta, reads[0] ] })
     ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first())
 
     //
@@ -133,26 +182,17 @@ workflow MAG_ONT {
     ch_generated_assembly_out = LONGREAD_ASSEMBLY(ch_qc_reads_to_assembly)
     ch_versions = ch_versions.mix(ch_generated_assembly_out.versions)
 
-    ch_assembly  = ch_generated_assembly_out.assembly
-    ch_consensus = ch_generated_assembly_out.consensus
-
-    ch_assembly_consensus_join = ch_assembly
-        .join(ch_consensus, remainder: true)
-
     // For publishing: both the raw assembly and the Medaka consensus when available
-    ch_assembly_to_publish = ch_assembly_consensus_join
-        .flatMap { meta, assembly, consensus ->
-            def results = [ [ meta + [ assembler: params.assembler ], assembly ] ]
-            if (consensus) {
-                results << [ meta + [ assembler: 'medaka' ], consensus ]
-            }
-            results
-        }
+    ch_assembly_to_publish = ch_generated_assembly_out.assembly
+        .map { meta, assembly -> [ meta + [ assembler: params.assembler ], assembly ] }
+        .mix(
+            ch_generated_assembly_out.consensus
+                .map { meta, consensus -> [ meta + [ assembler: 'medaka' ], consensus ] }
+        )
 
-    // For binning: medaka if available, otherwise flye or metamdbg
-    ch_assembly_for_binning = ch_assembly_consensus_join
-        .map { meta, assembly, consensus -> [ meta, consensus ?: assembly ] }
-        .mix(ch_input_assembly)
+    // For binning: medaka if it ran, otherwise flye or metamdbg
+    ch_assembly_for_binning = ch_generated_assembly_out.final_assembly
+        .mix(ch_plain_input_assembly)
 
     // A contig long enough to be a MAG on its own is assessed as a genome of its own, and
     // kept out of binning when it is complete enough: a contig that is already a genome
@@ -167,50 +207,50 @@ workflow MAG_ONT {
         ch_split_by_contig_lengths = SEQKIT_SPLITBYLENGTH(ch_assembly_for_binning, params.sc_mag_minimum)
         ch_versions = ch_versions.mix(SEQKIT_SPLITBYLENGTH.out.versions.first())
 
+        // Every group comes out of the split, with an empty list when no contig reaches
+        // --sc_mag_minimum, so that every step below has exactly one entry per group and is
+        // joined without `remainder`: a group never waits for the other groups.
+        ch_candidates = ch_split_by_contig_lengths.large
+            .branch { _meta, large ->
+                assess: large
+                none:   true
+            }
+
         // One CheckM job per group, with every candidate of that group as a genome of the
         // run, rather than one job per contig.
-        ch_potential_sc_hq_mag = ch_split_by_contig_lengths.large
-
-        ch_sc_mag_checkm = CHECKM(ch_potential_sc_hq_mag).checkm_stats
+        ch_sc_mag_checkm = CHECKM(ch_candidates.assess).checkm_stats
         ch_versions = ch_versions.mix(CHECKM.out.versions.first())
 
         //
         // MODULE: sort the candidates on completeness
         //
         ch_sc_mag_qa = FILTER_HQ_SC(
-            ch_potential_sc_hq_mag.join(ch_sc_mag_checkm),
+            ch_candidates.assess.join(ch_sc_mag_checkm),
             params.sc_mag_min_completeness
         )
         ch_versions = ch_versions.mix(FILTER_HQ_SC.out.versions.first())
 
+        // [ meta, held-out MAGs, rejected candidates ], one entry per group
+        ch_sorted_candidates = ch_sc_mag_qa.hq_sc
+            .join(ch_sc_mag_qa.lq_sc)
+            .mix(ch_candidates.none.map { meta, _none -> [ meta, [], [] ] })
+
         //
         // MODULE: put the short contigs and the rejected candidates back together
         //
-        // `remainder` covers the groups FILTER_HQ_SC did not run for, or that it rejected
-        // nothing in: their assembly is rebuilt from the short contigs alone.
         ch_concat_input = ch_split_by_contig_lengths.small
             .join(ch_split_by_contig_lengths.contig_mapping)
-            .join(ch_sc_mag_qa.lq_sc, remainder: true)
-            .map { meta, small_fa, mapping, lq_fa -> [ meta, small_fa, lq_fa ?: [], mapping ] }
+            .join(ch_sorted_candidates)
+            .map { meta, small_fa, mapping, _hq_fa, lq_fa -> [ meta, small_fa, lq_fa, mapping ] }
 
-        ch_rebuilt_assembly = CAT_CONTIGS(ch_concat_input).fasta
+        // A group whose every contig was held out gets an empty assembly here: BINNING
+        // keeps it away from the binners and picks its MAGs up through `ch_sc_mag_bins`.
+        ch_assembly_to_bin = CAT_CONTIGS(ch_concat_input).fasta
         ch_versions = ch_versions.mix(CAT_CONTIGS.out.versions.first())
 
-        // A group whose every contig was held out has nothing left to bin: it skips the
-        // binners, and BINNING picks its MAGs up again through `ch_sc_mag_bins`.
-        ch_assembly_to_bin = ch_rebuilt_assembly
-            .filter { _meta, assembly -> assembly.size() > 0 }
-
         // BINNING joins on this, so every group needs an entry, empty or not.
-        ch_sc_mag_bins = ch_rebuilt_assembly
-            .map { meta, _assembly -> [ meta.id, [] ] }
-            .join(
-                ch_sc_mag_qa.hq_sc.map { meta, hq_sc ->
-                    [ meta.id, hq_sc instanceof List ? hq_sc : [ hq_sc ] ]
-                },
-                remainder: true
-            )
-            .map { group, _none, hq_sc -> [ group, hq_sc ?: [] ] }
+        ch_sc_mag_bins = ch_sorted_candidates
+            .map { meta, hq_fa, _lq_fa -> [ meta.id, hq_fa ] }
     }
     else {
         // Without bin QA there is no completeness to sort candidates on, so nothing is
@@ -347,7 +387,6 @@ workflow MAG_ONT {
             ch_multiqc_logo.toList()
         )
         ch_multiqc_report = MULTIQC.out.report
-        ch_versions = ch_versions.mix(MULTIQC.out.versions)
     }
 
     emit:
@@ -357,7 +396,7 @@ workflow MAG_ONT {
     nanoplot_qc_html       = ch_qc_long_reads_out.nanoplot_qc_html
     porechop_log           = ch_qc_long_reads_out.porechop_log
     qc_long_reads          = ch_qc_long_reads
-    input_assembly         = ch_input_assembly
+    input_assembly         = ch_plain_input_assembly
     assembly               = ch_assembly_to_publish
     sc_mag_checkm          = ch_sc_mag_checkm
     pyrodigal_gff          = ch_genes.gff
@@ -368,9 +407,7 @@ workflow MAG_ONT {
     coverm_contig_norm     = BINNING.out.coverm_contig_norm
     metabat_bins           = BINNING.out.metabat_bins
     metabat_depth          = BINNING.out.metabat_depth
-    maxbin_bins            = BINNING.out.maxbin_bins
-    maxbin_abund           = BINNING.out.maxbin_abund
-    concoct_bins           = BINNING.out.concoct_bins
+    comebin_bins           = BINNING.out.comebin_bins
     semibin_bins           = BINNING.out.semibin_bins
     dastool_bins           = BINNING.out.dastool_bins
     final_bins             = BINNING.out.final_bins
@@ -400,7 +437,8 @@ workflow {
         params.input,
         params.help,
         params.help_full,
-        params.show_hidden
+        params.show_hidden,
+        params.version
     )
 
     //
@@ -426,9 +464,7 @@ workflow {
     coverm_contig_norm     = MAG_ONT.out.coverm_contig_norm
     metabat_bins           = MAG_ONT.out.metabat_bins
     metabat_depth          = MAG_ONT.out.metabat_depth
-    maxbin_bins            = MAG_ONT.out.maxbin_bins
-    maxbin_abund           = MAG_ONT.out.maxbin_abund
-    concoct_bins           = MAG_ONT.out.concoct_bins
+    comebin_bins           = MAG_ONT.out.comebin_bins
     semibin_bins           = MAG_ONT.out.semibin_bins
     dastool_bins           = MAG_ONT.out.dastool_bins
     final_bins             = MAG_ONT.out.final_bins
@@ -493,14 +529,8 @@ output {
     metabat_depth {
         path { meta, _file -> "group_${meta.id}/binning/metabat" }
     }
-    maxbin_bins {
-        path { meta, _file -> "group_${meta.id}/binning/maxbin" }
-    }
-    maxbin_abund {
-        path { meta, _file -> "group_${meta.id}/binning/maxbin" }
-    }
-    concoct_bins {
-        path { meta, _file -> "group_${meta.id}/binning/concoct" }
+    comebin_bins {
+        path { meta, _file -> "group_${meta.id}/binning/comebin" }
     }
     semibin_bins {
         path { meta, _file -> "group_${meta.id}/binning/semibin" }

@@ -24,22 +24,24 @@ sample3,groupC,/data/groupC.assembly.fasta,/data/sample3.ont.fastq.gz,/data/samp
 sample4,groupC,/data/groupC.assembly.fasta,/data/sample4.ont.fastq.gz,/data/sample4_R1.fastq.gz,/data/sample4_R2.fastq.gz
 ```
 
-| Column           | Description                                                                                                                     |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `sample_id`      | Unique sample identifier. Spaces are not allowed.                                                                               |
-| `group`          | Samples sharing a group are assembled and binned as one unit. Spaces are not allowed.                                           |
-| `assembly_fasta` | Optional pre-existing assembly. When given, the group is not assembled and every row of that group must point at the same file. |
-| `long_reads`     | Gzipped FastQ file of nanopore reads. Required unless `assembly_fasta` is given.                                                |
-| `short_reads_1`  | Optional gzipped FastQ file of forward paired-end reads.                                                                        |
-| `short_reads_2`  | Optional gzipped FastQ file of reverse paired-end reads. Required if `short_reads_1` is set.                                    |
+| Column           | Description                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sample_id`      | Sample identifier, unique within its group. Spaces are not allowed.                                                                                                            |
+| `group`          | Samples sharing a group are assembled and binned as one unit. Spaces are not allowed.                                                                                          |
+| `assembly_fasta` | Optional pre-existing assembly. When given, the group is not assembled and every row of that group must point at the same file. May be gzipped: it is decompressed before use. |
+| `long_reads`     | FastQ file of nanopore reads, gzipped or not. Required unless `assembly_fasta` is given.                                                                                       |
+| `short_reads_1`  | Optional FastQ file of forward paired-end reads, gzipped or not.                                                                                                               |
+| `short_reads_2`  | Optional FastQ file of reverse paired-end reads, gzipped or not. Required if `short_reads_1` is set.                                                                           |
 
 Rules that apply across the rows of a group, checked before any task is submitted:
 
 - A group needs either long reads to assemble or a pre-existing assembly.
+- Sample ids must be unique within a group: they name the group's BAM files and QC outputs.
 - All rows of a group must reference the same `assembly_fasta`, or none of them.
 - A read file cannot be shared by two samples of the same group.
-- A group cannot mix long-read-only samples with short-read-only samples, because the
-  mapping strategy is chosen once per group.
+- When any sample of a group carries paired-end reads, every sample of the group with long
+  reads must carry paired-end reads too, because the mapping strategy is chosen once per
+  group.
 
 When any sample of a group carries short reads, those reads drive the coverage signal for
 binning; otherwise the long reads are mapped with minimap2.
@@ -55,7 +57,7 @@ binning; otherwise the long reads are mapped with minimap2.
 
 `all` is what to use when the samples of a run belong to one experiment — a time series, a
 gradient, replicates of several conditions — but are assembled separately. A group holding a
-single sample then still gets a differential coverage signal, which is what MetaBAT2, CONCOCT
+single sample then still gets a differential coverage signal, which is what MetaBAT2, COMEBin
 and SemiBin2 bin on besides composition; without it they fall back on composition alone.
 
 It is not free: mapping goes from one job per sample to one job per assembly and per sample,
@@ -87,7 +89,7 @@ nextflow pull dsamoht/mag-ont
 Specify the pipeline version with `-r`, and record it in your methods:
 
 ```bash
-nextflow run dsamoht/mag-ont -r 1.4.0 -profile docker --input ./samplesheet.csv --outdir ./results
+nextflow run dsamoht/mag-ont -r 1.5.0 -profile docker --input ./samplesheet.csv --outdir ./results
 ```
 
 ## Core Nextflow arguments
@@ -100,11 +102,19 @@ comma-separated and order matters, the last one wins.
 - `docker`, `singularity`, `apptainer`, `podman`, `shifter`, `charliecloud`, `wave`
 - `conda` / `mamba` — only if none of the container engines are available, and only together with
   `--skip_bin_qa`: CheckM2 needs a DIAMOND reference database that the pipeline supplies through
-  its container image, and the Bioconda package ships none, so `CHECKM` fails without it
-- `gpu` — passes the GPU through to Medaka and SemiBin2
-- `drac` — slurm executor and resources for Digital Research Alliance of Canada clusters
+  its container image, and the Bioconda package ships none, so `CHECKM` fails without it. COMEBin
+  has no Conda environment either, so `--skip_comebin` is needed too
+- `gpu` — passes the GPU through to Medaka, SemiBin2 and COMEBin
+- `drac` — slurm executor and resources for Digital Research Alliance of Canada clusters. A GPU is
+  only requested together with `gpu` (`-profile drac,gpu,apptainer`)
 - `test` — a minimal dataset that exercises the whole pipeline
 - `test_full` — full-size test
+
+### Resource limits
+
+Memory and time requests grow with each retry, and are capped so that no task asks for more
+than a machine has: 256 GB, 32 CPUs and 72 h by default, 249 GB, 64 CPUs and 168 h under `drac`.
+Set `process.resourceLimits` in a config passed with `-c` to match your largest node.
 
 ### `-resume`
 
@@ -112,16 +122,17 @@ Restart a previous run, reusing the tasks whose inputs have not changed.
 
 ## Pipeline specific options
 
-| Option                | Default                       | Description                                                                                        |
-| --------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------- |
-| `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                                                         |
-| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used. |
-| `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                               |
-| `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                      |
-| `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                          |
-| `--maxbin_minlen`     | `2500`                        | Minimum contig length considered by MaxBin2.                                                       |
-| `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                     |
-| `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database, required unless `--skip_gtdbtk` is set.                                    |
+| Option                | Default                       | Description                                                                                                            |
+| --------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `--assembler`         | `flye`                        | Long read assembler, `flye` or `metamdbg`.                                                                             |
+| `--flye_read_type`    | `nano-hq`                     | Flye only. Read type passed to Flye: `nano-hq`, `nano-raw`, `nano-corr`, `pacbio-hifi`, `pacbio-raw` or `pacbio-corr`. |
+| `--medaka_model`      | `r1041_e82_400bps_hac_v5.2.0` | Flye only, and only with `--skip_medaka false`. Must match the flow cell, kit and basecaller used.                     |
+| `--chopper_minlength` | `1000`                        | Minimum read length kept by Chopper.                                                                                   |
+| `--chopper_minq`      | `10`                          | Minimum average read quality kept by Chopper.                                                                          |
+| `--only_qc`           | `false`                       | Stop after long read QC, before assembly.                                                                              |
+| `--minimap2_preset`   | `map-ont`                     | minimap2 preset for long-read mapping: `map-ont`, `lr:hq` (Nanopore Q20+), `map-hifi` or `map-pb`.                     |
+| `--sc_mag_minimum`    | `500000`                      | Contigs at least this long are assessed as single-contig MAGs.                                                         |
+| `--gtdbtk_db`         | `null`                        | Local GTDB-Tk database. Required, and checked at start-up, unless `--skip_gtdbtk` or `--only_qc` is set.               |
 
 `--only_qc` stops the run after long read QC: NanoPlot, Porechop_ABI and Chopper run, the
 QC'd reads and the MultiQC report are published, and no assembly, annotation, mapping or
@@ -130,8 +141,11 @@ QC, so nothing runs for them. It cannot be combined with `--skip_qc`, which woul
 nothing to run.
 
 Any step can be turned off: `--skip_qc`, `--skip_nanoplot`, `--skip_porechop`,
-`--skip_medaka`, `--skip_maxbin`, `--skip_concoct`, `--skip_semibin`, `--skip_bin_qa`,
+`--skip_medaka`, `--skip_comebin`, `--skip_semibin`, `--skip_bin_qa`,
 `--skip_gtdbtk`, `--skip_multiqc`. All default to `false` except `--skip_medaka`.
+`--skip_bin_qa` skips CheckM2 only: without completeness estimates no contig is held out as a
+single-contig MAG, and the quality columns of the MAG summary are empty. GTDB-Tk and the
+summary still run.
 
 Medaka polishes Flye assemblies only, and is **skipped by default**. Medaka is a haploid
 consensus model: on a co-assembly of related organisms at uneven depth it can replace a low
@@ -142,4 +156,3 @@ accuracy it buys is small. Pass `--skip_medaka false` to polish anyway, and chec
 metaMDBG produces its own consensus, so no polishing step runs with `--assembler metamdbg`,
 and passing `--medaka_model` or `--skip_medaka` on the command line together with it stops
 the run.
-

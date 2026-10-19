@@ -6,7 +6,7 @@ keywords:
   - align
   - map
   - short reads
-  - sam
+  - bam
 tools:
   - "bwa-mem2":
       description: Fast suffix-array based read aligner, a rewrite of bwa mem
@@ -14,6 +14,12 @@ tools:
       documentation: https://github.com/bwa-mem2/bwa-mem2#usage
       licence: ["MIT"]
       identifier: biotools:bwa-mem2
+  - "samtools":
+      description: Tools for manipulating next-generation sequencing data
+      homepage: http://www.htslib.org/
+      documentation: https://www.htslib.org/doc/samtools.html
+      licence: ["MIT"]
+      identifier: biotools:samtools
 input:
   - - meta_reads:
         type: map
@@ -24,18 +30,30 @@ input:
   - - meta_ref:
         type: map
         description: Meta ref
-    - reference:
-        type: file
-        description: Reference assembly in FASTA format
+    - index:
+        type: directory
+        description: bwa-mem2 index of the reference assembly, from BWA_INDEX
 output:
-  sam:
+  bam_pair:
     - - meta_reads:
           type: map
           description: Meta reads
-      - "*.sam":
+      - "*.bam":
           type: file
-          description: Alignments in SAM format
-          pattern: "*.sam"
+          description: Alignments in coordinate-sorted BAM format
+          pattern: "*.bam"
+      - "*.bam.bai":
+          type: file
+          description: BAM index
+          pattern: "*.bam.bai"
+  aligned_bases:
+    - - meta_reads:
+          type: map
+          description: Meta reads
+      - "*.aligned_bases.tsv":
+          type: file
+          description: "One line, `<sample>\\t<bases>`: bases of the primary and supplementary alignments (samtools stats 'bases mapped (cigar)')"
+          pattern: "*.aligned_bases.tsv"
   versions:
     - "versions.yml":
         type: file

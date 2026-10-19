@@ -3,6 +3,7 @@
 import argparse
 import csv
 import os
+import shutil
 import sys
 
 def parse_args():
@@ -36,23 +37,24 @@ def main():
 
         id_col = next((c for c in reader.fieldnames if c.lower() in ["bin id", "name", "bin"]), None)
         comp_col = next((c for c in reader.fieldnames if "completeness" in c.lower()), None)
+        if id_col is None or comp_col is None:
+            sys.exit(f"error: no name or completeness column in {args.checkm}: {reader.fieldnames}")
 
         for row in reader:
+            # a candidate without a completeness estimate is not held out
             try:
                 completeness = float(row[comp_col])
-                if completeness >= args.threshold:
-                    hq_bin_ids.add(row[id_col])
-            except ValueError:
+            except (TypeError, ValueError):
                 continue
+            if completeness >= args.threshold:
+                hq_bin_ids.add(row[id_col])
 
+    # Copied rather than linked: a link to the absolute path of a staged input only resolves
+    # where the task ran, which is not a given on cloud executors. These are a handful of
+    # single contigs, so the copy costs little.
     for bin_id, target_file in bin_file_map.items():
         outdir = args.hq_dir if bin_id in hq_bin_ids else args.lq_dir
-
-        target_path = os.path.abspath(target_file)
-        link_name = os.path.join(outdir, os.path.basename(target_file))
-
-        if not os.path.exists(link_name):
-            os.symlink(target_path, link_name)
+        shutil.copyfile(target_file, os.path.join(outdir, os.path.basename(target_file)))
 
 if __name__ == "__main__":
     main()
