@@ -1,4 +1,4 @@
-#!usr/bin/env nextflow
+#!/usr/bin/env nextflow
 
 include { BWA_INDEX               } from '../../modules/local/bwa/index'
 include { BWA_MEM                 } from '../../modules/local/bwa/mem'
