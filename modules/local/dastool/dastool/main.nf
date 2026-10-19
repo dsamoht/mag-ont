@@ -19,7 +19,7 @@ process DASTOOL {
     script:
     def args = task.ext.args ?: ''
     def contig2binList = contig2bin.join(",")
-    def labels = contig2bin.collect { it.name.replaceAll(/_contigs?2bin\.tsv$/, "") }.join(",")
+    def labels = contig2bin.collect { f -> f.name.replaceAll(/_contigs?2bin\.tsv$/, "") }.join(",")
     """
     DAS_Tool \\
         -i ${contig2binList} \\

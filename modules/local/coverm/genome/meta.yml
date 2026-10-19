@@ -18,9 +18,10 @@ input:
   - - meta:
         type: map
         description: Groovy Map containing sample or group information, e.g. `[ id:'group1' ]`
-    - dastool_bins:
+    - bins:
         type: file
-        description: Dastool bins
+        description: Final bins of the group, under their final names
+        pattern: "*.fa"
     - bam_files:
         type: file
         description: One or more sorted BAM files
