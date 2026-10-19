@@ -129,6 +129,10 @@ best, non-redundant set of bins. Individual binners can be turned off with
 <details markdown="1">
 <summary>Output files</summary>
 
+- `group_<group>/binning/final_bins/`
+  - `<group>_bin_NNN.fa`: every MAG of the group, DAS Tool bins and single-contig MAGs, under
+    its final name, numbered in the order of the original file names. CoverM, CheckM2, GTDB-Tk
+    and the summary all use these names.
 - `group_<group>/binning/checkm/`
   - `quality_report.tsv`: completeness and contamination of each bin.
 - `group_<group>/binning/single_contig_mags/<contig>/`
@@ -139,8 +143,8 @@ best, non-redundant set of bins. Individual binners can be turned off with
 - `group_<group>/binning/summary/`
   - `*_mag_summary.csv`: quality, coverage and taxonomy of every MAG in one table, one row per
     bin, columns in this order:
-    - `bin_id`, `group_id`, `bin_filename`: the id given to the MAG by the pipeline, its group,
-      and the bin file it was built from.
+    - `bin_id`, `group_id`, `original_bin`: the final name of the MAG, its group, and the DAS
+      Tool bin or single-contig MAG file it was copied from.
     - `completeness`, `contamination`, `genome_size`, `contig_n50`, `gc_content`,
       `total_contigs`, `max_contig_length`: CheckM2. Empty under `--skip_bin_qa`.
     - `domain`, `phylum`, `class`, `order`, `family`, `genus`, `species`: the GTDB-Tk

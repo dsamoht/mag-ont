@@ -174,38 +174,41 @@ CHECKM_HEADER = ("Name\tCompleteness\tContamination\tCompleteness_Model_Used\tTr
 
 
 def test_mag_summary_merges_quality_taxonomy_and_coverage(tmp_path):
-    write(tmp_path / "metabat_bin.1.fa", ">c1\nACGT\n>c2\nACGT\n")
-    write(tmp_path / "contig_9.fa", ">contig_9\nACGT\n")
+    # bins arrive under their final names (RENAME_BINS), with the original name alongside
+    write(tmp_path / "g1_bin_001.fa", ">contig_9\nACGT\n")
+    write(tmp_path / "g1_bin_002.fa", ">c1\nACGT\n>c2\nACGT\n")
+    write(tmp_path / "g1_bin_names.csv",
+          "bin_id,original_bin\ng1_bin_001,contig_9.fa\ng1_bin_002,metabat_bin.1.fa\n")
     write(tmp_path / "quality_report.tsv",
           CHECKM_HEADER
-          + "metabat_bin.1\t97.5\t1.2\tm\t11\t0.9\t4\t300\t8\t0.5\t2\t2\t4\tNone\n"
-          + "contig_9\t91.0\t0.1\tm\t11\t0.9\t4\t300\t4\t0.5\t1\t1\t4\tlow coverage\n")
+          + "g1_bin_002\t97.5\t1.2\tm\t11\t0.9\t4\t300\t8\t0.5\t2\t2\t4\tNone\n"
+          + "g1_bin_001\t91.0\t0.1\tm\t11\t0.9\t4\t300\t4\t0.5\t1\t1\t4\tlow coverage\n")
     write(tmp_path / "gtdbtk.bac120.summary.tsv",
           "user_genome\tclassification\tclosest_placement_reference\tclosest_placement_ani\twarnings\n"
-          "metabat_bin.1\td__Bacteria;p__Bacillota;c__Bacilli;o__;f__;g__;s__\tGCF_1\t97.1\tN/A\n")
+          "g1_bin_002\td__Bacteria;p__Bacillota;c__Bacilli;o__;f__;g__;s__\tGCF_1\t97.1\tN/A\n")
     write(tmp_path / "coverm.tsv",
-          "Genome\tS1 Mean\nunmapped\t0\nmetabat_bin.1\t12.5\ncontig_9\t3.0\n")
+          "Genome\tS1 Mean\nunmapped\t0\ng1_bin_002\t12.5\ng1_bin_001\t3.0\n")
 
-    result = run("mag_summary.py", "--bins", "metabat_bin.1.fa", "contig_9.fa",
+    result = run("mag_summary.py", "--bins", "g1_bin_002.fa", "g1_bin_001.fa",
+                 "--bin-names", "g1_bin_names.csv",
                  "--checkm", "quality_report.tsv", "--bac120", "gtdbtk.bac120.summary.tsv",
                  "--coverm", "coverm.tsv", "--group", "g1", "--output", "g1_mag_summary.csv",
                  cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
-    rows = {row["bin_filename"]: row for row in read_csv(tmp_path / "g1_mag_summary.csv")}
-    assert set(rows) == {"metabat_bin.1.fa", "contig_9.fa"}
-    # bins are numbered in file name order
-    assert rows["contig_9.fa"]["bin_id"] == "g1_bin_001"
-    assert rows["metabat_bin.1.fa"]["bin_id"] == "g1_bin_002"
+    rows = {row["bin_id"]: row for row in read_csv(tmp_path / "g1_mag_summary.csv")}
+    assert set(rows) == {"g1_bin_001", "g1_bin_002"}
+    assert rows["g1_bin_001"]["original_bin"] == "contig_9.fa"
+    assert rows["g1_bin_002"]["original_bin"] == "metabat_bin.1.fa"
 
-    binned = rows["metabat_bin.1.fa"]
+    binned = rows["g1_bin_002"]
     assert float(binned["completeness"]) == 97.5
     assert binned["phylum"] == "Bacillota"
     assert binned["order"] == "Unclassified"
     assert float(binned["s1_mean"]) == 12.5
     assert binned["checkm_notes"] == ""
 
-    single = rows["contig_9.fa"]
+    single = rows["g1_bin_001"]
     assert single["domain"] == "Unclassified"
     assert single["checkm_notes"] == "low coverage"
 
@@ -214,14 +217,28 @@ def test_mag_summary_merges_quality_taxonomy_and_coverage(tmp_path):
 
 
 def test_mag_summary_without_checkm_and_gtdbtk(tmp_path):
-    write(tmp_path / "binA.fa", ">c1\nACGT\n")
-    write(tmp_path / "coverm.tsv", "Genome\tS1 Mean\nbinA\t3\n")
+    write(tmp_path / "g1_bin_001.fa", ">c1\nACGT\n")
+    write(tmp_path / "g1_bin_names.csv", "bin_id,original_bin\ng1_bin_001,binA.fa\n")
+    write(tmp_path / "coverm.tsv", "Genome\tS1 Mean\ng1_bin_001\t3\n")
 
-    result = run("mag_summary.py", "--bins", "binA.fa", "--coverm", "coverm.tsv",
-                 "--group", "g1", "--output", "g1_mag_summary.csv", cwd=tmp_path)
+    result = run("mag_summary.py", "--bins", "g1_bin_001.fa", "--bin-names", "g1_bin_names.csv",
+                 "--coverm", "coverm.tsv", "--group", "g1", "--output", "g1_mag_summary.csv",
+                 cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
     row = read_csv(tmp_path / "g1_mag_summary.csv")[0]
     assert row["completeness"] == ""
     assert row["species"] == "Unclassified"
     assert float(row["s1_mean"]) == 3
+
+
+def test_mag_summary_fails_on_a_bin_without_a_name(tmp_path):
+    write(tmp_path / "g1_bin_001.fa", ">c1\nACGT\n")
+    write(tmp_path / "g1_bin_names.csv", "bin_id,original_bin\n")
+    write(tmp_path / "coverm.tsv", "Genome\tS1 Mean\ng1_bin_001\t3\n")
+
+    result = run("mag_summary.py", "--bins", "g1_bin_001.fa", "--bin-names", "g1_bin_names.csv",
+                 "--coverm", "coverm.tsv", "--group", "g1", "--output", "g1_mag_summary.csv",
+                 cwd=tmp_path)
+    assert result.returncode != 0
+    assert "g1_bin_001" in result.stderr
