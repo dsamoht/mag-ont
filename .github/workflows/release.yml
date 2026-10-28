@@ -1,0 +1,66 @@
+name: Release
+# Manually triggered from the Actions tab. Bumps the version strings on `main`,
+# commits, then creates the tag and the GitHub release on that commit.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number, e.g. 1.6.0"
+        required: true
+      title:
+        description: "Release title (defaults to the version number)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+
+      - name: Check version
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be X.Y.Z, got '$V'"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$V" > /dev/null; then
+            echo "::error::Tag $V already exists"
+            exit 1
+          fi
+
+      - name: Bump version strings
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          OLD=$(grep -Po "^\s*version\s*=\s*'\K[^']+" nextflow.config)
+          OLD_RE=${OLD//./\\.}
+          sed -i "s/Version: v$OLD_RE\$/Version: v$V/"                      README.md
+          sed -i "s/^\(\s*version\s*=\s*\)'$OLD_RE'/\1'$V'/"                 nextflow.config
+          sed -i "s/^\(\s*version:\s*\)$OLD_RE\$/\1$V/"                       .nf-core.yml
+          sed -i "s/-r $OLD_RE /-r $V /"                                      docs/usage.md
+          CHANGED=$(git diff --name-only | wc -l)
+          if [ "$CHANGED" -ne 4 ]; then
+            echo "::error::Expected 4 files changed from $OLD to $V, got $CHANGED"
+            git diff
+            exit 1
+          fi
+          git diff
+
+      - name: Commit, tag and release
+        env:
+          V: ${{ inputs.version }}
+          TITLE: ${{ inputs.title || inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump version to $V"
+          git push origin main
+          gh release create "$V" --target "$(git rev-parse HEAD)" --title "$TITLE" --generate-notes
