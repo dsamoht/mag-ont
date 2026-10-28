@@ -23,19 +23,35 @@ process COMEBIN {
     # through the staged symlink that would be the upstream task's directory.
     cp -L ${assembly} contigs.fa
 
-    # COMEBin clusters from single-copy marker gene seeds: an assembly too small or too
-    # fragmented to yield a seed set has nothing COMEBin can bin. No bins is the right
-    # outcome there, so only that failure is let through; any other one fails the task.
+    # An assembly that is empty, too small or too fragmented for COMEBin (no contig over the
+    # length cutoff, no marker gene seeds, fewer retained contigs than HNSW neighbours or seeds)
+    # has nothing COMEBin can bin. No bins is the right outcome there, so only those failures
+    # are let through; any other one fails the task.
+    set -o pipefail
     if ! run_comebin.sh \\
         ${args} \\
         -a contigs.fa \\
         -p bams \\
         -o comebin_output \\
         -t ${task.cpus} \\
-        -d ${device}
+        -d ${device} 2>&1 | tee comebin.log
     then
-        grep -qs 'no usable marker seed set could be generated' contigs.fa.bacar_marker.2quarter_lencutoff_1001.seed.err || exit 1
-        echo "${assembly} yields no marker gene seeds: no COMEBin bins" >&2
+        grep -qF \\
+            -e 'Input FASTA is missing or empty' \\
+            -e 'No sequences were found in' \\
+            -e 'No contigs longer than' \\
+            -e 'NN training needs at least two contigs' \\
+            -e 'received no DataLoader batches' \\
+            -e 'FragGeneScan completed but produced no proteins' \\
+            -e 'HMMsearch completed but found zero marker hits' \\
+            -e 'produced an empty seed set' \\
+            -e 'No seed identifiers found in' \\
+            -e 'No seed contigs remain on the filtered clustering axis' \\
+            -e 'No contigs remain on the clustering axis' \\
+            -e 'exceeds the retained contig count' \\
+            -e 'max_edges must be between 1 and the retained contig count minus one' \\
+            comebin.log || exit 1
+        echo "${assembly} is too small for COMEBin: no COMEBin bins" >&2
     fi
 
     for f in comebin_output/comebin_res/comebin_res_bins/*.fa; do
