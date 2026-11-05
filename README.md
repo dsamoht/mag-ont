@@ -19,14 +19,70 @@ with support for short reads
      Version: v1.5.2
 ```
 
-## tl;dr
+## workflow
 
-```bash
-nextflow run main.nf --help # if working in the repo
+```mermaid
+flowchart LR
+    lr[/"nanopore reads"/]
+    sr[/"short reads<br/>(optional)"/]
+    asm_in[/"assembly<br/>(optional)"/]
+
+    subgraph qc ["long-read QC · per sample"]
+        porechop["Porechop_ABI<br/>adapters"] --> chopper["Chopper<br/>length + quality"]
+        nanoplot["NanoPlot"]
+    end
+
+    subgraph assembly ["co-assembly · per group"]
+        assembler["Flye (+ Medaka)<br/>or metaMDBG"]
+    end
+
+    subgraph scmag ["single-contig MAGs"]
+        split["SeqKit<br/>split at 500 kb"] -- "≥ 500 kb" --> checkm_sc{"CheckM2<br/>≥ 90 % complete?"}
+    end
+
+    subgraph binning ["binning · per group"]
+        mapping["minimap2 / BWA-MEM<br/>vs. full assembly"]
+        subgraph binners [" "]
+            metabat["MetaBAT2"]
+            comebin["COMEBin"]
+            semibin["SemiBin2"]
+        end
+        dastool["DAS_Tool"]
+        mapping -- depth --> binners --> dastool
+    end
+
+    subgraph evaluation ["MAG evaluation"]
+        mags["final MAGs<br/>group_bin_NNN.fa"]
+        coverm["CoverM<br/>abundance"]
+        checkm["CheckM2<br/>quality"]
+        gtdbtk["GTDB-Tk<br/>taxonomy"]
+        summary["MAG summary"]
+        mags --> coverm & checkm & gtdbtk --> summary
+    end
+
+    lr --> porechop
+    lr -.-> nanoplot
+    chopper -.-> nanoplot
+    chopper --> assembler
+    assembler --> split
+    assembler --> mapping
+    asm_in -. skips QC + assembly .-> split
+    asm_in -.-> mapping
+    chopper -- long reads --> mapping
+    sr -- short reads --> mapping
+    split -- "< 500 kb" --> binners
+    checkm_sc -- no --> binners
+    checkm_sc -- yes --> mags
+    dastool --> mags
+    mapping -- BAMs --> coverm
+
+    classDef optional stroke-dasharray: 5 5
+    class porechop,nanoplot,comebin,semibin,checkm,gtdbtk optional
+    style scmag stroke-dasharray: 5 5
 ```
 
-or
 
+## tl;dr
 ```bash
 nextflow run dsamoht/mag-ont --help # nextflow pulls the repo automatically
 ```
