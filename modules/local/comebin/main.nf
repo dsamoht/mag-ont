@@ -45,6 +45,7 @@ process COMEBIN {
             -e 'FragGeneScan completed but produced no proteins' \\
             -e 'HMMsearch completed but found zero marker hits' \\
             -e 'produced an empty seed set' \\
+            -e 'no usable marker seed set could be generated' \\
             -e 'No seed identifiers found in' \\
             -e 'No seed contigs remain on the filtered clustering axis' \\
             -e 'No contigs remain on the clustering axis' \\
