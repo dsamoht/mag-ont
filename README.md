@@ -19,14 +19,75 @@ with support for short reads
      Version: v1.5.2
 ```
 
-## tl;dr
+## workflow
 
-```bash
-nextflow run main.nf --help # if working in the repo
+```mermaid
+flowchart TD
+    lr[/"nanopore reads"/]
+    sr[/"short reads<br/>(optional)"/]
+    asm_in[/"assembly<br/>(optional)"/]
+
+    subgraph qc ["Long-read QC · per sample"]
+        porechop["Porechop_ABI<br/>adapter removal"] --> chopper["Chopper<br/>length + quality filter"]
+        nanoplot["NanoPlot<br/>before + after"]
+    end
+
+    subgraph assembly ["Co-assembly · per group"]
+        assembler["Flye (+ Medaka)<br/>or metaMDBG"] --> asm["assembly"]
+    end
+
+    subgraph scmag ["Single-contig MAGs"]
+        is_long{"contig ≥ 500 kb?"}
+        checkm_sc["CheckM2"]
+        is_complete{"completeness ≥ 90 %?"}
+        sc["single-contig MAGs"]
+        to_bin["contigs to bin"]
+        is_long -- yes --> checkm_sc --> is_complete
+        is_long -- no --> to_bin
+        is_complete -- no --> to_bin
+        is_complete -- yes --> sc
+    end
+
+    subgraph binning ["Binning · per group"]
+        mapping["minimap2 or BWA-MEM<br/>reads vs. full assembly"]
+        metabat["MetaBAT2"]
+        comebin["COMEBin"]
+        semibin["SemiBin2"]
+        dastool["DAS_Tool"]
+        mapping -- depth --> metabat & comebin & semibin
+        metabat & comebin & semibin --> dastool
+    end
+
+    subgraph evaluation ["MAG evaluation"]
+        mags["final MAGs<br/>group_bin_NNN.fa"]
+        coverm["CoverM<br/>abundance"]
+        checkm["CheckM2<br/>quality"]
+        gtdbtk["GTDB-Tk<br/>taxonomy"]
+        summary["MAG summary"]
+        mags --> coverm & checkm & gtdbtk --> summary
+    end
+
+    lr --> porechop
+    lr -.-> nanoplot
+    chopper -.-> nanoplot
+    chopper --> assembler
+    asm_in -. skips QC + assembly .-> asm
+    asm --> is_long
+    asm --> mapping
+    chopper -- long reads --> mapping
+    sr -- short reads --> mapping
+    to_bin --> metabat & comebin & semibin
+    dastool --> mags
+    sc --> mags
+    mapping -- BAMs --> coverm
+
+    classDef optional stroke-dasharray: 5 5
+    class porechop,nanoplot,comebin,semibin,checkm,gtdbtk optional
+    style scmag stroke-dasharray: 5 5
 ```
 
-or
 
+## tl;dr
 ```bash
 nextflow run dsamoht/mag-ont --help # nextflow pulls the repo automatically
 ```
