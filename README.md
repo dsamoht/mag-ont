@@ -22,40 +22,33 @@ with support for short reads
 ## workflow
 
 ```mermaid
-flowchart TD
+flowchart LR
     lr[/"nanopore reads"/]
     sr[/"short reads<br/>(optional)"/]
     asm_in[/"assembly<br/>(optional)"/]
 
-    subgraph qc ["Long-read QC · per sample"]
-        porechop["Porechop_ABI<br/>adapter removal"] --> chopper["Chopper<br/>length + quality filter"]
-        nanoplot["NanoPlot<br/>before + after"]
+    subgraph qc ["long-read QC · per sample"]
+        porechop["Porechop_ABI<br/>adapters"] --> chopper["Chopper<br/>length + quality"]
+        nanoplot["NanoPlot"]
     end
 
-    subgraph assembly ["Co-assembly · per group"]
-        assembler["Flye (+ Medaka)<br/>or metaMDBG"] --> asm["assembly"]
+    subgraph assembly ["co-assembly · per group"]
+        assembler["Flye (+ Medaka)<br/>or metaMDBG"]
     end
 
-    subgraph scmag ["Single-contig MAGs"]
-        is_long{"contig ≥ 500 kb?"}
-        checkm_sc["CheckM2"]
-        is_complete{"completeness ≥ 90 %?"}
-        sc["single-contig MAGs"]
-        to_bin["contigs to bin"]
-        is_long -- yes --> checkm_sc --> is_complete
-        is_long -- no --> to_bin
-        is_complete -- no --> to_bin
-        is_complete -- yes --> sc
+    subgraph scmag ["single-contig MAGs"]
+        split["SeqKit<br/>split at 500 kb"] -- "≥ 500 kb" --> checkm_sc{"CheckM2<br/>≥ 90 % complete?"}
     end
 
-    subgraph binning ["Binning · per group"]
-        mapping["minimap2 or BWA-MEM<br/>reads vs. full assembly"]
-        metabat["MetaBAT2"]
-        comebin["COMEBin"]
-        semibin["SemiBin2"]
+    subgraph binning ["binning · per group"]
+        mapping["minimap2 / BWA-MEM<br/>vs. full assembly"]
+        subgraph binners [" "]
+            metabat["MetaBAT2"]
+            comebin["COMEBin"]
+            semibin["SemiBin2"]
+        end
         dastool["DAS_Tool"]
-        mapping -- depth --> metabat & comebin & semibin
-        metabat & comebin & semibin --> dastool
+        mapping -- depth --> binners --> dastool
     end
 
     subgraph evaluation ["MAG evaluation"]
@@ -71,14 +64,16 @@ flowchart TD
     lr -.-> nanoplot
     chopper -.-> nanoplot
     chopper --> assembler
-    asm_in -. skips QC + assembly .-> asm
-    asm --> is_long
-    asm --> mapping
+    assembler --> split
+    assembler --> mapping
+    asm_in -. skips QC + assembly .-> split
+    asm_in -.-> mapping
     chopper -- long reads --> mapping
     sr -- short reads --> mapping
-    to_bin --> metabat & comebin & semibin
+    split -- "< 500 kb" --> binners
+    checkm_sc -- no --> binners
+    checkm_sc -- yes --> mags
     dastool --> mags
-    sc --> mags
     mapping -- BAMs --> coverm
 
     classDef optional stroke-dasharray: 5 5
